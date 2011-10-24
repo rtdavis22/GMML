@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #include "gmml/internal/graph.h"
 
 #include <algorithm>
@@ -67,7 +69,7 @@ vector<size_t> *Graph::edge_bfs(size_t start_index, size_t end_index) const {
     return vertices_found;
 }
 
-// Tterative depth-first search by double-threading all vertices
+// Iterative depth-first search by double-threading all vertices
 vector<vector<size_t> > *Graph::get_cycles() const {
     vector<vector<size_t> > *cycles = new vector<vector<size_t> >();
     vector<int> parents(edges_.size());
