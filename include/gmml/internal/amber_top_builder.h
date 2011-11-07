@@ -113,6 +113,7 @@ class AmberTopBuilder {
 
     // Almost all information contained in the topology file comes from
     // a set of parameter files.
+    AmberTopBuilder();
     explicit AmberTopBuilder(const ParameterFileSet& parameter_file_set);
 
     // Builds the topology file for a structure, and optionally includes a title

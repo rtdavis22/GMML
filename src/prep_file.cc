@@ -193,10 +193,13 @@ PrepFile::OtherSection PrepFile::get_other_section(const string& line) const {
 void PrepFileSet::load(const PrepFile& prep_file) {
     PrepFile::const_iterator it;
     for (it = prep_file.begin(); it != prep_file.end(); ++it) {
-        if (residues_.find(it->first) == residues_.end())
+        if (residues_.find(it->first) == residues_.end()) {
             residues_.insert(*it);
-        else
+        } else  {
             residues_[it->first] = it->second;
+            warning("PrepFile - Overwriting prep file " + it->first +
+                    " in prep file set.");
+        }
     }
 }
 

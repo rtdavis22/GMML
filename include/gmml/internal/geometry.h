@@ -13,6 +13,9 @@
 #include <numeric>
 #include <stdexcept>
 #include <vector>
+#include <iostream> //remove
+
+#include "utilities.h"
 
 namespace gmml {
 
@@ -55,7 +58,7 @@ class VectorBase {
     }
     VectorBase& operator/=(double scalar) {
         std::transform(vector_.begin(), vector_.end(), vector_.begin(),
-                       std::bind1st(std::divides<T>(), scalar));
+                       std::bind2nd(std::divides<T>(), scalar));
         return *this;
     }
     template<typename U>
@@ -85,7 +88,7 @@ class VectorBase {
     VectorBase& normalize() {
         double norm_;
         if ((norm_ = norm()) != 0.0)
-            (*this)/=(norm_);
+            operator/=(norm_);
         return *this;
     }
 
@@ -304,8 +307,7 @@ inline double measure(const Coordinate& c1, const Coordinate& c2,
 inline Coordinate calculate_point(const Coordinate& a, const Coordinate& b,
                                   const Coordinate& c, double angle,
                                   double dihedral, double distance) {
-    // use kPi in utlities.h
-    dihedral = 3.14159265359 - dihedral;
+    dihedral = kPi - dihedral;
 
     Matrix<3, 4> m;
     Vector<3> v1(b, a);

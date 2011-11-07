@@ -7,6 +7,7 @@
 #include "gmml/internal/library_file.h"
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/prep_file.h"
+#include "gmml/internal/structure.h"
 #include "gmml/internal/utilities.h"
 
 namespace gmml {
@@ -28,12 +29,24 @@ void Environment::load_library_file(const string& file_name) {
     library_files_->load(file_name);
 }
 
+void Environment::load_library_file(const LibraryFile& library_file) {
+    library_files_->load(library_file);
+}
+
 void Environment::load_parameter_file(const string& file_name) {
     parameter_files_->load(file_name);
 }
 
+void Environment::load_parameter_file(const ParameterFile& parameter_file) {
+    parameter_files_->load(parameter_file);
+}
+
 void Environment::load_prep_file(const string& file_name) {
     prep_files_->load(file_name);
+}
+
+void Environment::load_prep_file(const PrepFile& prep_file) {
+    prep_files_->load(prep_file);
 }
 
 string Environment::find_file(const std::string& file_name) const {
@@ -58,9 +71,28 @@ string Environment::find_file(const std::string& file_name) const {
 
 Environment kDefaultEnvironment;
 
-Residue *build_prep_file(const string& prep_file_code) {
-    const PrepFileSet *prep_files = kDefaultEnvironment.prep_files();
-    return build_prep_file((*prep_files)[prep_file_code]);
+Residue *build_prep_file(const string& prep_code,
+                         const Environment& environment) {
+    const PrepFileSet *prep_files = environment.prep_files();
+    return build_prep_file((*prep_files)[prep_code]);
+}
+
+Residue *build_prep_file(const string& prep_code) {
+    return build_prep_file(prep_code, kDefaultEnvironment);
+}
+
+Structure *build_library_file_structure(const string& name,
+                                        const Environment& environment) {
+    const LibraryFileSet *library_files = environment.library_files();
+    const LibraryFile::StructurePtr structure = (*library_files)[name];
+    if (structure != LibraryFile::StructurePtr())
+        return build_library_file_structure(*structure);
+    else
+        return NULL;
+}
+
+Structure *build_library_file_structure(const string& name) {
+    return build_library_file_structure(name, kDefaultEnvironment);
 }
 
 }  // namespace gmml

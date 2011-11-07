@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
 
@@ -8,10 +10,14 @@
 
 namespace gmml {
 
+class LibraryFile;
 class LibraryFileSet;
+class ParameterFile;
 class ParameterFileSet;
+class PrepFile;
 class PrepFileSet;
 class Residue;
+class Structure;
 
 // This class represents a workspace to consolidate parameter files, prep files,
 // and library files. Clients only needing a single environment can use the
@@ -30,10 +36,17 @@ class Environment {
     std::string find_file(const std::string& file_name) const;
 
     void load_library_file(const std::string& file_name);
-    void load_parameter_file(const std::string& file_name);
-    void load_prep_file(const std::string& file_name);
+    void load_library_file(const LibraryFile& library_file);
 
-    PrepFileSet *prep_files() { return prep_files_; }
+    void load_parameter_file(const std::string& file_name);
+    void load_parameter_file(const ParameterFile& parameter_file);
+
+    void load_prep_file(const std::string& file_name);
+    void load_prep_file(const PrepFile& prep_file);
+
+    const LibraryFileSet *library_files() const { return library_files_; }
+    const ParameterFileSet *parm_set() const { return parameter_files_; }
+    const PrepFileSet *prep_files() const { return prep_files_; }
 
   private:
     std::vector<std::string> paths_;
@@ -52,7 +65,9 @@ inline void Environment::add_path(const std::string& path) {
 }
 
 // This is a default environment, which makes certain things much more
-// user-friendly for clients (see the functions that follow).
+// user-friendly for clients (see the functions that follow). It probably
+// shouldn't be externed in other files. Instead, it should be interacted with
+// using the functions below.
 //
 // WARNING: This is a global variable of class type. Therefore when it's created
 // in relation to static (non-local) objects in other translation units is
@@ -72,15 +87,35 @@ inline void load_library_file(const std::string& file_name) {
     kDefaultEnvironment.load_library_file(file_name);
 }
 
+inline void load_library_file(const LibraryFile& library_file) {
+    kDefaultEnvironment.load_library_file(library_file);
+}
+
 inline void load_parameter_file(const std::string& file_name) {
     kDefaultEnvironment.load_parameter_file(file_name);
+}
+
+inline void load_parameter_file(const ParameterFile& parameter_file) {
+    kDefaultEnvironment.load_parameter_file(parameter_file);
 }
 
 inline void load_prep_file(const std::string& file_name) {
     kDefaultEnvironment.load_prep_file(file_name);
 }
 
-Residue *build_prep_file(const std::string& prep_file_code);
+inline void load_prep_file(const PrepFile& prep_file) {
+    kDefaultEnvironment.load_prep_file(prep_file);
+}
+
+Residue *build_prep_file(const std::string& prep_code,
+                         const Environment& environment);
+
+Residue *build_prep_file(const std::string& prep_code);
+
+Structure *build_library_file_structure(const std::string& name,
+                                        const Environment& environment);
+
+Structure *build_library_file_structure(const std::string& name);
 
 }  // namespace gmml
 

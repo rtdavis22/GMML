@@ -1,35 +1,32 @@
 #include "gmml/internal/pdb_file_builder.h"
 
 #include <algorithm>
+#include <memory>
 #include <stack>
 #include <string>
 
 #include "gmml/internal/pdb_file.h"
 #include "gmml/internal/structure.h"
 
-namespace gmml
-{
+namespace gmml {
 
+using std::auto_ptr;
 using std::stack;
 using std::vector;
 
-namespace
-{
-PdbFile *file;
-}
-
 PdbFile *PdbFileBuilder::build(const Structure& structure) {
-    file = new PdbFile();
+    PdbFile *file = new PdbFile;
 
     //build_link_section(structure);
-    build_atom_section(structure);
-    build_connect_section(structure);
+    build_atom_section(file, structure);
+    build_connect_section(file, structure);
 
     return file;
 }
 
 
-void PdbFileBuilder::build_link_section(const Structure& structure) {
+void PdbFileBuilder::build_link_section(PdbFile *file,
+                                        const Structure& structure) {
 /*
     const vector<Atom*> atoms = structure.atoms();
     const vector<vector<int> >& bond_table = structure.bond_table();
@@ -57,7 +54,30 @@ void PdbFileBuilder::build_link_section(const Structure& structure) {
 }
 
 //add multiple components
-void PdbFileBuilder::build_atom_section(const Structure& structure) {
+void PdbFileBuilder::build_atom_section(PdbFile *file,
+                                        const Structure& structure) {
+    int cur_index = 1;
+    for (int i = 0; i < structure.get_residue_count(); i++) {
+        auto_ptr<Structure::InternalResidue> residue =
+            structure.residues(i);
+        for (Structure::AtomList::const_iterator it = residue->begin();
+                it != residue->end(); ++it) {
+            file->insert_atom_card(PdbFile::AtomCardPtr(new PdbAtomCard(
+                    cur_index++, (*it)->name(), residue->name(),
+                    i, (*it)->coordinate().x, (*it)->coordinate().y,
+                    (*it)->coordinate().z,
+                    get_element_symbol((*it)->element()))));
+        }
+    }
+/*
+    for (int i = 0; i < structure.size(); i++) {
+        const Structure::AtomPtr atom = structure.atoms(i);
+        PdbFile::AtomCardPtr(new PdbAtomCard(
+                i, atom->name(), structure.get_residue_name(i),
+        file->insert_atom_card(PdbFile::Card(i, atom->name(),
+                 
+    }
+*/
 /*
     vector<vector<int> > *link_table = structure.get_residue_link_table();
 
@@ -95,15 +115,13 @@ void PdbFileBuilder::build_atom_section(const Structure& structure) {
 */
 }
 
-void PdbFileBuilder::build_connect_section(const Structure& structure) {
-/*
-    const vector<vector<int> >& bond_table = structure.bond_table();
-    for (int i = 0; i < bond_table.size(); i++) {
-        vector<int> row = bond_table[i];
-        std::sort(row.begin(), row.end());
+void PdbFileBuilder::build_connect_section(PdbFile *file,
+                                           const Structure& structure) {
+    for (int i = 0; i < structure.size(); i++) {
+        const Structure::AdjList& row = structure.bonds(i);
         int complete_rows = row.size()/4;
         for (int j = 0; j < complete_rows; j++) {
-            file->insert_card(PdbFile::CardPtr(
+            file->insert_connect_card(PdbFile::ConnectCardPtr(
                 new PdbConnectCard(i + 1, row[j*4] + 1, row[j*4 + 1] + 1, 
                                    row[j*4 + 2] + 1, row[j*4 + 3] + 1)
             ));
@@ -121,11 +139,11 @@ void PdbFileBuilder::build_connect_section(const Structure& structure) {
             card.connect3 = row[complete_rows*4 + 1] + 1;
           case 1:
             card.connect2 = row[complete_rows*4] + 1;
-            file->insert_card(PdbFile::CardPtr(new PdbConnectCard(card)));
+            file->insert_connect_card(PdbFile::ConnectCardPtr(
+                    new PdbConnectCard(card)));
             break;
         }
     }
-*/
 }
 
-} //namespace gmml
+}  // namespace gmml

@@ -10,6 +10,27 @@ namespace gmml {
 enum Element { kElementC, kElementN, kElementH, kElementO, kElementS,
                kElementP, kElementSi, kElementCl, kElementF, kElementUnknown };
 
+// implement this and use it in place of get_element_by_char
+inline Element get_element(const std::string& symbol) {
+    return kElementUnknown;
+}
+
+inline std::string get_element_symbol(Element element) {
+    if (element == kElementC)
+        return "C";
+    else if (element == kElementH)
+        return "H";
+    else if (element == kElementN)
+        return "N";
+    else if (element == kElementO)
+        return "O";
+    else if (element == kElementP)
+        return "P";
+    else if (element == kElementS)
+        return "S";
+    return "";
+}
+
 //may want to use a static map instead
 inline Element get_element_by_char(char letter) {
     switch (letter) {
@@ -35,12 +56,26 @@ class Atom {
     Atom(Element element, const Coordinate& coordinate, const std::string& name,
          double charge)
             : coordinate_(coordinate), element_(element), name_(name),
-              charge_(charge) {}
+              type_(""), charge_(charge) {}
     Atom(Element element, const Coordinate& coordinate, const std::string& name,
          const std::string& type, double charge) 
             : coordinate_(coordinate), element_(element),  name_(name), 
               type_(type), charge_(charge) {}
 
+    void translate(double x, double y, double z) {
+        coordinate_.translate(x, y, z);
+    }
+
+    void set_coordinate(const Coordinate& coordinate) {
+        coordinate_ = coordinate;
+    }
+    void set_coordinate(double x, double y, double z) {
+        coordinate_.x = x;
+        coordinate_.y = y;
+        coordinate_.z = z;
+    }
+    void set_charge(double charge) { charge_ = charge; }
+ 
     Coordinate& coordinate() { return coordinate_; }
     const Coordinate& coordinate() const { return coordinate_; }
     Element element() const { return element_; }    

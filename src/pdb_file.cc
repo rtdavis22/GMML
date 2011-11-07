@@ -62,13 +62,25 @@ void PdbAtomCard::read(const string& line) {
     x = convert_string<double>(input.substr(30, 8));
     y = convert_string<double>(input.substr(38, 8));
     z = convert_string<double>(input.substr(46, 8));
-    occupancy = convert_string<double>(input.substr(54, 6));
-    temp_factor = convert_string<double>(input.substr(60, 6));
+    try {
+        occupancy = convert_string<double>(input.substr(54, 6));
+    } catch (const ConversionException& e) {
+        occupancy = kNotSet;
+    }
+    try {
+        temp_factor = convert_string<double>(input.substr(60, 6));
+    } catch (const ConversionException e) {
+        temp_factor = kNotSet;
+    }
     element = input.substr(76, 2);
     trim(element);
     if (element == "" && name.size() > 0)
         element = string(1, name[0]);
-    charge = convert_string<double>(input.substr(78, 2));
+    try {
+        charge = convert_string<double>(input.substr(78, 2));
+    } catch (const ConversionException& e) {
+        charge = kNotSet;
+    }
 }
 
 void PdbConnectCard::write(std::ostream& out) const {
@@ -92,11 +104,18 @@ void PdbConnectCard::read(const std::string& line) {
     string input(line);
     if (input.size() < 80)
         input.resize(80, ' ');
-    connect1 = convert_string<int>(input.substr(6, 5));
-    connect2 = convert_string<int>(input.substr(11, 5));
-    connect3 = convert_string<int>(input.substr(16, 5));
-    connect4 = convert_string<int>(input.substr(21, 5));
-    connect5 = convert_string<int>(input.substr(26, 5));
+
+    connect1 = connect2 = connect3 = connect4 = connect5 = kNotSet;
+    try {
+        connect1 = convert_string<int>(input.substr(6, 5));
+        connect2 = convert_string<int>(input.substr(11, 5));
+        connect3 = convert_string<int>(input.substr(16, 5));
+        connect4 = convert_string<int>(input.substr(21, 5));
+        connect5 = convert_string<int>(input.substr(26, 5));
+    } catch (const ConversionException& /*e*/) {
+        // Do nothing. If this occurs, the remaining connects will all
+        // properly be set to kNotSet.
+    }
 }
 
 void PdbLinkCard::read(const std::string& line) {

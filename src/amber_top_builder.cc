@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "gmml/internal/amber_top_file.h"
+#include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/structure.h"
@@ -68,6 +69,9 @@ const char *kSectionList[] = {
 
 typedef AmberTopFile::SectionPtr SectionPtr;
 typedef Structure::AtomList AtomList;
+
+AmberTopBuilder::AmberTopBuilder()
+        : parameter_file_set_(*kDefaultEnvironment.parm_set()) {}
 
 AmberTopBuilder::AmberTopBuilder(const ParameterFileSet& parameter_file_set)
         : parameter_file_set_(parameter_file_set) {}

@@ -14,9 +14,9 @@ class PdbFileBuilder {
     PdbFile *build(const Structure& structure);
 
   private:
-    void build_link_section(const Structure&);
-    void build_atom_section(const Structure&);
-    void build_connect_section(const Structure&);
+    void build_link_section(PdbFile *file, const Structure&);
+    void build_atom_section(PdbFile *file, const Structure&);
+    void build_connect_section(PdbFile *file, const Structure&);
 };
 
 } //namespace gmml

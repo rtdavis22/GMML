@@ -1,22 +1,29 @@
 #include "gmml/internal/glycam_code_set.h"
 
+#include <algorithm>
 #include <bitset>
 #include <map>
+#include <stack>
 #include <string>
 #include <vector>
 
+#include "gmml/internal/glycam_parser.h"
+#include "gmml/internal/residue.h"
 #include "gmml/internal/residue_classification.h"
 #include "gmml/internal/sequence_parser.h"
+#include "gmml/internal/structure.h"
+#include "gmml/internal/tree_residue.h"
 #include "gmml/internal/utilities.h"
 
 using std::bitset;
 using std::map;
+using std::stack;
 using std::string;
 using std::vector;
 
 namespace gmml {
 
-const char *kCodeMap[] = {
+const char *kNameMap[] = {
     "All", "N",
     "Alt", "E",
     "Ara", "A",
@@ -50,15 +57,23 @@ const char *kCodeMap[] = {
 };
 
 GlycamCodeSet::GlycamCodeSet() {
-    vector<string> map(kCodeMap, kCodeMap + GOOGLE_ARRAYSIZE(kCodeMap));
+    vector<string> map(kNameMap, kNameMap + GOOGLE_ARRAYSIZE(kNameMap));
     for (int i = 0; i < map.size(); i += 2) {
-        code_to_letter_.insert(std::make_pair(map[i], map[i + 1]));
-        letter_to_code_.insert(std::make_pair(map[i + 1], map[i]));
+        name_to_letter_.insert(std::make_pair(map[i], map[i + 1]));
+        letter_to_name_.insert(std::make_pair(map[i + 1], map[i]));
     }
 }
 
 string GlycamCodeSet::get_code(const ParsedResidue& parsed_residue,
                                const vector<int>& open_valences) const {
+    vector<int> new_valence_list = open_valences;
+    map<int, char>::const_iterator it = parsed_residue.derivatives.begin();
+    while (it != parsed_residue.derivatives.end()) {
+        new_valence_list.push_back(it->first);
+        ++it;
+    }
+    return get_code(parsed_residue.name, parsed_residue.isomer,
+                    parsed_residue.configuration, new_valence_list);
 }
 
 string GlycamCodeSet::get_code(const string& residue_name,
@@ -66,35 +81,250 @@ string GlycamCodeSet::get_code(const string& residue_name,
                                ResidueClassification::RingType ring_type,
                                ResidueClassification::Configuration config,
                                const vector<int>& open_valences) const {
-
-
+    bitset<10> bs;
+    for (int i = 0; i < open_valences.size(); i++)
+        bs.set(open_valences[i]);
+    string code = get_first_letter(bs) +
+                  get_second_letter(residue_name, isomer);
+    if (code.size() < 3)
+        code += get_third_letter(config, ring_type);
+    return code;
 }
 
 string GlycamCodeSet::get_code(const string& residue_name,
                                ResidueClassification::Isomer isomer,
                                ResidueClassification::Configuration config,
                                const vector<int>& open_valences) const {
-
+    string new_name = residue_name;
+    ResidueClassification::RingType ring_type =
+        ResidueClassification::kPyranose;
+    if (new_name.size() > 3) {
+        if (new_name[3] == 'p' || new_name[3] == 'f')
+            new_name.erase(new_name.begin() + 3);
+        if (new_name[3] == 'f')
+            ring_type = ResidueClassification::kFuranose;
+    }
+ 
+    return get_code(new_name, isomer, ring_type, config, open_valences);
 }
 
 string GlycamCodeSet::get_terminal_code(const string& terminal_name) const {
+    if (terminal_name == "OH")
+        return "ROH";
+    else if (terminal_name == "OME")
+        return "OME";
+    else if (terminal_name == "OtBu")
+        return "TBT";
+    return "";
+}
 
+tree<TreeResidue*> *GlycamCodeSet::build_residue_tree(
+        tree<ParsedResidue*> *parsed_tree) const {
+    tree<ParsedResidue*>::pre_order_iterator src_it = parsed_tree->begin();
+    tree<TreeResidue*> *residue_tree = new tree<TreeResidue*>;
+    tree<TreeResidue*>::pre_order_iterator dest_it = residue_tree->begin();
+
+    stack<tree<TreeResidue*>::pre_order_iterator> st;
+    dest_it = residue_tree->begin();
+    TreeResidue *terminal = new TreeResidue(get_terminal_code((*src_it)->name));
+    st.push(residue_tree->insert(dest_it, terminal));
+    src_it++;
+    while (src_it != parsed_tree->end()) {
+        ParsedResidue *parsed_residue = *src_it;
+        TreeResidue *tree_residue = build_tree_residue(src_it);
+        dest_it = residue_tree->append_child(st.top(), tree_residue);
+        map<int, char>::const_iterator map_it;
+        for (map_it = parsed_residue->derivatives.begin();
+                map_it != parsed_residue->derivatives.end(); ++map_it) {
+            residue_tree->append_child(
+                    dest_it, get_derivative_tree_residue(map_it->second,
+                                                         map_it->first));
+        }
+        st.push(dest_it);
+        int cur_depth = parsed_tree->depth(src_it);
+        ++src_it;
+        int new_depth = parsed_tree->depth(src_it);
+        for (int i = 0; i < cur_depth - new_depth + 1; i++)
+            st.pop();
+    }
+
+    return residue_tree;
+}
+
+std::string GlycamCodeSet::get_name_from_code(const string& code) const {
+    string uppercase_code(code);
+    std::transform(uppercase_code.begin(), uppercase_code.end(),
+                   uppercase_code.begin(), ::tolower);
+    if (uppercase_code.substr(1) == "GL")
+        return "Neu5Gc";
+    // I should probably make a table for these.
+    else if (uppercase_code == "SUL")
+        return "sulfate";
+    else if (uppercase_code == "OME")
+        return "OME";
+    else if (uppercase_code == "ROH")
+        return "OH";
+    else if (uppercase_code == "TBT")
+        return "OtBu";
+    string letter(1, code[1]);
+    map<string, string>::const_iterator it;
+    if ((it = letter_to_name_.find(letter)) != letter_to_name_.end())
+        return it->second;
+    return "";
 }
 
 string GlycamCodeSet::get_first_letter(const bitset<10>& open_valences) const {
-
+    // This is an alias for convenience.
+    const bitset<10>& bs = open_valences;
+    if (bs.count() == 4) {
+        if (bs[4] && bs[7] && bs[8] && bs[9])
+            return "K";
+        if (bs[2] && bs[3] && bs[4] && bs[6])
+            return "P";
+    } else if (bs.count() == 3) {
+        if (bs[4] && bs[7] && bs[8])
+            return "G";
+        if (bs[4] && bs[7] && bs[9])
+            return "H";
+        if (bs[4] && bs[8] && bs[9])
+            return "I";
+        if (bs[7] && bs[8] && bs[9])
+            return "J";
+        if (bs[3] && bs[4] && bs[6])
+            return "Q";
+        if (bs[2] && bs[4] && bs[6])
+            return "R";
+        if (bs[2] && bs[3] && bs[6])
+            return "S";
+        if (bs[2] && bs[3] && bs[4])
+            return "T";
+    } else if (bs.count() == 2) {
+        if (bs[4] && bs[7])
+            return "A";
+        if (bs[4] && bs[8])
+            return "B";
+        if (bs[4] && bs[9])
+            return "C";
+        if (bs[7] && bs[8])
+            return "D";
+        if (bs[7] && bs[9])
+            return "E";
+        if (bs[8] && bs[9])
+            return "F";
+        if (bs[4] && bs[6])
+            return "U";
+        if (bs[3] && bs[6])
+            return "V";
+        if (bs[3] && bs[4])
+            return "W";
+        if (bs[2] && bs[6])
+            return "X";
+        if (bs[2] && bs[4])
+            return "Y";
+        if (bs[2] && bs[3])
+            return "Z";
+    } else if (bs.count() == 1) {
+        for (int i = 1; i < bs.size(); i++)
+            if (bs[i])
+                return to_string(i);
+    } else if (bs.none()) {
+        return "0";
+    }
 }
 
 string GlycamCodeSet::get_second_letter(
         const string& residue_name,
-        ResidueClassification::Isomer) const {
-
+        ResidueClassification::Isomer isomer) const {
+    map<string,string>::const_iterator it;
+    if ((it = name_to_letter_.find(residue_name)) != name_to_letter_.end()) {
+        string letter = it->second;
+        if (isomer == ResidueClassification::kIsomerL)
+            std::transform(letter.begin(), letter.end(), letter.begin(),
+                           ::tolower);
+        return letter;
+    }
+    //error here?
+    return "";
 }
 
 string GlycamCodeSet::get_third_letter(
         ResidueClassification::Configuration configuration,
         ResidueClassification::RingType ring_type) const {
+    if (ring_type == ResidueClassification::kPyranose)
+        return (configuration == ResidueClassification::kAlpha)?"A":"B";
+    else
+        return (configuration == ResidueClassification::kAlpha)?"D":"U";
+}
 
+TreeResidue *GlycamCodeSet::build_tree_residue(
+        tree<ParsedResidue*>::iterator it) const {
+    vector<int> open_valences;
+    tree<ParsedResidue*>::sibling_iterator child_it = it.begin();
+    while (child_it != it.end()) {
+        open_valences.push_back((*child_it)->oxygen_position);
+        ++child_it;
+    }
+    string anomeric_carbon = "C" + to_string((*it)->anomeric_carbon);
+    tree<ParsedResidue*>::iterator parent = tree<ParsedResidue*>::parent(it);
+    string oxygen_position = get_oxygen_name((*parent)->name,
+                                             ((*it)->oxygen_position));
+    return new TreeResidue(get_code(**it, open_valences), anomeric_carbon,
+                           oxygen_position);
+}
+
+TreeResidue *GlycamCodeSet::get_derivative_tree_residue(char derivative,
+                                                        int pos) const {
+    string oxygen = "O" + to_string(pos);
+    if (derivative == 'S')
+        return new TreeResidue("SUL", "S1", oxygen);
+    else if (derivative == 'M')
+        return new TreeResidue("MEX", "CH3", oxygen);
+    else if (derivative == 'A')
+        return new TreeResidue("ACE", "C1A", oxygen);
+    return NULL;    
+}
+
+string GlycamCodeSet::get_oxygen_name(const string& residue_code,
+                                      int position) const {
+    if (residue_code == "OME")
+        return "O";
+    return "O" + to_string(position);
+}
+
+int GlycamAttach::operator()(Structure& structure, Residue *residue,
+                             const string& new_atom_name, int residue_index,
+                             const string& atom_name) const {
+    if (residue->name() == "SUL") {
+        int oxygen = structure.get_atom_index(residue_index, atom_name);
+        Structure::AtomPtr atom = structure.atoms(oxygen);
+        atom->set_charge(atom->charge() + 0.031);
+    }
+
+    StructureAttach structure_attach;
+    return structure_attach(structure, residue, new_atom_name, residue_index,
+                            atom_name);
+}
+
+Structure *glycam_build(tree<TreeResidue*> *residue_tree) {
+    return build_residue_tree(residue_tree, GlycamAttach());
+}
+
+Structure *glycam_build(tree<ParsedResidue*> *parsed_tree) {
+    GlycamCodeSet code_set;
+    tree<TreeResidue*> *residue_tree = code_set.build_residue_tree(parsed_tree);
+    Structure *structure = glycam_build(residue_tree);
+    std::for_each(residue_tree->begin(), residue_tree->end(), DeletePtr());
+    delete residue_tree;
+    return structure;
+}
+
+Structure *glycam_build(const string& sequence) {
+    SequenceParser *parser = new GlycamParser;
+    tree<ParsedResidue*> *parsed_tree = parser->parse(sequence);
+    Structure *structure = glycam_build(parsed_tree);
+    std::for_each(parsed_tree->begin(), parsed_tree->end(), DeletePtr());
+    delete parsed_tree;
+    return structure;
 }
 
 }  // namespace gmml

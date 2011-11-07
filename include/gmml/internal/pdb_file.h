@@ -11,8 +11,7 @@
 
 #include "utilities.h" //remove
 
-namespace gmml
-{
+namespace gmml {
 
 class PdbCard;
 class PdbAtomCard;
@@ -22,6 +21,8 @@ class PdbFile {
   public:
     enum CardType { ATOM, CONECT, END, HETATM, LINK, TER, UNKNOWN };
     typedef boost::shared_ptr<PdbCard> CardPtr;
+    typedef boost::shared_ptr<PdbAtomCard> AtomCardPtr;
+    typedef boost::shared_ptr<PdbConnectCard> ConnectCardPtr;
 
     PdbFile() {}
     PdbFile(const std::string& file_name) { read(file_name); }
@@ -29,11 +30,13 @@ class PdbFile {
     void print() const;
 
     void insert_card(CardPtr card_ptr) { cards_.push_back(card_ptr); }
+    void insert_atom_card(AtomCardPtr card_ptr);
+    void insert_connect_card(ConnectCardPtr card_ptr);
 
-    std::list<boost::shared_ptr<PdbAtomCard> > atom_cards() const {
+    const std::list<boost::shared_ptr<PdbAtomCard> >& atom_cards() const {
         return atom_cards_;
     }
-    std::list<boost::shared_ptr<PdbConnectCard> > connect_cards() const {
+    const std::list<boost::shared_ptr<PdbConnectCard> >& connect_cards() const {
         return connect_cards_;
     }
 
@@ -61,11 +64,11 @@ class PdbAtomCard : public PdbCard {
     PdbAtomCard(const std::string& line) { read(line); }
     PdbAtomCard(int serial, const std::string& name, 
                 const std::string& res_name, int res_seq, 
-                double x, double y, double z, char element)
+                double x, double y, double z, std::string element)
             : serial(serial), name(name), alt_loc(' '), res_name(res_name), 
               chain_id(' '), res_seq(res_seq), i_code(' '),
               x(x), y(y), z(z), occupancy(1.0), temp_factor(0.0),
-              element(std::string(1, element)), charge(kNotSet) {}
+              element(element), charge(kNotSet) {}
 
     int serial;
     std::string name;
@@ -157,6 +160,16 @@ class PdbUnknownCard : public PdbCard {
 
     std::string line;
 };
+
+inline void PdbFile::insert_atom_card(AtomCardPtr card_ptr) {
+    insert_card(card_ptr);
+    atom_cards_.push_back(card_ptr);
+}
+
+inline void PdbFile::insert_connect_card(ConnectCardPtr card_ptr) {
+    insert_card(card_ptr);
+    connect_cards_.push_back(card_ptr);
+}
 
 } //namespace gmml
 

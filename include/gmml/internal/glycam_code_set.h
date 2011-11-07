@@ -9,11 +9,15 @@
 #include <vector>
 
 #include "residue_classification.h"
+#include "tree.hh" // see if I can get out of including this
 #include "utilities.h"
 
 namespace gmml {
 
 class ParsedResidue;
+class Residue;
+class Structure;
+class TreeResidue;
 
 class GlycamCodeSet {
   public:
@@ -49,8 +53,10 @@ class GlycamCodeSet {
 
     std::string get_derivative_code(char derivative_letter) const;
 
-    // This is a wrapper around the 
-    //void attach(...)
+    std::string get_name_from_code(const std::string& code) const;
+
+    tree<TreeResidue*> *build_residue_tree(
+            tree<ParsedResidue*> *parsed_tree) const;
 
   private:
     // Because of the way the code mapping was designed, the the second letter
@@ -70,11 +76,32 @@ class GlycamCodeSet {
     std::string get_third_letter(ResidueClassification::Configuration,
                                  ResidueClassification::RingType) const;
 
-    std::map<std::string, std::string> code_to_letter_;
-    std::map<std::string, std::string> letter_to_code_;
+    // This builds a TreeResidue from a ParsedResidue. An tree iterator is
+    // used because the name of the residue depends on the children of
+    // ParsedResidue.
+    TreeResidue *build_tree_residue(tree<ParsedResidue*>::iterator) const;
+
+    TreeResidue *get_derivative_tree_residue(char derivative, int pos) const;
+
+    std::string get_oxygen_name(const std::string& residue_name,
+                                int position) const;
+
+    std::map<std::string, std::string> name_to_letter_;
+    std::map<std::string, std::string> letter_to_name_;
 
     DISALLOW_COPY_AND_ASSIGN(GlycamCodeSet);
 };
+
+struct GlycamAttach {
+    int operator()(Structure& structure, Residue *residue,
+                   const std::string& new_atom_name, int residue_index,
+                   const std::string& atom_name) const;
+
+};
+
+Structure *glycam_build(tree<TreeResidue*> *residue_tree);
+Structure *glycam_build(tree<ParsedResidue*> *parsed_tree);
+Structure *glycam_build(const std::string& sequence);
 
 }  // namespace gmml
 

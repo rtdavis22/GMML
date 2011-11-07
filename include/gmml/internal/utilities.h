@@ -16,7 +16,7 @@ namespace gmml {
 #undef DISALLOW_COPY_AND_ASSIGN
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
     TypeName(const TypeName&);             \
-    void operator=(const TypeName&)
+    void operator=(const TypeName&);
 
 // This macro returns the number of elements in a static array. If you
 // (wrongfully) pass it a pointer, the last line attempts to generate a
@@ -33,10 +33,10 @@ namespace gmml {
 template<typename T, typename U>
 class CreateMap {
   public:
-    CreateMap(const T& key, const U& val) { map_[key] = val; }
+    CreateMap(const T& key, const U& value) { map_[key] = value; }
 
-    CreateMap<T, U>& operator()(const T& key, const U& val) {
-        map_[key] = val;
+    CreateMap<T, U>& operator()(const T& key, const U& value) {
+        map_[key] = value;
         return *this;
     }
 
@@ -45,6 +45,24 @@ class CreateMap {
   private:
     std::map<T, U> map_;
 };
+
+// A function to efficiently add or update a map. If a key exists in the map
+// already, updating its value with operator[] is faster. Otherwise, insert()
+// is faster. This function does the right thing and returns an iterator
+// to the added or updated pair. This code is from Effective STL by
+// Scott Meyers.
+template<typename MapType, typename KeyArgType, typename ValueArgType>
+typename MapType::iterator add_or_update_map(MapType& map,
+                                             const KeyArgType& key,
+                                             const ValueArgType& value) {
+    typename MapType::iterator it = map.lower_bound(key);
+    if (it != map.end() && !(map.key_comp()(key, it->first))) {
+        it->second = value;
+        return it;
+    } else {
+        return map.insert(it, typename MapType::value_type(key, value));
+    }
+}
 
 // Handy functors
 struct DeletePtr {
@@ -137,7 +155,9 @@ inline T convert_string(const std::string& str) {
     std::stringstream ss(str);
     if (ss >> val)
         return val;
-    throw ConversionException("convert_string: invalid conversion");
+    
+    throw ConversionException("convert_string: invalid conversion of string " +
+                              str);
 }
 
 // Place val into str between str[index] and str[index + length]. The
