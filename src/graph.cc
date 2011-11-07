@@ -14,6 +14,34 @@ using std::deque;
 using std::queue;
 using std::vector;
 
+void Graph::remove_vertex_list(const vector<size_t>& vertices) {
+    vector<int> new_indices(edges_.size());
+    for (int i = 0; i < vertices.size(); i++)
+        new_indices[i] = -1;
+
+    int count = 0;
+    for (int i = 0; i < new_indices.size(); i++) {
+        if (new_indices[i] == -1)
+            count++;
+        else
+            new_indices[i] = i - count;
+    }
+
+    vector<AdjList> new_edges(edges_.size() - count);
+    int insert_index = 0;
+    for (int i = 0; i < edges_.size(); i++) {
+        if (new_indices[i] == -1)
+            continue;
+        for (int j = 0; j < edges_[i].size(); j++) {
+            int new_dest = new_indices[edges_[i][j]];
+            if (new_dest != -1)
+                new_edges[insert_index].push_back(new_dest);
+        }
+        insert_index++;
+    }
+    edges_ = new_edges;
+}
+
 vector<size_t> *Graph::bfs(size_t start_index, size_t distance) const {
     deque<bool> marked(edges_.size());
     vector<int> distances(edges_.size(), edges_.size());

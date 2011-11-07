@@ -32,6 +32,17 @@ class Graph {
     // adjacency lists to reflect their new vertex indices.
     void append(const Graph& graph);
 
+    // Remove the vertex from the graph, along with all incident edges.
+    // It is more efficient to remove a vertex with a large index.
+    void remove_vertex(size_t index);
+
+    // Remove a range of vertices from the graph.
+    void remove_vertex_range(size_t start_index, size_t count);
+
+    // Remove a list of vertices. This function is more efficient when removing
+    // many vertices.
+    void remove_vertex_list(const std::vector<size_t>& vertices);
+
     // The function performs a breadth-first search, starting at the given
     // index. It returns a list of all the vertex indices it finds.
     std::vector<size_t> *bfs(size_t start_index) const {
@@ -75,7 +86,7 @@ class Graph {
     void print() const;
 
   private:
-    std::vector<std::vector<size_t> > edges_;
+    std::vector<AdjList> edges_;
 };
 
 inline void Graph::append(const Graph& graph) {
