@@ -134,7 +134,7 @@ class ConversionException : public std::invalid_argument {
             : std::invalid_argument(what_arg) {}
 };
 
-// remove spaces on either side
+// Remove spaces on both sides of the string.
 inline std::string& trim(std::string& str) {
     str.erase(str.find_last_not_of(" ") + 1);
     str.erase(0, str.find_first_not_of(" "));

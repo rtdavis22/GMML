@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #ifndef SANDER_MINIMIZE_H
 #define SANDER_MINIMIZE_H
 
@@ -9,6 +11,9 @@ class Environment;
 class ParameterFileSet;
 class Structure;
 
+// This represents the results of a minimization as found in sander's mdout
+// file.
+// TODO: Figure out what else should be included in this struct.
 struct MinimizationResults {
     double energy;
 };
@@ -24,9 +29,10 @@ class SanderMinimize {
     MinimizationResults *operator()(Structure& structure,
                                     const std::string& input_file) const;
   private:
+    // This might should go in MinimizationResults.
     MinimizationResults *parse_output_file(const std::string& out_file) const;
 };
 
-}  // namespace gml
+}  // namespace gmml
 
 #endif  // SANDER_MINIMIZE_H

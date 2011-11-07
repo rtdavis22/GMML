@@ -21,7 +21,6 @@
 #include "internal/sequence_parser.h"
 #include "internal/structure.h"
 #include "internal/torsion_combination_builder.h"
-#include "internal/tree.h"
 #include "internal/tree.hh"
 #include "internal/tree_residue.h"
 #include "internal/utilities.h"

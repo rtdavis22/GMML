@@ -1,9 +1,11 @@
+// Author: Robert Davis
+
 #include "gmml/internal/sander_minimize.h"
 
 #include <unistd.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/time.h>
 #include <cmath>
 #include <cstdio>
 

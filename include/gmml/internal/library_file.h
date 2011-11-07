@@ -17,6 +17,8 @@ namespace gmml {
 
 class LibraryFileStructure;
 
+// This class represents an AMBER OFF library file. The file specification can
+// be found here: library file http://ambermd.org/doc/OFF_file_format.txt.
 class LibraryFile {
   public:
     typedef boost::shared_ptr<LibraryFileStructure> StructurePtr;
@@ -29,12 +31,17 @@ class LibraryFile {
     const_iterator begin() const { return structures_.begin(); }
     const_iterator end() const { return structures_.end(); }
 
+    // This returns the structure with given name. The name comes from the
+    // listing at the top of the file. If the structure isn't present,
+    // StructurePtr() is returned.
     const StructurePtr operator[](const std::string& name) const;
 
   private:
     void read(std::istream&);
     void read(const std::string& file_name);
 
+    // A mapping from the structure names at the top of the file to the
+    // corresponding structure in the file.
     std::map<std::string, StructurePtr> structures_;
 
     // Evil constructors
@@ -61,12 +68,19 @@ class LibraryFileSet {
     const_iterator begin() const { return structures_.begin(); }
     const_iterator end() const { return structures_.end(); }
 
+    // These add the structures in a library file to the current set of
+    // structure. If a structure name already exists in the set, it is
+    // overwritten and a warning is displayed.
     void load(const LibraryFile& file);
     void load(const std::string& file_name) { load(LibraryFile(file_name)); }
 
+    // This returns the structure with the given name. If the structure is
+    // not present, StructurePtr() is returned.
     const LibraryFile::StructurePtr operator[](const std::string& name) const;
 
   private:
+    // A mapping from the structure names found in the library files their
+    // corresonding structures.
     std::map<std::string, LibraryFile::StructurePtr> structures_;
 
     // Evil constructors
@@ -85,6 +99,7 @@ inline const LibraryFile::StructurePtr LibraryFileSet::operator[](
 
 class LibraryFileStructure : public Structure {
   public:
+    // This is a representation of the box information found in the file.
     struct Box {
         double angle;
         double length;
