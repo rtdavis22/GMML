@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #ifndef ATOM_H
 #define ATOM_H
 
@@ -7,8 +9,19 @@
 
 namespace gmml {
 
-enum Element { kElementC, kElementN, kElementH, kElementO, kElementS,
-               kElementP, kElementSi, kElementCl, kElementF, kElementUnknown };
+// kElementX is the atomic number of the element with symbol X.
+enum Element {
+    kElementUnknown = 0,
+    kElementH = 1,
+    kElementC = 6,
+    kElementN = 7,
+    kElementO = 8,
+    kElementF = 9,
+    kElementSi = 14,
+    kElementP = 15,
+    kElementS = 16,
+    kElementCl = 17
+};
 
 // implement this and use it in place of get_element_by_char
 inline Element get_element(const std::string& symbol) {

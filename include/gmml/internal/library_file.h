@@ -8,6 +8,7 @@
 #include <iosfwd>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "boost/shared_ptr.hpp"
@@ -111,6 +112,7 @@ class LibraryFileStructure : public Structure {
     void clone_from(const LibraryFileStructure& structure);
 
     void read(std::istream& in);
+    std::pair<AtomPtr, int> read_atom(std::istream& in) const;
     void read_box(std::istream& in);
     void read_connectivity_info(std::istream& in,
                                 const std::map<int, int>& atom_map);

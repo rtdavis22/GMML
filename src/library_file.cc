@@ -86,31 +86,18 @@ void LibraryFileStructure::clone_from(const LibraryFileStructure& structure) {
 }
 
 void LibraryFileStructure::read(std::istream& in) {
+    // This is a map from the residue serial numbers found in the atom section
+    // and referenced in other sections to the atoms in the residues.
     map<int, IndexedResidue> residues;
     int cur_atom = 0;
-    string line;
     while (in.peek() != '!') {
-        getline(in, line);
-        istringstream ss(line);
-        string name;
-        string type;
-        int residue;
-        int serial;
-        int atomic_number;
-        double charge;
-        int int_t;
-        ss >> name >> type >> int_t >> residue >> int_t >> serial >>
-              atomic_number >> charge;
-        remove_quotes(name);
-        remove_quotes(type);
-        // The coordinates will be set in the sections that follow.
-        AtomPtr atom(new Atom(static_cast<Element>(atomic_number),
-                              Coordinate(), name, type, charge));
+        std::pair<AtomPtr, int> atom = read_atom(in);
+        IndexedAtom *indexed_atom = new IndexedAtom(atom.first, cur_atom++);
         // We don't use the serial field because the sections that follow seem
         // to only use the (1-based) index of the atom in the atom list. The
         // serial is the same number, however, for all the library files I've
         // seen.
-        residues[residue].atoms.push_back(new IndexedAtom(atom, cur_atom++));
+        residues[atom.second].atoms.push_back(indexed_atom);
     }
     // This is a map from the (0-based) index of the atom in the atom list to
     // the index of the atom in the structure.
@@ -134,6 +121,7 @@ void LibraryFileStructure::read(std::istream& in) {
     }
 
     // Keep reading the stream until we bump into another residue
+    string line;
     while (getline(in, line) && line.find("unit.atoms ") == string::npos) {
         Graph file_bonds(atoms_.size());
         if (line.find("boundbox") != string::npos) {
@@ -149,6 +137,28 @@ void LibraryFileStructure::read(std::istream& in) {
             read_residue_info(in, residue_map);
         }
     }
+}
+
+std::pair<Structure::AtomPtr, int> LibraryFileStructure::read_atom(
+        std::istream& in) const {
+    string line;
+    getline(in, line);
+    istringstream ss(line);
+    string name;
+    string type;
+    int residue;
+    int serial;
+    int atomic_number;
+    double charge;
+    int int_t;
+    ss >> name >> type >> int_t >> residue >> int_t >> serial >>
+	  atomic_number >> charge;
+    remove_quotes(name);
+    remove_quotes(type);
+    // The coordinates will be set in the sections that follow.
+    AtomPtr atom(new Atom(static_cast<Element>(atomic_number),
+                 Coordinate(), name, type, charge));
+    return std::make_pair(atom, residue);
 }
 
 void LibraryFileStructure::read_box(std::istream& in) {
