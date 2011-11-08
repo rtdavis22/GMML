@@ -43,6 +43,8 @@ class Structure {
     typedef boost::shared_ptr<Atom> AtomPtr;
     typedef std::vector<AtomPtr> AtomList;
     typedef Graph::AdjList AdjList;
+    typedef AtomList::iterator iterator;
+    typedef AtomList::const_iterator const_iterator;
 
     class InternalResidue {
       public:
@@ -72,6 +74,12 @@ class Structure {
         std::for_each(residues_->begin(), residues_->end(), DeletePtr());
         delete residues_;
     }
+
+    iterator begin() { return atoms_.begin(); }
+    const_iterator begin() const { return atoms_.begin(); }
+
+    iterator end() { return atoms_.end(); }
+    const_iterator end() const { return atoms_.end(); }
 
     static Structure *build_from_pdb(const PdbFile& pdb_file);
 

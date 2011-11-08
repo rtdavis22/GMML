@@ -127,10 +127,9 @@ void Structure::clone_from(const Structure& structure) {
 }
 
 void Structure::append(const Structure& rhs) {
-    size_t old_size = atoms_.size();
+    size_t old_size = size();
     atoms_.reserve(old_size + rhs.atoms_.size());
-
-    //std::copy(rhs.atoms_->begin(), rhs.atoms_->end(), atoms_->end());
+    atoms_.insert(end(), rhs.begin(), rhs.end());
 
     bonds_->append(*rhs.bonds_);
 
@@ -139,17 +138,19 @@ void Structure::append(const Structure& rhs) {
     for (size_t i = 0; i < rhs.residues_->size(); i++) {
 	residues_->push_back(
 	    new StructureResidue(rhs.residues_->at(i)->name,
-				 rhs.residues_->at(i)->start_index + old_size,
-				 rhs.residues_->at(i)->size)
-	);
+                                 rhs.residues_->at(i)->start_index + old_size,
+                                 rhs.residues_->at(i)->size)
+        );
     }
 }
 
 int Structure::append(const Residue *residue) {
-    size_t old_size = atoms_.size();
+    size_t old_size = size();
     atoms_.reserve(old_size + residue->size());
-    atoms_.insert(atoms_.end(), residue->begin(), residue->end());
+    atoms_.insert(end(), residue->begin(), residue->end());
+
     bonds_->append(*residue->bonds());
+
     using detail::StructureResidue;
     residues_->push_back(new StructureResidue(residue->name(), old_size,
                                               residue->size()));
