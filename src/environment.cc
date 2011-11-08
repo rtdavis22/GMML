@@ -81,8 +81,8 @@ Residue *build_prep_file(const string& prep_code) {
     return build_prep_file(prep_code, kDefaultEnvironment);
 }
 
-Structure *build_library_file_structure(const string& name,
-                                        const Environment& environment) {
+LibraryFileStructure *build_library_file_structure(
+        const string& name, const Environment& environment) {
     const LibraryFileSet *library_files = environment.library_files();
     const LibraryFile::StructurePtr structure = (*library_files)[name];
     if (structure != LibraryFile::StructurePtr())
@@ -91,7 +91,7 @@ Structure *build_library_file_structure(const string& name,
         return NULL;
 }
 
-Structure *build_library_file_structure(const string& name) {
+LibraryFileStructure *build_library_file_structure(const string& name) {
     return build_library_file_structure(name, kDefaultEnvironment);
 }
 

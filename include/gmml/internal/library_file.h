@@ -3,7 +3,7 @@
 #ifndef LIBRARY_FILE_H
 #define LIBRARY_FILE_H
 
-#include "structure.h"
+#include "boxed_structure.h"
 
 #include <iosfwd>
 #include <map>
@@ -97,32 +97,22 @@ inline const LibraryFile::StructurePtr LibraryFileSet::operator[](
         return LibraryFile::StructurePtr();
 }
 
-class LibraryFileStructure : public Structure {
+class LibraryFileStructure : public BoxedStructure {
   public:
-    // This is a representation of the box information found in the file.
-    struct Box {
-        double angle;
-        double length;
-        double width;
-        double height;
-    };
-
     // This constructor reads a library file structure from a stream. The first
     // line of the stream must be the first atom of the structure.
     // The stream will read until the first atom of the next structure in the
     // stream.
-    explicit LibraryFileStructure(std::istream& in) : Structure(),
-                                                      box_(NULL) { read(in); }
+    explicit LibraryFileStructure(std::istream& in) : BoxedStructure() {
+        read(in);
+    }
 
-    virtual ~LibraryFileStructure();
+    virtual ~LibraryFileStructure() {}
 
     virtual LibraryFileStructure *clone() const;
 
-    // If the box is not set, NULL is returned.
-    const Box *box() const { return box_; }
-
   private:
-    LibraryFileStructure() : Structure(), box_(NULL) {}
+    LibraryFileStructure() : BoxedStructure() {}
 
     void clone_from(const LibraryFileStructure& structure);
 
@@ -135,17 +125,10 @@ class LibraryFileStructure : public Structure {
     void read_residue_info(std::istream& in,
                            const std::map<int, int>& residue_map);
 
-    Box *box_;
-
     // Evil constructors
     LibraryFileStructure(const LibraryFileStructure&);
     void operator=(const LibraryFileStructure&);
 };
-
-inline LibraryFileStructure::~LibraryFileStructure() {
-    if (box_ != NULL)
-        delete box_;
-}
 
 inline LibraryFileStructure *LibraryFileStructure::clone() const {
     LibraryFileStructure *structure = new LibraryFileStructure;

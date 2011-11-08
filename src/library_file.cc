@@ -80,9 +80,7 @@ void LibraryFileSet::load(const LibraryFile& library_file) {
 }
 
 void LibraryFileStructure::clone_from(const LibraryFileStructure& structure) {
-    Structure::clone_from(structure);
-    if (structure.box_ != NULL)
-        box_ = new Box(*structure.box_);
+    BoxedStructure::clone_from(structure);
 }
 
 void LibraryFileStructure::read(std::istream& in) {
