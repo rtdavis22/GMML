@@ -16,6 +16,8 @@ class SolvatedStructure : public BoxedStructure {
                       const BoxedStructure& solvent, double distance,
                       double closeness);
 
+    virtual AmberTopFile *build_amber_top_file() const;
+
     int last_solute_atom() const { return last_solute_atom_; }
 
   private:

@@ -169,7 +169,7 @@ class Structure {
 
     // File operations
     AmberTopFile *build_amber_top_file(const ParameterFileSet& parm_set) const;
-    AmberTopFile *build_amber_top_file() const;
+    virtual AmberTopFile *build_amber_top_file() const;
     void print_amber_top_file(const std::string& file_name,
                               const ParameterFileSet& parm_set) const;
     void print_amber_top_file(const std::string& file_name) const;

@@ -17,7 +17,9 @@ namespace gmml {
 
 class AmberTopFile;
 class AmberTopSection;
+class BoxedStructure;
 class ParameterFileSet;
+class SolvatedStructure;
 class Structure;
 
 // These structs are namespaced because of their general names. They are used
@@ -124,9 +126,27 @@ class AmberTopBuilder {
         return build(structure, "");
     }
 
+    // Boxed structures include a boxed section.
+    AmberTopFile *build(const BoxedStructure& boxed_structure,
+                        const std::string& title) const;
+    AmberTopFile *build(const BoxedStructure& boxed_structure) const {
+        return build(boxed_structure, "");
+    }
+
+    // Solvated structures include some special sections. See below.
+    AmberTopFile *build(const SolvatedStructure& solvated_structure,
+                        const std::string& title) const;
+    AmberTopFile *build(const SolvatedStructure& solvated_structure) const {
+        return build(solvated_structure, "");
+    }
+
   private:
     // It may be useful to make everything prefixed with build_ part of the
-    // public interface.
+    // public interface, if only for testing purposes.
+
+    // This builds a file with sections that relate to all structures.
+    AmberTopFile *build_common_sections(const Structure& structure,
+                                        const std::string& title) const;
 
     // Builds the RESIDUE_LABEL and RESIDUE_POINTER sections. Also sets the
     // 12th and 29th pointers.
@@ -171,6 +191,14 @@ class AmberTopBuilder {
     // find them. The section are SOLTY, HBOND_ACOEF, HBOND_BCOEF, HBCUT,
     // TREE_CHAIN_CLASSIFICATION, JOIN_ARRAY, and IROTAT.
     void build_garbage_sections(int atom_count, AmberTopFile *file) const;
+
+    // This builds BOX_DIMENSIONS and set pointer 28.
+    void build_box_section(const BoxedStructure& structure,
+                           AmberTopFile *file) const;
+
+    // This builds ATOMS_PER_MOLECULE and SOLVENT_POINTERS.
+    void build_solvation_sections(const SolvatedStructure& structure,
+                                  AmberTopFile *file) const;
 
     int get_bond_type_index(std::vector<BondType*>&, const std::string& type1,
                             const std::string& type2) const;

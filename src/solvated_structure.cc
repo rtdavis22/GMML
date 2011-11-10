@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "gmml/internal/amber_top_builder.h"
 #include "gmml/internal/coordinate_grid.h"
 #include "gmml/internal/geometry.h"
 #include "gmml/internal/utilities.h"
@@ -40,7 +41,8 @@ SolvatedStructure::SolvatedStructure(const Structure& structure,
     // If we have box dimensions, we contract the solvent region so that it's
     // dimensions are the same as the box's dimensions. If the dimensions of the
     // box are larger than the solvent, the contraction is actually an
-    // expansion.
+    // expansion. Currently, the angle of the box is not used and presumed
+    // to be 90 degrees.
     if (box != NULL) {
         double delta_x = (solvent_region->max_x - solvent_region->min_x -
                           box->length)/2.0;
@@ -124,6 +126,15 @@ void SolvatedStructure::solvate(const Structure& solvent,
     delete solvent_clone;
 
     remove_close_solvent_residues(closeness);
+
+    BoxedRegion *new_region = get_boxed_region(*this);
+    if (box_ == NULL)
+        box_ = new Box;
+    box_->angle = 90.0;
+    box_->length = new_region->max_x - new_region->min_x;
+    box_->width = new_region->max_y - new_region->min_y;
+    box_->height = new_region->max_z - new_region->min_z;
+    delete new_region;
 }
 
 void SolvatedStructure::remove_close_solvent_residues(double closeness) {
@@ -157,6 +168,11 @@ void SolvatedStructure::remove_close_solvent_residues(double closeness) {
     }
     delete residue_index_table;
     remove_residues(to_remove);
+}
+
+AmberTopFile *SolvatedStructure::build_amber_top_file() const {
+    AmberTopBuilder builder;
+    return builder.build(*this);
 }
 
 namespace detail {

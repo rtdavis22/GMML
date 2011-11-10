@@ -24,6 +24,8 @@ class BoxedStructure : public Structure {
 
     virtual BoxedStructure *clone() const;
 
+    virtual AmberTopFile *build_amber_top_file() const;
+
     // If the box is not set, NULL is returned.
     const Box *box() const { return box_; }
 

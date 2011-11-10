@@ -3,18 +3,22 @@
 #include <cmath>
 
 #include <algorithm>
+#include <deque>
 #include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include "gmml/internal/amber_top_file.h"
+#include "gmml/internal/boxed_structure.h"
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
 #include "gmml/internal/parameter_file.h"
+#include "gmml/internal/solvated_structure.h"
 #include "gmml/internal/structure.h"
 #include "gmml/internal/utilities.h"
 
+using std::deque;
 using std::string;
 using std::vector;
 
@@ -77,7 +81,31 @@ AmberTopBuilder::AmberTopBuilder(const ParameterFileSet& parameter_file_set)
         : parameter_file_set_(parameter_file_set) {}
 
 AmberTopFile *AmberTopBuilder::build(const Structure& structure,
-                                     const std::string& title) const {
+                                     const string& title) const {
+    AmberTopFile *file = build_common_sections(structure, title);
+    file->sort(SectionComparer());
+    return file;
+}
+
+AmberTopFile *AmberTopBuilder::build(const BoxedStructure& boxed_structure,
+                                     const string& title) const {
+    AmberTopFile *file = build_common_sections(boxed_structure, title);
+    build_box_section(boxed_structure, file);
+    file->sort(SectionComparer());
+    return file;
+}
+
+AmberTopFile *AmberTopBuilder::build(const SolvatedStructure& structure,
+                                     const string& title) const {
+    AmberTopFile *file = build_common_sections(structure, title);
+    build_box_section(structure, file);
+    build_solvation_sections(structure, file);
+    file->sort(SectionComparer());
+    return file;
+}
+
+AmberTopFile *AmberTopBuilder::build_common_sections(
+        const Structure& structure, const string& title) const {
     AmberTopFile *file = new AmberTopFile;
 
     SectionPtr title_section = file->create_section("TITLE", "20a4");
@@ -99,7 +127,6 @@ AmberTopFile *AmberTopBuilder::build(const Structure& structure,
         if (!is_set((*pointer_section)[i]))
             (*pointer_section)[i] = 0;
 
-    file->sort(SectionComparer());
     return file;
 }
 
@@ -442,6 +469,53 @@ void AmberTopBuilder::build_garbage_sections(int atom_count,
         join_array->insert(0);
         i_rotat->insert(0);
     }
+}
+
+void AmberTopBuilder::build_box_section(const BoxedStructure& boxed_structure,
+                                        AmberTopFile *file) const {
+    const Box *box = boxed_structure.box();
+    if (box == NULL)
+        return;
+    SectionPtr box_section = file->create_section("BOX_DIMENSIONS", "5E16.8");
+    box_section->insert(box->angle);
+    box_section->insert(box->length);
+    box_section->insert(box->width);
+    box_section->insert(box->height);
+
+    (*file)["POINTERS"][27] = 1;
+}
+
+void AmberTopBuilder::build_solvation_sections(
+        const SolvatedStructure& structure, AmberTopFile *file) const {
+    SectionPtr atoms_per_molecule = file->create_section("ATOMS_PER_MOLECULE",
+                                                         "10I8");
+    int last_solute_atom = structure.last_solute_atom();
+    int first_solvent_atom = last_solute_atom + 1;
+
+    int first_solvent_molecule = kNotSet;
+    int num_molecules = 0;
+    deque<bool> marked(structure.size(), false);
+    for (int i = 0; i < marked.size(); i++) {
+        if (!marked[i]) {
+            num_molecules++;
+            vector<size_t> *component = structure.bonds()->bfs(i);
+            atoms_per_molecule->insert(static_cast<int>(component->size()));
+            for (int j = 0; j < component->size(); j++) {
+                int atom = (*component)[j];
+                marked[atom] = true;
+                if (atom == first_solvent_atom)
+                    first_solvent_molecule = num_molecules;
+            }
+            delete component;
+        }
+    }
+
+    SectionPtr solvent_pointers = file->create_section("SOLVENT_POINTERS",
+                                                       "3I8");
+    int last_solute_residue = structure.get_residue_index(last_solute_atom);
+    solvent_pointers->insert(last_solute_residue + 1);
+    solvent_pointers->insert(num_molecules);
+    solvent_pointers->insert(first_solvent_molecule);
 }
 
 int AmberTopBuilder::get_bond_type_index(vector<BondType*>& bonds,
