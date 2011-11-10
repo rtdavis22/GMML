@@ -64,6 +64,16 @@ typename MapType::iterator add_or_update_map(MapType& map,
     }
 }
 
+template<typename T>
+struct Triplet {
+    Triplet(const T& first, const T& second, const T& third)
+            : first(first), second(second), third(third) {}
+
+    T first;
+    T second;
+    T third;
+};
+
 // Handy functors
 struct DeletePtr {
     template<class T>

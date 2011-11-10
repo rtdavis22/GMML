@@ -92,6 +92,7 @@ class Structure {
     virtual int append(const Residue *residue);
     virtual int append(const std::string& prep_code);
 
+    void shift(double x, double y, double z);
 
     virtual int attach(Residue *new_residue, const std::string& new_atom_name,
                        int residue_index, const std::string& target_atom_name);
@@ -106,6 +107,7 @@ class Structure {
 
     void translate_residue(int residue_index, double x, double y, double z);
 
+    void remove_residues(const std::vector<int>& residues);
     void remove_residue(int index);
 
     void set_dihedral(size_t atom1, size_t atom2, size_t atom3, size_t atom4,
@@ -191,10 +193,10 @@ class Structure {
                                 first + residues_->at(index)->size));
     }
 
-  protected:
     // vector[i] is the residue index of atom i
     std::vector<size_t> *get_residue_index_table() const;
 
+  protected:
     void clone_from(const Structure& structure);
 
     AtomList atoms_;

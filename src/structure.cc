@@ -1,6 +1,7 @@
 #include "gmml/internal/structure.h"
 
 #include <algorithm>
+#include <deque>
 #include <string>
 #include <vector>
 
@@ -15,6 +16,7 @@
 #include "gmml/internal/sander_minimize.h"
 #include "gmml/internal/utilities.h"
 
+using std::deque;
 using std::list;
 using std::map;
 using std::string;
@@ -162,6 +164,11 @@ int Structure::append(const string& prep_code) {
     return append(residue);
 }
 
+void Structure::shift(double x, double y, double z) {
+    for (iterator it = begin(); it != end(); ++it)
+        (*it)->translate(x, y, z);
+}
+
 int Structure::attach(Residue *new_residue, const string& new_atom_name,
                       int residue_index, const string& target_atom_name) {
     StructureAttach s;
@@ -186,6 +193,48 @@ void Structure::translate_residue(int residue_index, double x, double y,
     int residue_size = residues_->at(residue_index)->size;
     for (int i = residue_start; i < residue_size + residue_start; i++)
         atoms_[i]->translate(x, y, z);
+}
+
+void Structure::remove_residues(const std::vector<int>& residues) {
+    vector<size_t> atoms;
+    vector<int> new_indices(residues_->size());
+    for (int i = 0; i < residues.size(); i++)
+        new_indices[residues[i]] = -1;
+
+    deque<bool> is_deleted(atoms_.size(), false);
+    int cur_shift = 0;
+    int i = 0;
+    int k = 0;
+    while (i < residues_->size()) {
+        if (new_indices[k] == -1) {
+            int start_index = (*residues_)[i]->start_index;
+            int residue_size = (*residues_)[i]->size;
+            cur_shift += residue_size;
+            for (int j = start_index; j < start_index + residue_size; j++) {
+                atoms.push_back(j);
+                is_deleted[j] = true;
+            }
+            delete (*residues_)[i];
+            residues_->erase(residues_->begin() + i);
+        } else {
+            (*residues_)[i]->start_index -= cur_shift;
+            i++;
+        }
+        k++;
+    }
+
+    i = 0;
+    k = 0;
+    while (i < atoms_.size()) {
+        if (is_deleted[k]) {
+            atoms_.erase(atoms_.begin() + i);
+        } else {
+            i++;
+        }
+        k++;
+    }
+
+    bonds_->remove_vertex_list(atoms);
 }
 
 int Structure::get_atom_index(int residue_index, int atom_index) const {

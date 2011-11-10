@@ -7,6 +7,8 @@
 
 namespace gmml {
 
+class Coordinate;
+
 struct Box {
     double angle;
     double length;
@@ -47,6 +49,47 @@ inline void BoxedStructure::clone_from(const BoxedStructure& boxed_structure) {
     if (boxed_structure.box_ != NULL)
         box_ = new Box(*boxed_structure.box_); 
 }
+
+struct BoxedRegion {
+    explicit BoxedRegion(const Coordinate& coordinate);
+
+    void contract(double x, double y, double z);
+    void expand(double x, double y, double z);
+    void shift(double x, double y, double z);
+
+    double min_x, max_x;
+    double min_y, max_y;
+    double min_z, max_z;
+};
+
+inline void BoxedRegion::contract(double x, double y, double z) {
+    min_x += x;
+    max_x -= x;
+    min_y += y;
+    max_y -= y;
+    min_z += z;
+    max_z -= z;
+}
+
+inline void BoxedRegion::expand(double x, double y, double z) {
+    min_x -= x;
+    max_x += x;
+    min_y -= y;
+    max_y += y;
+    min_z -= z;
+    max_z += z;
+}
+
+inline void BoxedRegion::shift(double x, double y, double z) {
+    min_x += x;
+    max_x += x;
+    min_y += y;
+    max_y += y;
+    min_z += z;
+    max_z += z;
+}
+
+BoxedRegion *get_boxed_region(const Structure& structure);
 
 }  // namespace gmml
 

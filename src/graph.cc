@@ -17,7 +17,7 @@ using std::vector;
 void Graph::remove_vertex_list(const vector<size_t>& vertices) {
     vector<int> new_indices(edges_.size());
     for (int i = 0; i < vertices.size(); i++)
-        new_indices[i] = -1;
+        new_indices[vertices[i]] = -1;
 
     int count = 0;
     for (int i = 0; i < new_indices.size(); i++) {
