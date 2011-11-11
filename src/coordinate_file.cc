@@ -81,7 +81,7 @@ Status CoordinateFile::append_coordinate(const string& crd) {
 void CoordinateFile::write(std::ostream& out) const {
     out << "TITLE" << std::endl;
     int size = coordinates_.size();
-    out << std::setw(5) << size << std::endl;
+    out << std::setw(5) << size - noncoordinate_count_ << std::endl;
     bool odd = size & 1;
     for (int i = 0; i < size - (odd == true); i += 2) {
         write_coordinate(out, coordinates_[i]);

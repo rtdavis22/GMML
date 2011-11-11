@@ -181,7 +181,7 @@ class Structure {
     void print_amber_top_file(const std::string& file_name) const;
     void print_amber_top_file() const;
 
-    CoordinateFile *build_coordinate_file() const;
+    virtual CoordinateFile *build_coordinate_file() const;
     void print_coordinate_file(const std::string& file_name) const;
     void print_coordinate_file() const;
     void load_coordinates(const CoordinateFile& coordinate_file);

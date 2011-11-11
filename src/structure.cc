@@ -652,13 +652,12 @@ void Structure::print_coordinate_file() const {
 }
 
 void Structure::load_coordinates(const CoordinateFile& coordinate_file) {
-    if (coordinate_file.size() < atoms_.size()) {
-        
+    if (coordinate_file.coordinate_count() < atoms_.size()) { 
         warning(string("Structure: Insufficient number of coordinates") +
                 " in coordinate file");
         return;
     }
-    for (int i = 0; i < coordinate_file.size(); i++)
+    for (int i = 0; i < atoms_.size(); i++)
         atoms_[i]->set_coordinate(coordinate_file[i]);
 }
 

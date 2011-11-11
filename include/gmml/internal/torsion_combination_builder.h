@@ -156,7 +156,6 @@ class TorsionCombinationBuilder {
         vec[0] = phi;
         vec[1] = psi;
         vec[2] = omega;
-        warning("calling insert with residue_index " + to_string(residue_index));
         linkage_angles[residue_index].insert(vec);
     }
     int get_index(std::vector<double>&, double number) const;

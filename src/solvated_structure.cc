@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "gmml/internal/amber_top_builder.h"
+#include "gmml/internal/coordinate_file.h"
 #include "gmml/internal/coordinate_grid.h"
 #include "gmml/internal/geometry.h"
 #include "gmml/internal/utilities.h"
@@ -173,6 +174,13 @@ void SolvatedStructure::remove_close_solvent_residues(double closeness) {
 AmberTopFile *SolvatedStructure::build_amber_top_file() const {
     AmberTopBuilder builder;
     return builder.build(*this);
+}
+
+CoordinateFile *SolvatedStructure::build_coordinate_file() const {
+    CoordinateFile *file = Structure::build_coordinate_file();
+    file->add_noncoordinate(box_->length, box_->width, box_->height);
+    file->add_noncoordinate(box_->angle, box_->angle, box_->angle);
+    return file;
 }
 
 namespace detail {

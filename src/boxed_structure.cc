@@ -1,6 +1,7 @@
 // Author: Robert Davis
 
 #include "gmml/internal/amber_top_builder.h"
+#include "gmml/internal/coordinate_file.h"
 #include "gmml/internal/boxed_structure.h"
 #include "gmml/internal/geometry.h"
 
@@ -9,6 +10,10 @@ namespace gmml {
 AmberTopFile *BoxedStructure::build_amber_top_file() const {
     AmberTopBuilder builder;
     return builder.build(*this);
+}
+
+CoordinateFile *BoxedStructure::build_coordinate_file() const {
+    return Structure::build_coordinate_file();
 }
 
 BoxedRegion::BoxedRegion(const Coordinate& coordinate) {
