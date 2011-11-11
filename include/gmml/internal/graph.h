@@ -80,7 +80,7 @@ class Graph {
     // 0...n-1. This doesn't affect the topology of the graph.
     void apply_map(const std::vector<size_t>& permutation);
 
-    const std::vector<size_t>& edges(size_t v) const { return edges_[v]; }
+    const AdjList& edges(size_t v) const { return edges_[v]; }
     const std::vector<std::vector<size_t> >& edges() const { return edges_; }
 
     void print() const;

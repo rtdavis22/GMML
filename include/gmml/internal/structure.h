@@ -160,6 +160,8 @@ class Structure {
         return residues_->at(i)->name;
     }
 
+    Graph *get_link_graph() const;
+
     size_t size() const { return atoms_.size(); }
     const AtomList& atoms() const { return atoms_; }
     const AtomPtr atoms(size_t index) const { return atoms_[index]; }
@@ -168,6 +170,10 @@ class Structure {
     const AdjList& bonds(size_t index) const { return bonds_->edges(index); }
 
     // File operations
+    virtual PdbFile *build_pdb_file() const;
+    void print_pdb_file(const std::string& file_name) const;
+    void print_pdb_file() const;
+
     AmberTopFile *build_amber_top_file(const ParameterFileSet& parm_set) const;
     virtual AmberTopFile *build_amber_top_file() const;
     void print_amber_top_file(const std::string& file_name,
@@ -197,6 +203,7 @@ class Structure {
     std::vector<size_t> *get_residue_index_table() const;
 
   protected:
+    // This is an alternative to the assignment operator.
     void clone_from(const Structure& structure);
 
     AtomList atoms_;

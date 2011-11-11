@@ -12,6 +12,7 @@
 #include "gmml/internal/geometry.h"
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/pdb_file.h"
+#include "gmml/internal/pdb_file_builder.h"
 #include "gmml/internal/prep_file.h"
 #include "gmml/internal/sander_minimize.h"
 #include "gmml/internal/utilities.h"
@@ -235,6 +236,23 @@ void Structure::remove_residues(const std::vector<int>& residues) {
     }
 
     bonds_->remove_vertex_list(atoms);
+}
+
+Graph *Structure::get_link_graph() const {
+    Graph *graph = new Graph(residues_->size());
+    vector<size_t> *index_table = get_residue_index_table();
+    for (int i = 0; i < atoms_.size(); i++) {
+        int residue_index = (*index_table)[i];
+        const AdjList& edges = bonds(i);
+        int j = 0;
+        // The second conditions ensures that we don't add the same edge twice.
+        while (j < edges.size() && edges[j] < i) {
+            graph->add_edge(residue_index, (*index_table)[edges[j]]);
+            j++;
+        }
+    }
+    delete index_table;
+    return graph;
 }
 
 int Structure::get_atom_index(int residue_index, int atom_index) const {
@@ -565,6 +583,23 @@ void Structure::set_residue_angle(int atom1, int atom2, int atom3,
     int residue_size = residues_->at(residue_index)->size;
     for (int i = residue_start; i < residue_size + residue_start; i++)
         matrix.apply(atoms_[i]->coordinate());
+}
+
+PdbFile *Structure::build_pdb_file() const {
+    PdbFileBuilder builder;
+    return builder.build(*this);
+}
+
+void Structure::print_pdb_file(const string& file_name) const {
+    PdbFile *file = build_pdb_file();
+    file->print(file_name);
+    delete file;
+}
+
+void Structure::print_pdb_file() const {
+    PdbFile *file = build_pdb_file();
+    file->print();
+    delete file;
 }
 
 AmberTopFile *Structure::build_amber_top_file(
