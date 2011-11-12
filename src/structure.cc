@@ -777,12 +777,7 @@ void StructureAttach::set_dihedrals(Structure& structure, int new_residue_index,
                                0.0);
     }
 
-    structure.set_dihedral(target_residue_index, "C" + oxygen,
-                           target_residue_index, "O" + oxygen,
-                           new_residue_index, "C" + carbon,
-                           new_residue_index,
-                          "C" + to_string(carbon_number + 1),
-                           to_degrees(kPi));
+    structure.set_phi(new_residue_index, to_degrees(kPi));
 
     if (oxygen_number == 5 || oxygen_number == 6) {
         structure.set_dihedral(target_residue_index,
