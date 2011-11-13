@@ -3,9 +3,10 @@
 
 AC_PREREQ([2.65])
 AC_INIT([gmml], [1.0], [rtdavis22@gmail.com])
-AM_INIT_AUTOMAKE([silent-rules])
+AM_INIT_AUTOMAKE([foreign silent-rules])
 AC_CONFIG_SRCDIR([src/parameter_file.cc])
 AC_CONFIG_HEADERS([config.h])
+#AC_CONFIG_SUBDIRS([gtest])
 
 # Checks for programs.
 AC_PROG_CXX

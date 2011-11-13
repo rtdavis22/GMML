@@ -1,4 +1,4 @@
-SUBDIRS = src
+SUBDIRS = src# gtest
 
 gmml_baseincludedir = $(includedir)/gmml
 gmml_baseinclude_HEADERS = include/gmml/gmml.h
@@ -34,6 +34,19 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/tree.hh \
   include/gmml/internal/tree_residue.h \
   include/gmml/internal/utilities.h
+
+#Look at protobuf/src/Makefile.am for how I want to do this.
+#check_PROGRAMS = gmml-test
+
+#gmml_test_LDADD = $(top_builddir)/gtest/lib/libgtest.la \
+#                  $(top_builddir)/gtest/lib/libgtest_main.la
+#gmml_test_CPPFLAGS = -I$(top_builddir)/gtest/include
+#gmml_test_SOURCES = \
+#  test/geometry_test.cc
+
+uninstall-hook:
+	rmdir $(includedir)/gmml/internal
+	rmdir $(includedir)/gmml
 
 MAINTAINERCLEANFILES = \
   aclocal.m4 \

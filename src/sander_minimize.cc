@@ -1,5 +1,9 @@
 // Author: Robert Davis
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "gmml/internal/sander_minimize.h"
 
 #include <unistd.h>
@@ -30,6 +34,10 @@ namespace gmml {
 MinimizationResults *SanderMinimize::operator()(
         Structure& structure, const string& input_file,
         const ParameterFileSet& parm_set) const {
+#ifndef HAVE_SANDER
+    warning("SanderMinimize - You must have sander in your path to minimize.");
+    return NULL;
+#endif
     struct timeval tv;
     gettimeofday(&tv, NULL);
     string uid = to_string(static_cast<int>(tv.tv_usec));
