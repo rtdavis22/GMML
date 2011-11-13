@@ -39,3 +39,11 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile])
 
 AC_OUTPUT
+
+if test "x${have_sander}" != xyes; then
+echo \
+"--------------------------------------------------
+Warning: sander was not found in your environment.
+You will not be able to use structure minimization.
+---------------------------------------------------"
+fi
