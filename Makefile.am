@@ -45,8 +45,7 @@ gmmlinclude_HEADERS = \
 #  test/geometry_test.cc
 
 uninstall-hook:
-	rmdir $(includedir)/gmml/internal
-	rmdir $(includedir)/gmml
+	rm -rf $(includedir)/gmml
 
 MAINTAINERCLEANFILES = \
   aclocal.m4 \

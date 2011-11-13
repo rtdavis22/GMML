@@ -18,8 +18,12 @@ struct MinimizationResults {
     double energy;
 };
 
+// This functor minimizes structures with sander, given a sander input (mdin)
+// file.
 class SanderMinimize {
   public:
+    // If sander is not part of the user's PATH or if the the minimization
+    // failed, the return is NULL.
     MinimizationResults *operator()(Structure& structure,
                                     const std::string& input_file,
                                     const ParameterFileSet& parm_set) const;

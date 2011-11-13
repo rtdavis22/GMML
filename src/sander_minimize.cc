@@ -43,9 +43,9 @@ MinimizationResults *SanderMinimize::operator()(
     string uid = to_string(static_cast<int>(tv.tv_usec));
 
     pid_t child = fork();
-
     if (child < 0) {
-        warning("SanderMinimize: fork failed");
+        warning("SanderMinimize - Fork failed.");
+        return NULL;
     } else if (child == 0) {
         structure.print_amber_top_file(uid + "_temp.top", parm_set);
         structure.print_coordinate_file(uid + "_temp.rst");
@@ -71,21 +71,23 @@ MinimizationResults *SanderMinimize::operator()(
                           (char *) 0 };
         execvp("sander", args);
         return NULL;
-        warning("SanderMinimize: Error in exec");
+        warning("SanderMinimize - Error in exec.");
     }
     
     int child_exit_status;
     waitpid(-1, &child_exit_status, 0);
     if (child_exit_status > 0) {
-	warning("error in sander, exited with status " +
-		to_string(child_exit_status));
+	warning("SanderMinimize - Error in sander, exited with status " +
+		to_string(child_exit_status) + ".");
     }
     else {
 	structure.load_coordinates(CoordinateFile(uid + "_out_temp.rst"));
     }
+    //Clean up after ourselves.
     remove(string(uid + "_temp.top").c_str());
     remove(string(uid + "_temp.rst").c_str());
-    //Clean up after sander
+
+    //Clean up after sander.
     remove(string(uid + "_mdcrd").c_str());
     remove(string(uid + "_mden").c_str());
     remove(string(uid + "_mdinfo").c_str());

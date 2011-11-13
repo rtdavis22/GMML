@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "gmml/internal/amber_top_file.h"
 
 #include <ctime>
@@ -309,12 +313,17 @@ void AmberTopFile::write(std::ostream& out) {
 
 std::string AmberTopFile::get_version_string() const {
     char buffer[80];
-    tm new_time;
+    tm time_info;
     time_t ltime;
     time(&ltime);
+#ifdef HAVE_LOCALTIME_R
+    localtime_r(&ltime, &time_info);
+#else
+    time_info = *localtime(&ltime);
+#endif
     strftime(buffer, 80,
              " VERSION_STAMP = V0001.000  DATE = %m/%d/%y  %H:%M:%S\0",
-             localtime_r(&ltime, &new_time));
+             &time_info);
     return string(buffer);
 }
 
