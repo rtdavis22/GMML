@@ -59,25 +59,25 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/utilities.h
 
 lib_LIBRARIES = libgmml.a
-libgmml_a_SOURCES =                                        \
-  src/amber_top_builder.cc                                 \
-  src/amber_top_file.cc                                    \
-  src/boxed_structure.cc                                   \
-  src/coordinate_file.cc                                   \
-  src/environment.cc                                       \
-  src/generic_type.cc                                      \
-  src/glycam_code_set.cc                                   \
-  src/glycam_parser.cc                                     \
-  src/graph.cc                                             \
-  src/library_file.cc                                      \
-  src/parameter_file.cc                                    \
-  src/pdb_file_builder.cc                                  \
-  src/pdb_file.cc                                          \
-  src/prep_file.cc                                         \
-  src/sander_minimize.cc                                   \
-  src/solvated_structure.cc                                \
-  src/structure.cc                                         \
-  src/torsion_combination_builder.cc                       \
+libgmml_a_SOURCES = \
+  src/amber_top_builder.cc \
+  src/amber_top_file.cc \
+  src/boxed_structure.cc \
+  src/coordinate_file.cc \
+  src/environment.cc \
+  src/generic_type.cc \
+  src/glycam_code_set.cc \
+  src/glycam_parser.cc \
+  src/graph.cc \
+  src/library_file.cc \
+  src/parameter_file.cc \
+  src/pdb_file_builder.cc \
+  src/pdb_file.cc \
+  src/prep_file.cc \
+  src/sander_minimize.cc \
+  src/solvated_structure.cc \
+  src/structure.cc \
+  src/torsion_combination_builder.cc \
   src/utilities.cc
 libgmml_a_CPPFLAGS = -I$(top_srcdir)/include
 
