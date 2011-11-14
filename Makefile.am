@@ -98,4 +98,5 @@ MAINTAINERCLEANFILES = \
   missing stamp-h1 \
   config.guess \
   config.sub \
-  ltmain.sh
+  ltmain.sh \
+  config.g~
