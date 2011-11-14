@@ -1,4 +1,27 @@
-SUBDIRS = src# gtest
+SUBDIRS =  . test
+
+DIST_SUBDIRS = ${subdirs} test
+
+# Build gtest before we build gmml tests.  We don't add gtest to SUBDIRS
+# because then "make check" would also build and run all of gtest's own tests,
+# which takes a lot of time and is generally not useful to us.  Also, we don't
+# want "make install" to recurse into gtest since we don't want to overwrite
+# the installed version of gtest if there is one.
+check-local:
+	@echo "Making lib/libgtest.a lib/libgtest_main.a in gtest"
+	@cd gtest && $(MAKE) $(AM_MAKEFLAGS) lib/libgtest.la lib/libgtest_main.la
+
+# We would like to clean gtest when "make clean" is invoked.  But we have to
+# be careful because clean-local is also invoked during "make distclean", but
+# "make distclean" already recurses into gtest because it's listed among the
+# DIST_SUBDIRS.  distclean will delete gtest/Makefile, so if we then try to
+# cd to the directory again and "make clean" it will fail.  So, check that the
+# Makefile exists before recursing.
+clean-local:
+	@if test -e gtest/Makefile; then \
+	  echo "Making clean in gtest"; \
+	  cd gtest && $(MAKE) $(AM_MAKEFLAGS) clean; \
+	fi
 
 gmml_baseincludedir = $(includedir)/gmml
 gmml_baseinclude_HEADERS = include/gmml/gmml.h
@@ -35,21 +58,34 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/tree_residue.h \
   include/gmml/internal/utilities.h
 
-#Look at protobuf/src/Makefile.am for how I want to do this.
-#check_PROGRAMS = gmml-test
-
-#gmml_test_LDADD = $(top_builddir)/gtest/lib/libgtest.la \
-#                  $(top_builddir)/gtest/lib/libgtest_main.la
-#gmml_test_CPPFLAGS = -I$(top_builddir)/gtest/include
-#gmml_test_SOURCES = \
-#  test/geometry_test.cc
+lib_LIBRARIES = libgmml.a
+libgmml_a_SOURCES =                                        \
+  src/amber_top_builder.cc                                 \
+  src/amber_top_file.cc                                    \
+  src/boxed_structure.cc                                   \
+  src/coordinate_file.cc                                   \
+  src/environment.cc                                       \
+  src/generic_type.cc                                      \
+  src/glycam_code_set.cc                                   \
+  src/glycam_parser.cc                                     \
+  src/graph.cc                                             \
+  src/library_file.cc                                      \
+  src/parameter_file.cc                                    \
+  src/pdb_file_builder.cc                                  \
+  src/pdb_file.cc                                          \
+  src/prep_file.cc                                         \
+  src/sander_minimize.cc                                   \
+  src/solvated_structure.cc                                \
+  src/structure.cc                                         \
+  src/torsion_combination_builder.cc                       \
+  src/utilities.cc
+libgmml_a_CPPFLAGS = -I$(top_srcdir)/include
 
 uninstall-hook:
 	rm -rf $(includedir)/gmml
 
 MAINTAINERCLEANFILES = \
   aclocal.m4 \
-  autom4te.cache \
   config.h \
   config.h.in \
   config.log \
@@ -59,4 +95,7 @@ MAINTAINERCLEANFILES = \
   install-sh \
   Makefile \
   Makefile.in \
-  missing stamp-h1
+  missing stamp-h1 \
+  config.guess \
+  config.sub \
+  ltmain.sh

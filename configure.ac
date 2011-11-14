@@ -6,12 +6,12 @@ AC_INIT([gmml], [1.0], [rtdavis22@gmail.com])
 AM_INIT_AUTOMAKE([foreign silent-rules])
 AC_CONFIG_SRCDIR([src/parameter_file.cc])
 AC_CONFIG_HEADERS([config.h])
-#AC_CONFIG_SUBDIRS([gtest])
+AC_CONFIG_SUBDIRS([gtest])
 
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
-AC_PROG_RANLIB
+LT_INIT([dlopen])
 AC_CHECK_PROG([have_sander], [sander], [yes])
 
 if test "x${have_sander}" = xyes; then
@@ -36,7 +36,7 @@ AC_FUNC_FORK
 AC_CHECK_FUNCS([gettimeofday localtime_r])
 
 AC_CONFIG_FILES([Makefile
-                 src/Makefile])
+                 test/Makefile])
 
 AC_OUTPUT
 
