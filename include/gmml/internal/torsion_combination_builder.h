@@ -1,16 +1,32 @@
-#ifndef TORSION_COMBINATION_BUILDER
-#define TORSION_COMBINATION_BUILDER
+#ifndef TORSION_COMBINATION_BUILDER_H
+#define TORSION_COMBINATION_BUILDER_H
 
 #include <list>
 #include <set>
 #include <string>
 #include <vector>
 
+#include "structure.h"
 #include "utilities.h"
 
 namespace gmml {
 
-class Structure;
+class TCBStructure : public Structure {
+  public:
+    TCBStructure(const Structure& structure, const std::string& name)
+            : Structure(), name_(name) {
+        clone_from(structure);
+    }
+
+    virtual ~TCBStructure() {}
+
+    void set_name(const std::string& name) { name_ = name; }
+
+    std::string name() const { return name_; }
+
+  private:
+    std::string name_;
+};
 
 class TorsionCombinationBuilder {
   public:
@@ -121,7 +137,7 @@ class TorsionCombinationBuilder {
 
     void add_likely_omega_values();
 
-    std::list<Structure*> *build() const;
+    std::list<TCBStructure*> *build() const;
     std::vector<std::vector<std::vector<double> > > *get_build_info() const;
 
   private:

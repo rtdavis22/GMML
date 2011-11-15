@@ -770,26 +770,33 @@ void StructureAttach::set_dihedrals(Structure& structure, int new_residue_index,
                                to_degrees(kPi));
     }
     else {
-        structure.set_dihedral(target_residue_index, "H" + oxygen_number,
+        structure.set_dihedral(target_residue_index, "H" + oxygen,
                                target_residue_index, "C" + oxygen,
-                               target_residue_index, "O" + oxygen_number,
-                               new_residue_index, "C" + carbon_number,
+                               target_residue_index, "O" + oxygen,
+                               new_residue_index, "C" + carbon,
                                0.0);
     }
 
-    if (carbon_number == 2)
-        structure.set_phi(new_residue_index, -60.0);
-    else
-        structure.set_phi(new_residue_index, 180.0);
+    // Regardless of what the actual phi torsion is defined to be, setting
+    // C(x+1)-Cx-O'-C' to 180.0 indirectly sets phi to the right thing.
+    // So we set this torsion instead of calling set_phi(), which 
+    // sets the actual phi torsion.
+    structure.set_dihedral(target_residue_index, "C" + oxygen,
+                           target_residue_index, "O" + oxygen,
+                           new_residue_index, "C" + carbon,
+                           new_residue_index,
+                           "C" + to_string(carbon_number + 1),
+                           180.0);
 
-    if (oxygen_number == 5 || oxygen_number == 6) {
+    // Should probably change this to check if the linkage is exocyclic
+    if (oxygen_number == 6) {
         structure.set_dihedral(target_residue_index,
                               "O" + to_string(oxygen_number - 1),
                               target_residue_index,
                               "C" + to_string(oxygen_number - 1),
                               target_residue_index, "C" + oxygen,
                               target_residue_index, "O" + oxygen,
-                              to_degrees(kPi/3.0));
+                              60.0);
     }
 }
 

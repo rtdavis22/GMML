@@ -188,7 +188,6 @@ class Structure {
 
     void set_residue_angle(int atom1, int atom2, int atom3, int residue_index,
                            double radians);
-    void set_name(const std::string& name) { name_ = name; }
 
     std::auto_ptr<InternalResidue> residues(int index) const {
         AtomList::const_iterator first = atoms_.begin() +
@@ -209,7 +208,6 @@ class Structure {
     AtomList atoms_;
     Graph *bonds_;
     std::vector<detail::StructureResidue*> *residues_;
-    std::string name_;
 
     // bump up
     struct IndexedAtom {

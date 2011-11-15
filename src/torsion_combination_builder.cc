@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "gmml/internal/glycam_code_set.h"
-#include "gmml/internal/structure.h"
 #include "gmml/internal/utilities.h"
 
 namespace gmml {
@@ -75,9 +74,9 @@ vector<vector<vector<double> > >
 }
 
 //should maybe convert sets to vectors for random access
-list<Structure*> *TorsionCombinationBuilder::build() const {
+list<TCBStructure*> *TorsionCombinationBuilder::build() const {
     int num_residues = linkage_angles.size();
-    list<Structure*> *structures = new list<Structure*>();
+    list<TCBStructure*> *structures = new list<TCBStructure*>();
     vector<int> a(num_residues + 1, 0);
     vector<int> m(a.size());
     m[0] = 2;
@@ -88,7 +87,8 @@ list<Structure*> *TorsionCombinationBuilder::build() const {
     vector<double> omega_values;
     while (true) {
         //visit
-        Structure *new_structure = structure->clone();
+        // We'll set the name later.
+        TCBStructure *new_structure = new TCBStructure(*structure, "");
         string name("");
         for (int i = 1; i <= num_residues; i++) {
             const vector<double>& values = linkage_angles[i - 1].at(a[i]);
@@ -119,6 +119,7 @@ list<Structure*> *TorsionCombinationBuilder::build() const {
             name.erase(name.end() - 1);
         new_structure->set_name(name);
         structures->push_back(new_structure);
+        
         //end visit
         int j = a.size() - 1;
         while (a[j] == m[j] - 1) {
