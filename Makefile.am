@@ -101,4 +101,9 @@ MAINTAINERCLEANFILES = \
   config.guess \
   config.sub \
   ltmain.sh \
-  config.g~
+  config.g~ \
+  m4/ltsugar.m4 \
+  m4/libtool.m4 \
+  m4/ltversion.m4 \
+  m4/lt~obsolete.m4 \
+  m4/ltoptions.m4
