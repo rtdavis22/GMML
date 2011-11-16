@@ -2,6 +2,8 @@ SUBDIRS =  . test
 
 DIST_SUBDIRS = ${subdirs} test
 
+ACLOCAL_AMFLAGS = -I m4
+
 # Build gtest before we build gmml tests.  We don't add gtest to SUBDIRS
 # because then "make check" would also build and run all of gtest's own tests,
 # which takes a lot of time and is generally not useful to us.  Also, we don't
