@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #ifndef SEQUENCE_PARSER_H
 #define SEQUENCE_PARSER_H
 

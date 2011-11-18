@@ -12,14 +12,15 @@ using std::vector;
 
 namespace gmml {
 
-tree<ParsedResidue*> *GlycamParser::parse(const string& sequence) const {
+GlycamParser::ParseInfo *GlycamParser::get_parse_info(
+        const string& sequence) const {
     // This is populated with the parsed residues in the order they appear
     // in the sequence.
-    vector<ParsedResidue*> residues;
+    vector<ParsedResidue*> *residues = new vector<ParsedResidue*>;
 
     // This sequence of tokens is used to discover the tree structure of the
     // sequence.
-    vector<TokenType> tokens;
+    vector<TokenType> *tokens = new vector<TokenType>;
 
     // This was added to differentiate between brackets that denote
     // derivatives and brackets that denote branches.
@@ -45,7 +46,7 @@ tree<ParsedResidue*> *GlycamParser::parse(const string& sequence) const {
                 }
                 string residue = sequence.substr(start_index,
                                                  end_index - start_index + 1);
-                residues.push_back(parse_residue(residue));
+                residues->push_back(parse_residue(residue));
                 if (next_is_terminal) {
                     start_index = i + 1;
                 } else {
@@ -54,19 +55,19 @@ tree<ParsedResidue*> *GlycamParser::parse(const string& sequence) const {
                     start_index = i + 2;
                     i++;
                 }
-                tokens.push_back(kTokenResidue);
+                tokens->push_back(kTokenResidue);
                 reading_residue = false;
                 break;
             }
             case '[':
                 if (!reading_residue) {
-                    tokens.push_back(kTokenLeft);
+                    tokens->push_back(kTokenLeft);
                     start_index = i + 1;
                 }
                 break;
             case ']':
                 if (!reading_residue) {
-                    tokens.push_back(kTokenRight);
+                    tokens->push_back(kTokenRight);
                     start_index = i + 1;
                 }
                 break;
@@ -76,17 +77,70 @@ tree<ParsedResidue*> *GlycamParser::parse(const string& sequence) const {
         }
     }
     string terminal = sequence.substr(sequence.find_last_of('-') + 1);
-    residues.push_back(parse_residue(terminal));
-    tokens.push_back(kTokenResidue);
+    residues->push_back(parse_residue(terminal));
+    tokens->push_back(kTokenResidue);
 
-    vector<TokenType>::reverse_iterator cur_token = tokens.rbegin();
-    vector<ParsedResidue*>::reverse_iterator cur_residue = residues.rbegin();
+    return new ParseInfo(residues, tokens);
+}
+
+ArrayTree<ParsedResidue*> *GlycamParser::get_array_tree(
+        const string& sequence) const {
+    ParseInfo *parse_info = get_parse_info(sequence);
+    vector<ParsedResidue*> *residues = parse_info->residues;
+    vector<TokenType> *tokens = parse_info->tokens;
+
+    vector<TokenType>::reverse_iterator cur_token = tokens->rbegin();
+    vector<ParsedResidue*>::reverse_iterator cur_residue = residues->rbegin();
+
+    ArrayTree<ParsedResidue*> *tree = new ArrayTree<ParsedResidue*>;
+
+    stack<int> st;
+    st.push(tree->insert(*cur_residue));
+
+    while (++cur_token != tokens->rend()) {
+        switch (*cur_token) {
+            case kTokenLeft:
+                st.pop();
+                break;
+            case kTokenRight:
+                ++cur_token;
+                ++cur_residue;
+                st.push(tree->insert(*cur_residue, st.top()));
+                break;
+            case kTokenResidue: {
+                ++cur_residue;
+                int parent = tree->insert(*cur_residue, st.top());
+                st.pop();
+                st.push(parent);
+                break;
+            }
+        }
+    }
+
+    delete residues;
+    delete tokens;
+    delete parse_info;
+
+    return tree;
+}
+
+tree<ParsedResidue*> *GlycamParser::parse(const string& sequence) const {
+    ParseInfo *parse_info = get_parse_info(sequence);
+    vector<ParsedResidue*> *residues = parse_info->residues;
+    vector<TokenType> *tokens = parse_info->tokens;
+
+    vector<TokenType>::reverse_iterator cur_token = tokens->rbegin();
+    vector<ParsedResidue*>::reverse_iterator cur_residue = residues->rbegin();
+
     tree<ParsedResidue*> *tr = new tree<ParsedResidue*>;
 
+    // The top of the stack is the residue we're currently attaching to.
     stack<tree<ParsedResidue*>::iterator> st;
+
     // Set the root of the tree to be the last residue in the sequence.
     st.push(tr->insert(tr->begin(), *cur_residue));
-    while (++cur_token != tokens.rend()) {
+
+    while (++cur_token != tokens->rend()) {
         switch (*cur_token) {
             case kTokenLeft:
                 st.pop();
@@ -106,6 +160,10 @@ tree<ParsedResidue*> *GlycamParser::parse(const string& sequence) const {
             }
         }
     }
+
+    delete residues;
+    delete tokens;
+    delete parse_info;
 
     return tr;
 }
