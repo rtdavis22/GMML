@@ -10,6 +10,8 @@
 
 namespace gmml {
 
+// I think both of the public functions should go in SequenceParser, and
+// get_parse_info should be purely virtual in SequenceParser.
 class GlycamParser : public SequenceParser {
   public:
     // This returns a "first-child, next-sibling" n-ary tree.

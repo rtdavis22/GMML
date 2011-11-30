@@ -80,7 +80,7 @@ Structure *Structure::build_from_pdb(const PdbFile& pdb_file) {
 void Structure::add_indexed_residue(map<int, int>& atom_map,
                                     const IndexedResidue& residue) {
     int cur_size = atoms_.size();
-    residues_->push_back(new detail::StructureResidue(
+    residues_->push_back(new StructureResidue(
             residue.name, cur_size, residue.atoms.size()));
     for (int i = 0; i < residue.atoms.size(); i++) {
         AtomPtr atom = residue.atoms[i]->atom;
@@ -91,32 +91,12 @@ void Structure::add_indexed_residue(map<int, int>& atom_map,
 }
 
 Structure *Structure::clone() const {
-/*
-    using detail::StructureResidue;
-
-    Structure *structure = new Structure;
-    structure->atoms_.reserve(atoms_.size());
-    for (size_t i = 0; i < atoms_.size(); i++)
-	structure->atoms_.push_back(AtomPtr(atoms_[i]->clone()));
-
-    structure->residues_->reserve(residues_->size());
-    for (size_t i = 0; i < residues_->size(); i++) {
-	structure->residues_->push_back(
-            new StructureResidue(*residues_->at(i)));
-    }
-
-    structure->bonds_ = bonds_->clone();
-
-    return structure;
-*/
     Structure *structure = new Structure;
     structure->clone_from(*this);
     return structure;
 }
 
 void Structure::clone_from(const Structure& structure) {
-    using detail::StructureResidue;
-
     atoms_.reserve(structure.atoms_.size());
     for (size_t i = 0; i < structure.atoms_.size(); i++)
         atoms_.push_back(AtomPtr(structure.atoms_[i]->clone()));
@@ -136,7 +116,6 @@ void Structure::append(const Structure& rhs) {
 
     bonds_->append(*rhs.bonds_);
 
-    using detail::StructureResidue;
     residues_->reserve(residues_->size() + rhs.residues_->size());
     for (size_t i = 0; i < rhs.residues_->size(); i++) {
 	residues_->push_back(
@@ -154,7 +133,6 @@ int Structure::append(const Residue *residue) {
 
     bonds_->append(*residue->bonds());
 
-    using detail::StructureResidue;
     residues_->push_back(new StructureResidue(residue->name(), old_size,
                                               residue->size()));
     return residues_->size() - 1;
@@ -668,6 +646,14 @@ vector<size_t> *Structure::get_residue_index_table() const {
         for (size_t j = 0; j < residues_->at(i)->size; j++)
             (*table)[current_index++] = i;
     return table;
+}
+
+std::auto_ptr<Structure::InternalResidue> Structure::residues(int index) const {
+    AtomList::const_iterator first = atoms_.begin() +
+                                     residues_->at(index)->start_index;
+    return std::auto_ptr<InternalResidue>(
+        new InternalResidue(residues_->at(index)->name, first,
+                            first + residues_->at(index)->size));
 }
 
 int StructureAttach::operator()(Structure& structure, Residue *new_residue,

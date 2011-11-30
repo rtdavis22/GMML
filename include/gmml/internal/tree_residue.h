@@ -67,21 +67,42 @@ Structure *build_residue_tree(tree<TreeResidue*> *residue_tree,
 }
 
 template<typename AttachFunc>
-inline Structure *build_residue_tree(tree<TreeResidue*> *residue_tree,
+Structure *build_residue_tree(const ArrayTree<TreeResidue*> *tree,
+                              const Environment& environment,
+                              AttachFunc attach_func) {
+    Structure *structure = new Structure;
+
+    ArrayTree<TreeResidue*>::const_iterator it = tree->begin();
+    structure->append(it->first->name());
+    ++it;
+
+    while (it != tree->end()) {
+        Residue *residue = build_prep_file(it->first->name());
+        attach_func(*structure, residue, it->first->anomeric_carbon(),
+                    it->second, it->first->parent_oxygen());
+        delete residue;
+        ++it;
+    }
+
+    return structure;
+}
+
+template<typename TREE, typename AttachFunc>
+inline Structure *build_residue_tree(TREE *residue_tree,
                                      AttachFunc attach_func) {
     return build_residue_tree(residue_tree, kDefaultEnvironment, attach_func);
 }
 
-template<typename AttachFunc>
+template<typename TREE, typename AttachFunc>
 inline Structure *build_residue_tree(tree<TreeResidue*> *residue_tree,
                                      const Environment& environment) {
     return build_residue_tree(residue_tree, environment, AttachFunc());
 }
 
-template<typename AttachFunc>
-inline Structure *build_residue_tree(tree<TreeResidue*> *residue_tree) {
-    return build_residue_tree<StructureAttach>(residue_tree,
-                                               kDefaultEnvironment);
+template<typename TREE, typename AttachFunc>
+inline Structure *build_residue_tree(TREE *residue_tree) {
+    return build_residue_tree<TREE, StructureAttach>(residue_tree,
+                                                     kDefaultEnvironment);
 }
 
 }  // namespace gmml

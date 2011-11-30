@@ -151,6 +151,54 @@ tree<TreeResidue*> *GlycamCodeSet::build_residue_tree(
     return residue_tree;
 }
 
+ArrayTree<TreeResidue*> *GlycamCodeSet::build_array_tree(
+        ArrayTree<ParsedResidue*> *parsed_tree) const {
+    ArrayTree<TreeResidue*> *tree = new ArrayTree<TreeResidue*>;
+
+    vector<vector<int> > open_valences(parsed_tree->size());
+    for (int i = 0; i < parsed_tree->size(); i++) {
+        int parent = (*parsed_tree)[i].second;
+        if ((*parsed_tree)[i].second != -1) {
+            int oxygen_position = (*parsed_tree)[i].first->oxygen_position;
+            open_valences[parent].push_back(oxygen_position);
+        }
+    }
+
+    string terminal_name = (*parsed_tree)[0].first->name;
+    tree->insert(new TreeResidue(get_terminal_code(terminal_name)));
+
+    int cur_derivative_count = 0;
+    // We keep a count of how many derivatives have appeared before each
+    // residue because the parent indices will need to be modified.
+    vector<int> derivatives_before(parsed_tree->size(), 0);
+    for (int i = 1; i < parsed_tree->size(); i++) {
+        derivatives_before[i] = cur_derivative_count;
+        ParsedResidue *parsed_residue = (*parsed_tree)[i].first;
+        int parent = (*parsed_tree)[i].second;
+        string parent_name = (*parsed_tree)[parent].first->name;
+        TreeResidue *tree_residue = build_tree_residue(*parsed_residue,
+                                                       open_valences[i],
+                                                       parent_name);
+
+        // Insert the residue with possibly a different parent index,
+        // accounting for derivatives that may have been added before the
+        // parent.
+        int residue_index = tree->insert(tree_residue, 
+                                         parent + derivatives_before[parent]);
+
+        map<int, char>::const_iterator map_it;
+        for (map_it = parsed_residue->derivatives.begin();
+                map_it != parsed_residue->derivatives.end(); ++map_it) {
+            tree->insert(get_derivative_tree_residue(map_it->second,
+                                                     map_it->first),
+                         residue_index);
+            cur_derivative_count++;
+        }
+    }
+
+    return tree;
+}
+
 std::string GlycamCodeSet::get_name_from_code(const string& code) const {
     string uppercase_code(code);
     std::transform(uppercase_code.begin(), uppercase_code.end(),
@@ -258,6 +306,7 @@ string GlycamCodeSet::get_third_letter(
 
 TreeResidue *GlycamCodeSet::build_tree_residue(
         tree<ParsedResidue*>::iterator it) const {
+/*
     vector<int> open_valences;
     tree<ParsedResidue*>::sibling_iterator child_it = it.begin();
     while (child_it != it.end()) {
@@ -270,6 +319,28 @@ TreeResidue *GlycamCodeSet::build_tree_residue(
                                              ((*it)->oxygen_position));
     return new TreeResidue(get_code(**it, open_valences), anomeric_carbon,
                            oxygen_position);
+*/
+    vector<int> open_valences;
+    tree<ParsedResidue*>::sibling_iterator child_it = it.begin();
+    while (child_it != it.end()) {
+        open_valences.push_back((*child_it)->oxygen_position);
+        ++child_it;
+    }
+    tree<ParsedResidue*>::iterator parent_it = tree<ParsedResidue*>::parent(it);
+    string parent_name = (*parent_it)->name;
+    return build_tree_residue(**it, open_valences, parent_name);
+}
+
+TreeResidue *GlycamCodeSet::build_tree_residue(
+        const ParsedResidue& parsed_residue,
+        const vector<int>& open_valences,
+        const string& parent_name) const {
+    string anomeric_carbon = "C" + to_string(parsed_residue.anomeric_carbon);
+    string oxygen_position = get_oxygen_name(parent_name,
+                                             parsed_residue.oxygen_position);
+    return new TreeResidue(get_code(parsed_residue, open_valences),
+                           anomeric_carbon, oxygen_position);
+
 }
 
 TreeResidue *GlycamCodeSet::get_derivative_tree_residue(char derivative,
@@ -305,6 +376,10 @@ int GlycamAttach::operator()(Structure& structure, Residue *residue,
                             atom_name);
 }
 
+Structure *glycam_build(ArrayTree<TreeResidue*> *residue_tree) {
+    return build_residue_tree(residue_tree, GlycamAttach());
+}
+
 Structure *glycam_build(tree<TreeResidue*> *residue_tree) {
     return build_residue_tree(residue_tree, GlycamAttach());
 }
@@ -318,11 +393,33 @@ Structure *glycam_build(tree<ParsedResidue*> *parsed_tree) {
     return structure;
 }
 
+Structure *glycam_build(ArrayTree<ParsedResidue*> *parsed_tree) {
+    GlycamCodeSet code_set;
+    ArrayTree<TreeResidue*> *tree = code_set.build_array_tree(parsed_tree);
+    Structure *structure = glycam_build(tree);
+    for (ArrayTree<TreeResidue*>::const_iterator it = tree->begin();
+            it != tree->end(); ++it)
+        delete it->first;
+    delete tree;
+    return structure;
+}
+
 Structure *glycam_build(const string& sequence) {
     SequenceParser *parser = new GlycamParser;
     tree<ParsedResidue*> *parsed_tree = parser->parse(sequence);
     Structure *structure = glycam_build(parsed_tree);
     std::for_each(parsed_tree->begin(), parsed_tree->end(), DeletePtr());
+    delete parsed_tree;
+    return structure;
+}
+
+Structure *glycam_build_with_array_tree(const string& sequence) {
+    GlycamParser *parser = new GlycamParser;
+    ArrayTree<ParsedResidue*> *parsed_tree = parser->get_array_tree(sequence);
+    Structure *structure = glycam_build(parsed_tree);
+    for (ArrayTree<ParsedResidue*>::const_iterator it = parsed_tree->begin();
+            it != parsed_tree->end(); ++it)
+        delete it->first;
     delete parsed_tree;
     return structure;
 }

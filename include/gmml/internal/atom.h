@@ -82,16 +82,23 @@ class Atom {
     void set_coordinate(const Coordinate& coordinate) {
         coordinate_ = coordinate;
     }
+
     void set_coordinate(double x, double y, double z) {
         coordinate_.x = x;
         coordinate_.y = y;
         coordinate_.z = z;
     }
+
+    void set_element(Element element) { element_ = element; }
+
+    void set_name(const std::string& name) { name_ = name; }
+
     void set_charge(double charge) { charge_ = charge; }
+
+    void set_type(const std::string& type) { type_ = type; }
  
-    Coordinate& coordinate() { return coordinate_; }
     const Coordinate& coordinate() const { return coordinate_; }
-    Element element() const { return element_; }    
+    Element element() const { return element_; }
     const std::string& name() const { return name_; }
     const std::string& type() const { return type_; }
     double charge() const { return charge_; }
