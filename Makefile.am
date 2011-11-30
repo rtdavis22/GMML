@@ -32,6 +32,7 @@ gmmlincludedir = $(includedir)/gmml/internal
 gmmlinclude_HEADERS = \
   include/gmml/internal/amber_top_builder.h \
   include/gmml/internal/amber_top_file.h \
+  include/gmml/internal/array_tree.h \
   include/gmml/internal/atom.h \
   include/gmml/internal/boxed_structure.h \
   include/gmml/internal/coordinate_file.h \
@@ -55,6 +56,7 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/sequence_parser.h \
   include/gmml/internal/solvated_structure.h \
   include/gmml/internal/structure.h \
+  include/gmml/internal/structure-inl.h \
   include/gmml/internal/torsion_combination_builder.h \
   include/gmml/internal/tree.hh \
   include/gmml/internal/tree_residue.h \
