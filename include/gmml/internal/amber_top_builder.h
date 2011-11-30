@@ -3,8 +3,8 @@
 // This file contains classes to build the sections of an AMBER topology file
 // for a given structure.
 
-#ifndef AMBER_TOP_BUILDER_H
-#define AMBER_TOP_BUILDER_H
+#ifndef GMML_INTERNAL_AMBER_TOP_BUILDER_H_
+#define GMML_INTERNAL_AMBER_TOP_BUILDER_H_
 
 #include <algorithm>
 #include <string>
@@ -294,4 +294,4 @@ class SectionComparer {
 
 }  // namespace gmml
 
-#endif  // AMBER_TOP_BUILDER_H
+#endif  // GMML_INTERNAL_AMBER_TOP_BUILDER_H_

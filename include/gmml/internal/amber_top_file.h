@@ -1,5 +1,7 @@
-#ifndef AMBER_TOP_FILE_H
-#define AMBER_TOP_FILE_H
+// Author: Robert Davis
+
+#ifndef GMML_INTERNAL_AMBER_TOP_FILE_H_
+#define GMML_INTERNAL_AMBER_TOP_FILE_H_
 
 #include <algorithm>
 #include <iosfwd>
@@ -146,4 +148,4 @@ class AmberTopFile {
 
 }  // namespace gmml
 
-#endif  // AMBER_TOP_FILE_H
+#endif  // GMML_INTERNAL_AMBER_TOP_FILE_H_

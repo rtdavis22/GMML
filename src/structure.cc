@@ -127,6 +127,8 @@ void Structure::append(const Structure& rhs) {
 }
 
 int Structure::append(const Residue *residue) {
+    if (residue == NULL)
+        return -1;
     size_t old_size = size();
     atoms_.reserve(old_size + residue->size());
     atoms_.insert(end(), residue->begin(), residue->end());
@@ -140,6 +142,8 @@ int Structure::append(const Residue *residue) {
 
 int Structure::append(const string& prep_code) {
     Residue *residue = build_prep_file(prep_code);
+    if (residue == NULL)
+        return -1;
     return append(residue);
 }
 
@@ -158,6 +162,8 @@ int Structure::attach(Residue *new_residue, const string& new_atom_name,
 int Structure::attach(const string& prep_code, const string& new_atom_name,
                       int residue_index, const string& target_atom_name) {
     Residue *residue = build_prep_file(prep_code);
+    if (residue == NULL)
+        return -1;
     return attach(residue, new_atom_name, residue_index, target_atom_name);
 }
 
@@ -661,10 +667,19 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
                                 const string& target_atom_name) const {
     const Structure::AtomList& atoms = structure.atoms();
     int new_residue_index = structure.append(new_residue);
+    if (new_residue_index == -1)
+        return -1;
+
     int new_atom_index = structure.get_atom_index(new_residue_index,
                                                   new_atom_name);
+    if (new_atom_index == -1)
+        return -1;
+
     int target_atom_index = structure.get_atom_index(residue_index,
                                                      target_atom_name);
+    if (target_atom_index == -1)
+        return -1;
+
     structure.add_bond(new_atom_index, target_atom_index);
 
     const ParameterFileSet *parm_set = kDefaultEnvironment.parm_set();
@@ -672,7 +687,11 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
     const ParameterFileBond *parameter_bond =
         parm_set->lookup(atoms[target_atom_index]->type(),
                          atoms[new_atom_index]->type());
-    double bond_length = parameter_bond->length;
+
+    // This constant should be changed and made static const in the class.
+    double bond_length = 1.4;
+    if (parameter_bond == NULL && parameter_bond->length != kNotSet)
+        bond_length = parameter_bond->length;
 
     Vector<3> direction = get_connection_direction(structure,
                                                    new_atom_index,

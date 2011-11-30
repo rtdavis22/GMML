@@ -107,6 +107,8 @@ inline void load_prep_file(const PrepFile& prep_file) {
     kDefaultEnvironment.load_prep_file(prep_file);
 }
 
+// Build the prep file with the prep file code from the prep file set in the
+// given environment. NULL is returned if the residue doesn't exist.
 Residue *build_prep_file(const std::string& prep_code,
                          const Environment& environment);
 

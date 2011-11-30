@@ -5,6 +5,7 @@
 #include <map>
 #include <stack>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include "gmml/internal/glycam_parser.h"
@@ -19,6 +20,7 @@ using std::bitset;
 using std::map;
 using std::stack;
 using std::string;
+using std::stringstream;
 using std::vector;
 
 namespace gmml {
@@ -82,8 +84,11 @@ string GlycamCodeSet::get_code(const string& residue_name,
                                ResidueClassification::Configuration config,
                                const vector<int>& open_valences) const {
     bitset<10> bs;
-    for (int i = 0; i < open_valences.size(); i++)
+    for (int i = 0; i < open_valences.size(); i++) {
+        if (open_valences[i] < 0 || open_valences[i] >= 10)
+            throw GlycamCodeException("Invalid open valence");
         bs.set(open_valences[i]);
+    }
     string code = get_first_letter(bs) +
                   get_second_letter(residue_name, isomer);
     if (code.size() < 3)
@@ -115,7 +120,8 @@ string GlycamCodeSet::get_terminal_code(const string& terminal_name) const {
         return "OME";
     else if (terminal_name == "OtBu")
         return "TBT";
-    return "";
+
+    throw GlycamCodeException("Invalid aglycon " + terminal_name);
 }
 
 tree<TreeResidue*> *GlycamCodeSet::build_residue_tree(
@@ -278,6 +284,12 @@ string GlycamCodeSet::get_first_letter(const bitset<10>& open_valences) const {
     } else if (bs.none()) {
         return "0";
     }
+
+    stringstream ss;
+    ss << "There is no code in the GLYCAM code set for residues with open " <<
+          "valences at the given positions.";
+
+    throw GlycamCodeException(ss.str());
 }
 
 string GlycamCodeSet::get_second_letter(
@@ -291,8 +303,7 @@ string GlycamCodeSet::get_second_letter(
                            ::tolower);
         return letter;
     }
-    //error here?
-    return "";
+    throw GlycamCodeException(residue_name + " is not a valid residue.");
 }
 
 string GlycamCodeSet::get_third_letter(
@@ -352,7 +363,11 @@ TreeResidue *GlycamCodeSet::get_derivative_tree_residue(char derivative,
         return new TreeResidue("MEX", "CH3", oxygen);
     else if (derivative == 'A')
         return new TreeResidue("ACE", "C1A", oxygen);
-    return NULL;    
+
+    stringstream ss;
+    ss << "There is no derivative in the GLYCAM code set represented by the " <<
+          "letter " << string(1, derivative);
+    throw GlycamCodeException(ss.str());
 }
 
 string GlycamCodeSet::get_oxygen_name(const string& residue_code,

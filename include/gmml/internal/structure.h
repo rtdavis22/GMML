@@ -157,11 +157,14 @@ class Structure {
     // structure if you want a copy of the atoms.
     virtual void append(const Structure& rhs);
 
-    // This is similar to the above, but with a residue.
+    // This is similar to the above, but with a residue. The index of the new
+    // residue in the structure is returned.
     virtual int append(const Residue *residue);
 
-    // This builds the residue from a prep file and then appends it. This
-    // should probably be changed to look in library files (and more) as well.
+    // This builds the residue from a prep file in the prep file set of the
+    // default environment and appends it. This should probably be changed to
+    // look in library files (and more) as well. If the prep file code doesn't
+    // exist in the default environment, -1 is returned.
     virtual int append(const std::string& prep_code);
 
     // The attach operations reposition the atoms that are being attached to
@@ -364,6 +367,8 @@ class Structure {
 // functor.
 class StructureAttach {
   public:
+    // The return value is -1 if the attachment failed for any reason, such as
+    // the atom names don't exist in the residue.
     int operator()(Structure& structure, Residue *residue,
                     const std::string& new_atom_name, int residue_index,
                     const std::string& atom_name) const;

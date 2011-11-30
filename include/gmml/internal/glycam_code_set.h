@@ -100,6 +100,20 @@ class GlycamCodeSet {
     DISALLOW_COPY_AND_ASSIGN(GlycamCodeSet);
 };
 
+class GlycamCodeException : public std::exception {
+  public:
+    explicit GlycamCodeException(const std::string& what) {
+        what_ = what;
+    }
+
+    virtual const char *what() const throw() { return what_.c_str(); }
+
+    virtual ~GlycamCodeException() throw() {}
+
+  private:
+    std::string what_;
+};
+
 // This functor is a wrapper around the default attachment functor. It accounts
 // for changes that need to be made in the charges because of derivatives.
 struct GlycamAttach {

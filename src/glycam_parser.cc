@@ -100,15 +100,25 @@ ArrayTree<ParsedResidue*> *GlycamParser::get_array_tree(
     while (++cur_token != tokens->rend()) {
         switch (*cur_token) {
             case kTokenLeft:
+                if (st.empty())
+                    throw ParseException("Invalid branching in sequence");
                 st.pop();
                 break;
             case kTokenRight:
                 ++cur_token;
                 ++cur_residue;
+                if (cur_residue == residues->rend())
+                    throw ParseException("Invalid sequence of residues");
+                if (st.empty())
+                    throw ParseException("Invalid sequence");
                 st.push(tree->insert(*cur_residue, st.top()));
                 break;
             case kTokenResidue: {
                 ++cur_residue;
+                if (cur_residue == residues->rend())
+                    throw ParseException("Invalid sequence of residues");
+                if (st.empty())
+                    throw ParseException("Invalid sequence");
                 int parent = tree->insert(*cur_residue, st.top());
                 st.pop();
                 st.push(parent);
@@ -179,22 +189,32 @@ ParsedResidue *GlycamParser::parse_residue(const string& residue_string) const {
         return residue;
     }
 
+    if (residue_string.empty())
+        throw ParseException("Invalid residue in sequence");
     char isomer_letter = residue_string[0];
     if (isomer_letter == 'D' || isomer_letter == 'd')
         residue->isomer = ResidueClassification::kIsomerD;
     else if (isomer_letter = 'L' || isomer_letter == 'l')
         residue->isomer = ResidueClassification::kIsomerL;
-    // else some sort of error should go here
+    else
+        throw ParseException("Invalid isomer in residue " + residue_string);
 
+    if (dash_index <= 2)
+        throw ParseException("Invalid residue in sequence");
     char config_letter = residue_string[dash_index - 2];
     if (config_letter == 'A' || config_letter == 'a')
         residue->configuration = ResidueClassification::kAlpha;
     else if (config_letter == 'B' || config_letter == 'b')
         residue->configuration = ResidueClassification::kBeta;
-    // else some error here
+    else
+        throw ParseException("Invalid isomer in residue " + residue_string);
 
+    if (!is_number(residue_string[dash_index - 1]))
+        throw ParseException("Invalid residue in sequence");
     residue->anomeric_carbon = char_to_number(residue_string[dash_index - 1]);
     if (dash_index != residue_string.size() - 1) {
+        if (!is_number(residue_string[dash_index + 1]))
+            throw ParseException("Invalid residue in sequence");
         residue->oxygen_position =
             char_to_number(residue_string[dash_index + 1]);
     } else {
@@ -215,6 +235,10 @@ ParsedResidue *GlycamParser::parse_residue(const string& residue_string) const {
         split(derivatives, ',', derivatives_tokens);
         for (vector<string>::iterator it = derivatives_tokens.begin();
                 it != derivatives_tokens.end(); ++it) {
+            if (it->size() != 2)
+                throw ParseException("Invalid derivative in sequence");
+            if (!is_number(it->at(0)))
+                throw ParseException("Invalid derivative position in sequence");
             residue->derivatives[char_to_number(it->at(0))] = it->at(1);
         }
     }

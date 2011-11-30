@@ -1,7 +1,7 @@
 // Author: Robert Davis
 
-#ifndef GLYCAM_PARSER_H
-#define GLYCAM_PARSER_H
+#ifndef GMML_INTERNAL_GLYCAM_PARSER_H_
+#define GMML_INTERNAL_GLYCAM_PARSER_H_
 
 #include <string>
 
@@ -39,4 +39,4 @@ class GlycamParser : public SequenceParser {
 
 }  // namespace gmml
 
-#endif  // GLYCAM_PARSER_H
+#endif  // GMML_INTERNAL_GLYCAM_PARSER_H

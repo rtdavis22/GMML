@@ -3,6 +3,7 @@
 #ifndef TREE_RESIDUE_H
 #define TREE_RESIDUE_H
 
+#include <exception>
 #include <stack>
 #include <string>
 
@@ -37,6 +38,20 @@ class TreeResidue {
     bool has_parent_;
 };
 
+class BuildResidueTreeException : public std::exception {
+  public:
+    explicit BuildResidueTreeException(const std::string& what) {
+        what_ = what;
+    }
+
+    virtual const char *what() const throw() { return what_.c_str(); }
+
+    virtual ~BuildResidueTreeException() throw() {}
+
+  private:
+    std::string what_;
+};
+
 template<typename AttachFunc>
 Structure *build_residue_tree(tree<TreeResidue*> *residue_tree,
                               const Environment& environment,
@@ -49,6 +64,10 @@ Structure *build_residue_tree(tree<TreeResidue*> *residue_tree,
     ++tree_it;
     while (tree_it != residue_tree->end()) {
         Residue *residue = build_prep_file((*tree_it)->name());
+        if (residue == NULL) {
+            throw BuildResidueTreeException(
+                "Unable to build residue " + (*tree_it)->name());
+        }
         int residue_index = attach_func(*structure,
                                         residue,
                                         (*tree_it)->anomeric_carbon(),
@@ -78,6 +97,9 @@ Structure *build_residue_tree(const ArrayTree<TreeResidue*> *tree,
 
     while (it != tree->end()) {
         Residue *residue = build_prep_file(it->first->name());
+        if (residue == NULL)
+            throw BuildResidueTreeException(
+                "Unable to build residue with code " + it->first->name());
         attach_func(*structure, residue, it->first->anomeric_carbon(),
                     it->second, it->first->parent_oxygen());
         delete residue;

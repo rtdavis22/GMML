@@ -252,7 +252,7 @@ class ParameterFile {
     DISALLOW_COPY_AND_ASSIGN(ParameterFile);
 };
 
-class ParameterFileProcessingException : std::exception {
+class ParameterFileProcessingException : public std::exception {
   public:
     explicit ParameterFileProcessingException(const std::string& message)
             : line_number_(kNotSet), message_(message) {}
