@@ -1,15 +1,19 @@
 // Author: Robert Davis
 
-#ifndef BOXED_STRUCTURE_H
-#define BOXED_STRUCTURE_H
+#ifndef GMML_INTERNAL_BOXED_STRUCTURE_H_
+#define GMML_INTERNAL_BOXED_STRUCTURE_H_
 
-#include "structure.h"
+#include "gmml/internal/structure.h"
 
 namespace gmml {
 
 class Coordinate;
 class CoordinateFile;
 
+// Box only contains the dimensions of the box. See BoxedRegion below for
+// a structure that encapsulates the position of a box.
+//
+// TODO: Put a constructor in here.
 struct Box {
     double angle;
     double length;
@@ -25,6 +29,9 @@ class BoxedStructure : public Structure {
 
     virtual BoxedStructure *clone() const;
 
+    //
+    // File operations
+    //
     virtual AmberTopFile *build_amber_top_file() const;
     virtual CoordinateFile *build_coordinate_file() const;
 
@@ -32,6 +39,7 @@ class BoxedStructure : public Structure {
     const Box *box() const { return box_; }
 
   protected:
+    // An alternative to the assignment operator.
     void clone_from(const BoxedStructure& boxed_structure);
 
     Box *box_;
@@ -54,11 +62,19 @@ inline void BoxedStructure::clone_from(const BoxedStructure& boxed_structure) {
         box_ = new Box(*boxed_structure.box_); 
 }
 
+// The class represents the upper and lower coordinate bounds of a set of
+// coordinates.
 struct BoxedRegion {
+    // The upper and lower bounds are taken from this coordinate.
     explicit BoxedRegion(const Coordinate& coordinate);
 
+    // Contract each side of the region by the given amounts.
     void contract(double x, double y, double z);
+
+    // Expand each side of the region by the given amounts.
     void expand(double x, double y, double z);
+
+    // Translate the region.
     void shift(double x, double y, double z);
 
     double min_x, max_x;
@@ -97,4 +113,4 @@ BoxedRegion *get_boxed_region(const Structure& structure);
 
 }  // namespace gmml
 
-#endif  // BOXED_STRUCTURE_H
+#endif  // GMML_INTERNAL_BOXED_STRUCTURE_H_

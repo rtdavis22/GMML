@@ -1,7 +1,7 @@
 // Author: Robert Davis
 
-#ifndef SANDER_MINIMIZE_H
-#define SANDER_MINIMIZE_H
+#ifndef GMML_INTERNAL_SANDER_MINIMIZE_H_
+#define GMML_INTERNAL_SANDER_MINIMIZE_H_
 
 #include <string>
 
@@ -39,4 +39,4 @@ class SanderMinimize {
 
 }  // namespace gmml
 
-#endif  // SANDER_MINIMIZE_H
+#endif  // GMML_INTERNAL_SANDER_MINIMIZE_H_

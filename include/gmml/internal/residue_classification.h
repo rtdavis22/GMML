@@ -1,5 +1,5 @@
-#ifndef RESIDUE_CLASSIFICATION_H
-#define RESIDUE_CLASSIFICATION_H
+#ifndef GMML_INTERNAL_RESIDUE_CLASSIFICATION_H_
+#define GMML_INTERNAL_RESIDUE_CLASSIFICATION_H_
 
 namespace gmml {
 
@@ -21,4 +21,4 @@ class ResidueClassification {
 
 }  // namespace gmml
 
-#endif  // RESIDUE_CLASSIFICATION_H
+#endif  // GMML_INTERNAL_RESIDUE_CLASSIFICATION_H_

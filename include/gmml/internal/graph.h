@@ -1,12 +1,12 @@
 // Author: Robert Davis
 
-#ifndef GRAPH_H
-#define GRAPH_H
+#ifndef GMML_INTERNAL_GRAPH_H_
+#define GMML_INTERNAL_GRAPH_H_
 
 #include <algorithm>
 #include <vector>
 
-#include "utilities.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -99,4 +99,4 @@ inline void Graph::append(const Graph& graph) {
 
 }  // namespace gmml
 
-#endif  // GRAPH_H
+#endif  // GMML_INTERNAL_GRAPH_H_

@@ -4,6 +4,8 @@
 #include <map>
 #include <string>
 
+#include "gmml/internal/stubs/common.h"
+
 namespace gmml {
 
 class Structure;
@@ -20,6 +22,8 @@ class StandardProteins {
 
   private:
     std::map<std::string, Structure*> protein_map_;
+
+    DISALLOW_COPY_AND_ASSIGN(StandardProteins);
 };
 
 }  // namespace gmml

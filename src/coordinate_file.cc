@@ -3,12 +3,10 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <string>
-#include <vector>
 
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 using std::string;
 using std::vector;

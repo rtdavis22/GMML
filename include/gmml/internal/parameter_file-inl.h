@@ -1,8 +1,7 @@
-#ifndef PARAMETER_FILE_INL_H
-#define PARAMETER_FILE_INL_H
+#ifndef GMML_INTERNAL_PARAMETER_FILE_INL_H_
+#define GMML_INTERNAL_PARAMETER_FILE_INL_H
 
-namespace gmml
-{
+namespace gmml {
 
 inline bool ParameterFileImproperDihedral::matches(
         const std::vector<std::string>& rhs) const {
@@ -65,6 +64,6 @@ inline ParameterFile::~ParameterFile() {
                   DeletePtr());
 }
 
-} //namespace gmml
+} // namespace gmml
 
-#endif
+#endif  // GMML_INTERNAL_PARAMETER_FILE_INL_H_

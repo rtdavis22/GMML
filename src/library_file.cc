@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "gmml/internal/environment.h"
+#include "utilities.h"
 
 using std::istringstream;
 using std::map;

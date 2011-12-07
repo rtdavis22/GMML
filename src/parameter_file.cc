@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "gmml/internal/environment.h"
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 using std::istringstream;
 using std::map;
@@ -16,8 +16,14 @@ using std::set;
 using std::string;
 using std::vector;
 
-namespace gmml
-{
+namespace gmml {
+
+const char *ParameterFileProcessingException::what() const throw() {
+    string what = "ParameterFile: " + message_;
+    if (line_number_ != kNotSet)
+        what += " (line " + to_string(line_number_) + ")";
+    return what.c_str();
+}
 
 ParameterFile::ParameterFile() { 
     read(std::cin); 
@@ -490,6 +496,10 @@ void ParameterFileSet::load_dihedrals(
         delete reverse_dihedral;
         ++first;
     }
+}
+
+void ParameterFileSet::warning(const string& message) const {
+    gmml::warning("ParameterFileSet: " + message);
 }
 
 ParameterFile::BondSet::const_iterator ParameterFileSet::find(

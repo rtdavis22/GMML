@@ -8,10 +8,9 @@
 #include <sstream>
 #include <stack>
 
-#include "boost/shared_ptr.hpp"
-
 #include "gmml/internal/environment.h"
 #include "gmml/internal/residue.h"
+#include "utilities.h"
 
 namespace gmml {
 
@@ -23,7 +22,6 @@ using std::vector;
 // Private implementation
 class PrepFile::Impl {
   public:
-    Impl() { read(std::cin); }
     explicit Impl(const string& file) { read(file); }
 
     PrepFile::iterator begin() { return residues_.begin(); }
@@ -219,7 +217,6 @@ PrepFile::OtherSection PrepFile::Impl::get_other_section(
 }
 
 // Public implementation
-PrepFile::PrepFile() : impl_(new Impl) {}
 PrepFile::PrepFile(const string& file) : impl_(new Impl(file)) {}
 PrepFile::~PrepFile() {}
 
@@ -313,6 +310,17 @@ PrepFile::const_iterator PrepFileSet::begin() const { return impl_->begin(); }
 
 PrepFile::iterator PrepFileSet::end() { return impl_->end(); }
 PrepFile::const_iterator PrepFileSet::end() const { return impl_->end(); }
+
+int PrepFileResidue::find(const string& name) const {
+    for (int i = 0; i < atoms.size(); i++)
+        if (name == atoms[i]->name)
+            return i;
+    return -1;
+}
+
+PrepFileResidue::~PrepFileResidue() {
+    std::for_each(atoms.begin(), atoms.end(), DeletePtr());
+}
 
 namespace {
 

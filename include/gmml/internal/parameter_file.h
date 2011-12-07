@@ -1,5 +1,9 @@
-#ifndef PARAMETER_FILE_H
-#define PARAMETER_FILE_H
+// Author: Robert Davis
+//
+// TODO: pimplize this file.
+
+#ifndef GMML_INTERNAL_PARAMETER_FILE_H_
+#define GMML_INTERNAL_PARAMETER_FILE_H_
 
 #include <algorithm>
 #include <functional>
@@ -9,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-#include "utilities.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -260,12 +264,7 @@ class ParameterFileProcessingException : public std::exception {
                                      const std::string& message)
             : line_number_(line_number), message_(message) {}
 
-    virtual const char *what() const throw() {
-        std::string what = "ParameterFile: " + message_;
-        if (line_number_ != kNotSet)
-            what += " (line " + to_string(line_number_) + ")";
-        return what.c_str();
-    }
+    virtual const char *what() const throw();
 
     virtual ~ParameterFileProcessingException() throw() {}
 
@@ -330,9 +329,7 @@ class ParameterFileSet {
             const std::string& type1, const std::string& type2,
             const std::string& type3, const std::string& type4) const;
 
-    void warning(const std::string& message) const {
-        gmml::warning("ParameterFileSet: " + message);
-    }
+    void warning(const std::string& message) const;
 
     ParameterFile::AtomTypeMap atom_types_;
     ParameterFile::BondSet bonds_;
@@ -404,6 +401,6 @@ ParameterFileSet::lookup_improper_dihedral(
 
 }  // namespace gmml
 
-#include "parameter_file-inl.h"
+#include "gmml/internal/parameter_file-inl.h"
 
-#endif  // PARAMETER_FILE_H
+#endif  // GMML_INTERNAL_PARAMETER_FILE_H_

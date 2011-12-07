@@ -1,16 +1,16 @@
-#ifndef GENERIC_TYPE_H
-#define GENERIC_TYPE_H
+#ifndef GMML_INTERNAL_GENERIC_TYPE_H_
+#define GMML_INTERNAL_GENERIC_TYPE_H_
 
 #include <iosfwd>
 #include <string>
 
-#include "utilities.h"
+#include "gmml/internal/stubs/common.h"
 
-namespace gmml
-{
+namespace gmml {
+namespace internal {
 
-//This class is only used by AmberTopFile and is probably not a great idea,
-//in retrospect
+// This class is only used by AmberTopFile and is probably not a great idea,
+// in retrospect. It shouldn't be used by clients.
 class GenericType {
   public:
     enum Type { kDouble, kInt, kString };
@@ -20,9 +20,9 @@ class GenericType {
     GenericType(double n) : type_(kDouble), dval_(n) {}
     GenericType(const std::string& s) : type_(kString), sval_(s) {}
 
-    GenericType& operator=(const GenericType&);
-    GenericType& operator=(double);
-    GenericType& operator=(const std::string&);
+    GenericType& operator=(const GenericType& value);
+    GenericType& operator=(double value);
+    GenericType& operator=(const std::string& value);
 
     operator std::string() const;
     operator double() const;
@@ -35,6 +35,10 @@ class GenericType {
     std::string sval_;
 };
 
-} //namespace gmml
+}  // namespace internal
 
-#endif
+using internal::GenericType;
+
+}  // namespace gmml
+
+#endif  // GMML_INTERNAL_GENERIC_TYPE_H_

@@ -11,7 +11,9 @@
 #include <utility>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
+#include "boost/shared_ptr.hpp"
+
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -249,6 +251,8 @@ class AmberTopBuilder {
                     const std::string& type3, const std::string& type4) const;
 
     const ParameterFileSet& parameter_file_set_;
+
+    DISALLOW_COPY_AND_ASSIGN(AmberTopBuilder);
 };
 
 inline void AmberTopBuilder::type_error(const std::string& type) const {

@@ -9,9 +9,9 @@
 #include <string>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
+#include "boost/shared_ptr.hpp"
 
-#include "utilities.h" //remove
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -127,7 +127,7 @@ class PdbTerCard : public PdbCard {
 
     PdbFile::CardType get_type() const { return PdbFile::TER; }
 
-    void write(std::ostream& out) const { out << "TER"; }
+    void write(std::ostream& out) const;
     void read(const std::string& /* line */) {}
 };
 
@@ -159,7 +159,7 @@ class PdbEndCard : public PdbCard {
 
     PdbFile::CardType get_type() const { return PdbFile::END; }
 
-    void write(std::ostream& out) const { out << "END"; }
+    void write(std::ostream& out) const;
     void read(const std::string& /* line */) {}
 };
 
@@ -196,7 +196,7 @@ class PdbUnknownCard : public PdbCard {
 
     PdbFile::CardType get_type() const { return PdbFile::UNKNOWN; }
 
-    void write(std::ostream& out) const { out << line; }
+    void write(std::ostream& out) const;
     void read(const std::string& line) { this->line = line; }
 
     std::string line;

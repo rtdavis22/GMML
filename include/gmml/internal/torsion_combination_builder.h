@@ -1,13 +1,13 @@
-#ifndef TORSION_COMBINATION_BUILDER_H
-#define TORSION_COMBINATION_BUILDER_H
+#ifndef GMML_INTERNAL_TORSION_COMBINATION_BUILDER_H_
+#define GMML_INTERNAL_TORSION_COMBINATION_BUILDER_H_
 
 #include <list>
 #include <set>
 #include <string>
 #include <vector>
 
-#include "structure.h"
-#include "utilities.h"
+#include "gmml/internal/structure.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -26,6 +26,8 @@ class TCBStructure : public Structure {
 
   private:
     std::string name_;
+
+    DISALLOW_COPY_AND_ASSIGN(TCBStructure);
 };
 
 class TorsionCombinationBuilder {
@@ -150,7 +152,7 @@ class TorsionCombinationBuilder {
 
         const std::vector<double>& at(int index) const {
             std::set<std::vector<double> >::iterator it = values_.begin();
-            //yeah...
+            // TODO: Use advance instead.
             for (int i = 0; i < index; i++)
                 it++;
             return *it;
@@ -185,8 +187,10 @@ class TorsionCombinationBuilder {
 
     Structure *structure;
     std::vector<LinkageAngles> linkage_angles;
+
+    DISALLOW_COPY_AND_ASSIGN(TorsionCombinationBuilder);
 };
 
 }  // namespace gmml
 
-#endif  // TORSION_COMBINATION_BUILDER_H
+#endif  // GMML_INTERNAL_TORSION_COMBINATION_BUILDER_H_

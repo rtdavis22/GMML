@@ -16,7 +16,7 @@
 #include "gmml/internal/pdb_file_structure.h"
 #include "gmml/internal/prep_file.h"
 #include "gmml/internal/sander_minimize.h"
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 using std::deque;
 using std::list;

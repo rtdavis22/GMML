@@ -16,7 +16,7 @@
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/solvated_structure.h"
 #include "gmml/internal/structure.h"
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 using std::deque;
 using std::string;

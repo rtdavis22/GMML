@@ -4,7 +4,8 @@
 #include <map>
 #include <vector>
 
-#include "structure.h"
+#include "gmml/internal/structure.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -37,6 +38,8 @@ class PdbFileStructure : public Structure {
             const std::vector<PdbAtomCard*>& atom_cards);
 
     void add_protein_bonds(const std::map<PdbIndexedResidue*, int>& index_map);
+
+    DISALLOW_COPY_AND_ASSIGN(PdbFileStructure);
 };
 
 }  // namespace gmml

@@ -7,8 +7,9 @@
 #include <utility>
 #include <vector>
 
-#include "geometry.h"
-#include "utilities.h"
+#include "gmml/internal/geometry.h"
+#include "gmml/internal/stubs/common.h"
+#include "gmml/internal/stubs/utils.h"
 
 namespace gmml {
 
@@ -57,6 +58,8 @@ class CoordinateGrid {
 
     // The grid_unit is the length, width, and height of all cells.
     double grid_unit_;
+
+    DISALLOW_COPY_AND_ASSIGN(CoordinateGrid);
 };
 
 template<typename T>

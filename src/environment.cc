@@ -8,7 +8,7 @@
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/prep_file.h"
 #include "gmml/internal/structure.h"
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 namespace gmml {
 

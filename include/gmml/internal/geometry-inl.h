@@ -1,8 +1,7 @@
-#ifndef GEOMETRY_INL_H
-#define GEOMETRY_INL_H
+#ifndef GMML_INTERNAL_GEOMETRY_INL_H_
+#define GMML_INTERNAL_GEOMETRY_INL_H_
 
-namespace gmml
-{
+namespace gmml {
 
 inline RotationMatrix::RotationMatrix(const Coordinate& point,
                                       Vector<3> direction,
@@ -44,6 +43,6 @@ inline RotationMatrix::RotationMatrix(const Coordinate& point,
     matrix_[2][2] = w2 + (u2 + v2)*cos_t;
 }
 
-} //namespace gmml
+}  // namespace gmml
 
-#endif
+#endif  // GMML_INTERNAL_GEOMETRY_INL_H_

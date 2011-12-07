@@ -11,10 +11,10 @@
 
 #include "boost/shared_ptr.hpp"
 
-#include "atom.h"
-#include "graph.h"
-#include "residue.h"
-#include "utilities.h"
+#include "gmml/internal/atom.h"
+#include "gmml/internal/graph.h"
+#include "gmml/internal/residue.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 

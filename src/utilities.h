@@ -1,7 +1,7 @@
 // Author: Robert Davis
 
-#ifndef GMML_INTERNAL_UTILITIES_H_
-#define GMML_INTERNAL_UTILITIES_H_
+#ifndef GMML_SRC_UTILITIES_H_
+#define GMML_SRC_UTILITIES_H_
 
 #include <exception>
 #include <iomanip>
@@ -11,20 +11,10 @@
 #include <string>
 #include <vector>
 
+#include "gmml/internal/stubs/common.h"
+#include "gmml/internal/stubs/utils.h"
+
 namespace gmml {
-
-#undef DISALLOW_COPY_AND_ASSIGN
-#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-    TypeName(const TypeName&);             \
-    void operator=(const TypeName&);
-
-// This macro returns the number of elements in a static array. If you
-// (wrongfully) pass it a pointer, the last line attempts to generate a
-// compiler warning. I found this in the source code of Protocol Buffers.
-#undef GOOGLE_ARRAYSIZE
-#define GOOGLE_ARRAYSIZE(a) \
-    ((sizeof(a) / sizeof(*(a))) / \
-     static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
 
 // Standard Library Additions
 
@@ -64,51 +54,6 @@ typename MapType::iterator add_or_update_map(MapType& map,
     }
 }
 
-// Handy functors
-struct DeletePtr {
-    template<class T>
-    void operator()(const T* ptr) const { delete ptr; }
-};
-
-struct DereferenceLess {
-    template<typename PtrType>
-    bool operator()(PtrType lhs, PtrType rhs) const { return *lhs < *rhs; }
-};
-
-template<typename T, typename U = T, typename V = T>
-struct Triplet {
-    Triplet(const T& first, const U& second, const V& third)
-            : first(first), second(second), third(third) {}
-
-    T first;
-    U second;
-    V third;
-};
-
-template<typename T, typename U = T, typename V = T>
-struct TripletLess {
-    bool operator()(const Triplet<T, U, V>& lhs,
-                    const Triplet<T, U, V>& rhs) const {
-        if (lhs.first == rhs.first) {
-            if (lhs.second == rhs.second) {
-                return lhs.third < rhs.third;
-            } else {
-                return lhs.second < rhs.second;
-            }
-        } else {
-            return lhs.first < rhs.first;
-        }
-    }
-};
-
-template<typename T, typename U = T, typename V = T>
-struct TripletPtrLess {
-    bool operator()(const Triplet<T, U, V> *lhs,
-                    const Triplet<T, U, V> *rhs) const {
-        return TripletLess<T, U, V>()(*lhs, *rhs);
-    }
-};
-
 // File utilities
 
 class FileNotFoundException : public std::invalid_argument {
@@ -126,9 +71,6 @@ class FileNotFoundException : public std::invalid_argument {
 };
 
 // Error utilities
-
-// general-purpose status type
-enum Status { kStatusOK, kStatusError };
 
 // An exception that is not caught internally
 struct ExitException : public std::exception {
@@ -162,36 +104,11 @@ void error(const std::string& message);
 
 // String utilities
 
-class ConversionException : public std::invalid_argument {
-  public:
-    explicit ConversionException(const std::string& what_arg)
-            : std::invalid_argument(what_arg) {}
-};
-
 // Remove spaces on both sides of the string.
 inline std::string& trim(std::string& str) {
     str.erase(str.find_last_not_of(" ") + 1);
     str.erase(0, str.find_first_not_of(" "));
     return str;
-}
-
-template<typename T>
-inline std::string to_string(const T& val) {
-    std::stringstream ss;
-    if (ss << val)
-        return ss.str();
-    throw ConversionException("to_string: invalid conversion");
-}
-
-template<typename T>
-inline T convert_string(const std::string& str) {
-    T val;
-    std::stringstream ss(str);
-    if (ss >> val)
-        return val;
-    
-    throw ConversionException("convert_string: invalid conversion of string " +
-                              str);
 }
 
 // Place val into str between str[index] and str[index + length]. The
@@ -248,32 +165,6 @@ inline ExitException::ExitException(int status)
     what_ = "Exit status: " + to_string(status);
 }
 
-// Numeric utilities
-
-// A value for numbers to indicate that they are not set. This obviously isn't
-// the safest thing to do, but it is useful in many situations.
-const double kNotSet = 123456789.0;
-
-template<typename T>
-inline bool is_not_set(T val) {
-    return val == kNotSet;
-}
-
-template<typename T>
-inline bool is_set(T val) {
-    return !is_not_set(val);
-}
-
-const double kPi = 3.14159265359;
-
-inline double to_radians(double degrees) {
-    return degrees/180.0*kPi;
-}
-
-inline double to_degrees(double radians) {
-    return radians*180.0/kPi;
-}
-
 }  // namespace gmml
 
-#endif  // GMML_INTERNAL_UTILITIES_H_
+#endif  // GMML_SRC_UTILITIES_H_

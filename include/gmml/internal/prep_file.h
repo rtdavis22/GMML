@@ -8,81 +8,14 @@
 
 #include "boost/shared_ptr.hpp"
 
-#include "geometry.h"
-#include "utilities.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
 class Residue;
 
-struct PrepFileAtom {
-    enum TopologicalType { kTopTypeM, kTopTypeS, kTopTypeB, kTopTypeE,
-                           kTopType3 };
-
-    PrepFileAtom() {}
-
-    int index;
-    std::string name;
-    std::string type;
-    TopologicalType topological_type;
-    int bond_index;
-    int angle_index;
-    int dihedral_index;
-    double bond_length;
-    double angle;
-    double dihedral;
-    double charge;
-
-  private:
-    DISALLOW_COPY_AND_ASSIGN(PrepFileAtom);
-};
-
-struct PrepFileResidue {
-    enum CoordinateType { kINT, kXYZ };
-    enum GeometryType { kGeometryCorrect, kGeometryChange };
-    enum DummyAtomOmission { kOmit, kNomit };
-    enum DummyAtomPosition { kPositionAll, kPositionBeg };
-    enum OutputFormat { kFormatted, kBinary };
-
-    PrepFileResidue() {}
-
-    ~PrepFileResidue() {
-        std::for_each(atoms.begin(), atoms.end(), DeletePtr());
-    }
-
-    struct ImproperDihedral {
-        std::string atom_names[4];
-    };
-    struct Loop {
-        Loop(int from, int to) : from(from), to(to) {}
-        int from;
-        int to;
-    };
-
-    int find(const std::string& name) const {
-        for (size_t i = 0; i < atoms.size(); i++)
-            if (name == atoms[i]->name)
-                return i;
-        return -1;
-    }
-
-    std::string header;
-    std::string file;
-    std::string name;
-    CoordinateType coordinate_type;
-    OutputFormat output_format;
-    GeometryType geometry_type;
-    DummyAtomOmission dummy_atom_omission;
-    std::string dummy_atom_type;
-    DummyAtomPosition dummy_atom_position;
-    double cutoff;
-    std::vector<PrepFileAtom*> atoms;
-    std::vector<ImproperDihedral> improper_dihedrals;
-    std::vector<Loop> loops;
-
-  private:
-    DISALLOW_COPY_AND_ASSIGN(PrepFileResidue);
-};
+struct PrepFileAtom;
+struct PrepFileResidue;
 
 class PrepFile {
   public:
@@ -94,10 +27,6 @@ class PrepFile {
 
     enum OtherSection { kSectionLoop, kSectionImproper, kSectionDone,
                         kSectionOther };
-
-    // Read the file from standard input. This will probably need to be changed
-    // if we want to output prep files.
-    PrepFile();
 
     explicit PrepFile(const std::string& file_name);
 
@@ -125,7 +54,7 @@ class PrepFileSet {
     bool exists(const std::string& name) const;
 
     void load(const PrepFile&);
-    void load(const std::string& file_name) { load(PrepFile(file_name)); }
+    void load(const std::string& file) { load(PrepFile(file)); }
 
     PrepFileResidue& operator[](const std::string& name);
     const PrepFileResidue& operator[](const std::string& name) const;
@@ -140,6 +69,69 @@ class PrepFileSet {
     std::auto_ptr<Impl> impl_;
 
     DISALLOW_COPY_AND_ASSIGN(PrepFileSet);
+};
+
+struct PrepFileResidue {
+    struct ImproperDihedral {
+        std::string atom_names[4];
+    };
+
+    struct Loop {
+        Loop(int from, int to) : from(from), to(to) {}
+        int from;
+        int to;
+    };
+
+    enum CoordinateType { kINT, kXYZ };
+    enum GeometryType { kGeometryCorrect, kGeometryChange };
+    enum DummyAtomOmission { kOmit, kNomit };
+    enum DummyAtomPosition { kPositionAll, kPositionBeg };
+    enum OutputFormat { kFormatted, kBinary };
+
+    PrepFileResidue() {}
+
+    ~PrepFileResidue();
+
+    int find(const std::string& name) const;
+
+    std::string header;
+    std::string file;
+    std::string name;
+    CoordinateType coordinate_type;
+    OutputFormat output_format;
+    GeometryType geometry_type;
+    DummyAtomOmission dummy_atom_omission;
+    std::string dummy_atom_type;
+    DummyAtomPosition dummy_atom_position;
+    double cutoff;
+    std::vector<PrepFileAtom*> atoms;
+    std::vector<ImproperDihedral> improper_dihedrals;
+    std::vector<Loop> loops;
+
+  private:
+    DISALLOW_COPY_AND_ASSIGN(PrepFileResidue);
+};
+
+struct PrepFileAtom {
+    enum TopologicalType { kTopTypeM, kTopTypeS, kTopTypeB, kTopTypeE,
+                           kTopType3 };
+
+    PrepFileAtom() {}
+
+    int index;
+    std::string name;
+    std::string type;
+    TopologicalType topological_type;
+    int bond_index;
+    int angle_index;
+    int dihedral_index;
+    double bond_length;
+    double angle;
+    double dihedral;
+    double charge;
+
+  private:
+    DISALLOW_COPY_AND_ASSIGN(PrepFileAtom);
 };
 
 class BuildPrepFileResidue {

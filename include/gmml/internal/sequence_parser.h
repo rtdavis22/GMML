@@ -1,15 +1,15 @@
 // Author: Robert Davis
 
-#ifndef SEQUENCE_PARSER_H
-#define SEQUENCE_PARSER_H
+#ifndef GMML_INTERNAL_SEQUENCE_PARSER_H_
+#define GMML_INTERNAL_SEQUENCE_PARSER_H_
 
 #include <exception>
 #include <map>
 #include <string>
 
-#include "residue_classification.h"
-#include "tree.hh"
-#include "utilities.h"
+#include "gmml/internal/residue_classification.h"
+#include "gmml/internal/stubs/common.h"
+#include "gmml/internal/tree.h"
 
 namespace gmml {
 
@@ -40,6 +40,8 @@ struct ParsedResidue {
     bool is_terminal;
 };
 
+// This is an abstract base class for parsers that parse a sequence of
+// residues.
 class SequenceParser {
   public:
     SequenceParser() {}
@@ -49,4 +51,4 @@ class SequenceParser {
 
 }  // namespace gmml
 
-#endif  // SEQUENCE_PARSER_H
+#endif  // GMML_INTERNAL_SEQUENCE_PARSER_H_

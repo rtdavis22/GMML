@@ -11,7 +11,7 @@
 #include "gmml/internal/coordinate_file.h"
 #include "gmml/internal/coordinate_grid.h"
 #include "gmml/internal/geometry.h"
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 using std::map;
 using std::vector;

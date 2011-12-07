@@ -1,10 +1,10 @@
 // Author: Robert Davis
 
-#ifndef SOLVATED_STRUCTURE_H
-#define SOLVATED_STRUCTURE_H
+#ifndef GMML_INTERNAL_SOLVATED_STRUCTURE_H_
+#define GMML_INTERNAL_SOLVATED_STRUCTURE_H_
 
-#include "boxed_structure.h"
-#include "utilities.h"
+#include "gmml/internal/boxed_structure.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -28,6 +28,8 @@ class SolvatedStructure : public BoxedStructure {
     void remove_close_solvent_residues(double closeness);
 
     int last_solute_atom_;
+
+    DISALLOW_COPY_AND_ASSIGN(SolvatedStructure);
 };
 
 
@@ -67,7 +69,6 @@ class TrimmedSolvents {
                                const std::vector<int>& bad_y_residues,
                                const std::vector<int>& bad_z_residues);
     
-
     Structure *trimmed_x_;
     Structure *trimmed_y_;
     Structure *trimmed_z_;
@@ -82,4 +83,4 @@ class TrimmedSolvents {
 }  // namespace detail
 }  // namespace gmml
 
-#endif  // SOLVATED_STRUCTURE_H
+#endif  // GMML_INTERNAL_SOLVATED_STRUCTURE_H_

@@ -1,5 +1,9 @@
-#ifndef RESIDUE_H
-#define RESIDUE_H
+// Author: Robert Davis
+//
+// TODO: This class needs some rethinking.
+
+#ifndef GMML_INTERNAL_RESIDUE_H_
+#define GMML_INTERNAL_RESIDUE_H_
 
 #include <algorithm>
 #include <string>
@@ -7,9 +11,9 @@
 
 #include "boost/shared_ptr.hpp"
 
-#include "atom.h"
-#include "graph.h"
-#include "utilities.h"
+#include "gmml/internal/atom.h"
+#include "gmml/internal/graph.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -57,4 +61,4 @@ class Residue {
 
 } //namespace gmml
 
-#endif
+#endif  // GMML_INTERNAL_RESIDUE_H_

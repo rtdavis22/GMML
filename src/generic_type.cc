@@ -2,12 +2,11 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <string>
-
-namespace gmml
-{
 
 using std::string;
+
+namespace gmml {
+namespace internal {
 
 GenericType& GenericType::operator=(const GenericType& rhs) {
     if ((type_ != kString && rhs.type_ == kString) || 
@@ -58,4 +57,5 @@ std::ostream& operator<<(std::ostream &out, GenericType& t) {
     return out;
 }
 
-} // namespace gmml 
+}  // namespace internal
+}  // namespace gmml 

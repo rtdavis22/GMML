@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "utilities.h"
+
 using std::stack;
 using std::string;
 using std::vector;

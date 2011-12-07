@@ -1,5 +1,5 @@
-#ifndef GMML_H
-#define GMML_H
+#ifndef GMML_GMML_H_
+#define GMML_GMML_H_
 
 #include "internal/amber_top_builder.h"
 #include "internal/amber_top_file.h"
@@ -24,8 +24,6 @@
 #include "internal/standard_proteins.h"
 #include "internal/structure.h"
 #include "internal/torsion_combination_builder.h"
-#include "internal/tree.hh"
 #include "internal/tree_residue.h"
-#include "internal/utilities.h"
 
-#endif
+#endif  // GMML_GMML_H_

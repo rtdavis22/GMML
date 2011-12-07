@@ -1,9 +1,7 @@
 // Author: Robert Davis
 
-#ifndef LIBRARY_FILE_H
-#define LIBRARY_FILE_H
-
-#include "boxed_structure.h"
+#ifndef GMML_INTERNAL_LIBRARY_FILE_H_
+#define GMML_INTERNAL_LIBRARY_FILE_H_
 
 #include <iosfwd>
 #include <map>
@@ -12,6 +10,9 @@
 #include <vector>
 
 #include "boost/shared_ptr.hpp"
+
+#include "gmml/internal/boxed_structure.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -44,9 +45,7 @@ class LibraryFile {
     // corresponding structure in the file.
     std::map<std::string, StructurePtr> structures_;
 
-    // Evil constructors
-    LibraryFile(const LibraryFile&);
-    void operator=(const LibraryFile&);
+    DISALLOW_COPY_AND_ASSIGN(LibraryFile);
 };
 
 inline const LibraryFile::StructurePtr LibraryFile::operator[](
@@ -83,9 +82,7 @@ class LibraryFileSet {
     // corresonding structures.
     std::map<std::string, LibraryFile::StructurePtr> structures_;
 
-    // Evil constructors
-    LibraryFileSet(const LibraryFileSet&);
-    void operator=(const LibraryFileSet&);
+    DISALLOW_COPY_AND_ASSIGN(LibraryFileSet);
 };
 
 inline const LibraryFile::StructurePtr LibraryFileSet::operator[](
@@ -125,9 +122,7 @@ class LibraryFileStructure : public BoxedStructure {
     void read_residue_info(std::istream& in,
                            const std::map<int, int>& residue_map);
 
-    // Evil constructors
-    LibraryFileStructure(const LibraryFileStructure&);
-    void operator=(const LibraryFileStructure&);
+    DISALLOW_COPY_AND_ASSIGN(LibraryFileStructure);
 };
 
 inline LibraryFileStructure *LibraryFileStructure::clone() const {
@@ -143,4 +138,4 @@ inline LibraryFileStructure *build_library_file_structure(
 
 }  // namespace gmml
 
-#endif  // LIBRARY_FILE_H
+#endif  // GMML_INTERNAL_LIBRARY_FILE_H_

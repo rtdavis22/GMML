@@ -1,16 +1,17 @@
 // Author: Robert Davis
 
-#ifndef TREE_RESIDUE_H
-#define TREE_RESIDUE_H
+#ifndef GMML_INTERNAL_TREE_RESIDUE_H_
+#define GMML_INTERNAL_TREE_RESIDUE_H_
 
 #include <exception>
 #include <stack>
 #include <string>
 
-#include "environment.h"
-#include "residue.h"
-#include "structure.h"
-#include "tree.hh"
+#include "gmml/internal/environment.h"
+#include "gmml/internal/residue.h"
+#include "gmml/internal/structure.h"
+#include "gmml/internal/stubs/common.h"
+#include "gmml/internal/tree.h"
 
 namespace gmml {
 

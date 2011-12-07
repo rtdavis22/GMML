@@ -2,7 +2,6 @@
 // and has many features that we have no use for so we should probably make our
 // own trimmed-down tree implementation at some point.
 
-
 //  STL-like templated tree class.
 //
 // Copyright (C) 2001-2011 Kasper Peeters <kasper@phi-sci.com>
@@ -28,8 +27,8 @@
    available. 
 */
 
-#ifndef tree_hh_
-#define tree_hh_
+#ifndef GMML_INTERNAL_TREE_H_
+#define GMML_INTERNAL_TREE_H_
 
 #include <cassert>
 #include <memory>
@@ -2782,8 +2781,4 @@ typename tree<T, tree_node_allocator>::leaf_iterator& tree<T, tree_node_allocato
    return (*this);
    }
 
-#endif
-
-// Local variables:
-// default-tab-width: 3
-// End:
+#endif  // GMML_INTERNAL_TREE_H_

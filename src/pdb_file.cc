@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "gmml/internal/environment.h"
-#include "gmml/internal/utilities.h"
 #include "gmml/internal/geometry.h"
+#include "utilities.h"
 
 namespace gmml {
 
@@ -45,6 +45,7 @@ void PdbAtomCard::write(std::ostream& out) const {
     trim(str);
     out << str;
 }
+
 void PdbAtomCard::read(const string& line) {
     string input(line);
     if (input.size() < 80)
@@ -82,6 +83,10 @@ void PdbAtomCard::read(const string& line) {
     }
 }
 
+void PdbTerCard::write(std::ostream& out) const {
+    out << "TER";
+}
+
 void PdbConnectCard::write(std::ostream& out) const {
     string str(80, ' ');
     set_in_string(str, "CONECT", 0, 6, 'L');
@@ -117,6 +122,10 @@ void PdbConnectCard::read(const std::string& line) {
     }
 }
 
+void PdbEndCard::write(std::ostream& out) const {
+    out << "END";
+}
+
 void PdbLinkCard::read(const std::string& line) {
     string input(line);
     if (input.size() < 80)
@@ -150,6 +159,10 @@ void PdbLinkCard::write(std::ostream& out) const {
     set_in_string(str, res_seq2, 52, 4, 'L');
     trim(str);
     out << str;
+}
+
+void PdbUnknownCard::write(std::ostream& out) const {
+    out << line;
 }
 
 void PdbFile::read(const string& file_name) {

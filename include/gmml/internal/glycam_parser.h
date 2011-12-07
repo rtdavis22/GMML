@@ -5,8 +5,9 @@
 
 #include <string>
 
-#include "array_tree.h"
-#include "sequence_parser.h"
+#include "gmml/internal/array_tree.h"
+#include "gmml/internal/sequence_parser.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -14,6 +15,8 @@ namespace gmml {
 // get_parse_info should be purely virtual in SequenceParser.
 class GlycamParser : public SequenceParser {
   public:
+    GlycamParser() {}
+
     // This returns a "first-child, next-sibling" n-ary tree.
     virtual tree<ParsedResidue*> *parse(const std::string& sequence) const;
 
@@ -35,6 +38,8 @@ class GlycamParser : public SequenceParser {
     ParseInfo *get_parse_info(const std::string& sequence) const;
     
     ParsedResidue *parse_residue(const std::string& residue_string) const;
+
+    DISALLOW_COPY_AND_ASSIGN(GlycamParser);
 };
 
 }  // namespace gmml

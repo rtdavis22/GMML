@@ -9,10 +9,10 @@
 #include <string>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
+#include "boost/shared_ptr.hpp"
 
-#include "generic_type.h"
-#include "utilities.h"
+#include "gmml/internal/generic_type.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -54,32 +54,47 @@ class AmberTopSection {
     size_t count_per_line_;
     size_t width_;
     std::vector<GenericType> elements_;
+
+  private:
+    DISALLOW_COPY_AND_ASSIGN(AmberTopSection);
 };
 
 class AmberTopIntSection : public AmberTopSection {
   public:
     AmberTopIntSection(const std::string& name, const std::string& format,
                        size_t size = 0);
-    Status append(const std::string&);
+
+    virtual Status append(const std::string&);
     virtual void print(std::ostream&);
+
+  private:
+    DISALLOW_COPY_AND_ASSIGN(AmberTopIntSection);
 };
 
 class AmberTopDoubleSection : public AmberTopSection {
   public:
     AmberTopDoubleSection(const std::string& name, const std::string& format,
                           size_t size = 0);
-    Status append(const std::string&);
-    void print(std::ostream&);
+
+    virtual Status append(const std::string&);
+    virtual void print(std::ostream&);
+
   private:
     size_t decimal_places_;
+
+    DISALLOW_COPY_AND_ASSIGN(AmberTopDoubleSection);
 };
 
 class AmberTopStringSection : public AmberTopSection {
   public:
     AmberTopStringSection(const std::string& name, const std::string& format,
                           size_t size = 0);
-    Status append(const std::string&);
-    void print(std::ostream&);
+
+    virtual Status append(const std::string&);
+    virtual void print(std::ostream&);
+
+  private:
+    DISALLOW_COPY_AND_ASSIGN(AmberTopStringSection);
 };
 
 class AmberTopFile {
@@ -144,6 +159,8 @@ class AmberTopFile {
 
     SectionMap sections_;
     std::vector<std::string> section_list_;
+
+    DISALLOW_COPY_AND_ASSIGN(AmberTopFile);
 };
 
 }  // namespace gmml

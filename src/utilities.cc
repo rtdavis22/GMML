@@ -1,4 +1,4 @@
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 #include <iostream>
 

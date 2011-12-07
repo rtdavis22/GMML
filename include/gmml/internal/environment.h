@@ -1,12 +1,12 @@
 // Author: Robert Davis
 
-#ifndef ENVIRONMENT_H
-#define ENVIRONMENT_H
+#ifndef GMML_INTERNAL_ENVIRONMENT_H_
+#define GMML_INTERNAL_ENVIRONMENT_H_
 
 #include <string>
 #include <vector>
 
-#include "utilities.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -121,4 +121,4 @@ LibraryFileStructure *build_library_file_structure(const std::string& name);
 
 }  // namespace gmml
 
-#endif  // ENVIRONMENT_H
+#endif  // GMML_INTERNAL_ENVIRONMENT_H_

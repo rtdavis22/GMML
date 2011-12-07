@@ -15,11 +15,9 @@
 #include <string>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-
 #include "gmml/internal/environment.h"
 #include "gmml/internal/generic_type.h"
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 namespace gmml {
 

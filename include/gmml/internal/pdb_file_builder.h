@@ -1,10 +1,12 @@
 // Author: Robert Davis
 
-#ifndef PDB_FILE_BUILDER_H
-#define PDB_FILE_BUILDER_H
+#ifndef GMML_INTERNAL_PDB_FILE_BUILDER_H_
+#define GMML_INTERNAL_PDB_FILE_BUILDER_H_
 
 #include <utility>
 #include <vector>
+
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -32,8 +34,10 @@ class PdbFileBuilder {
     void build_connect_section(PdbFile *file, const Structure&,
                                const std::vector<int>& sequence,
                                const std::vector<int>& atom_map);
+
+    DISALLOW_COPY_AND_ASSIGN(PdbFileBuilder);
 };
 
 } // namespace gmml
 
-#endif  // PDB_FILE_BUILDER_H
+#endif  // GMML_INTERNAL_PDB_FILE_BUILDER_H_

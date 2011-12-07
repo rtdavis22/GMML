@@ -60,10 +60,11 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/standard_proteins.h \
   include/gmml/internal/structure.h \
   include/gmml/internal/structure-inl.h \
+  include/gmml/internal/stubs/common.h \
+  include/gmml/internal/stubs/utils.h \
   include/gmml/internal/torsion_combination_builder.h \
-  include/gmml/internal/tree.hh \
-  include/gmml/internal/tree_residue.h \
-  include/gmml/internal/utilities.h
+  include/gmml/internal/tree.h \
+  include/gmml/internal/tree_residue.h
 
 lib_LIBRARIES = libgmml.a
 libgmml_a_SOURCES = \
@@ -87,7 +88,9 @@ libgmml_a_SOURCES = \
   src/standard_proteins.cc \
   src/structure.cc \
   src/torsion_combination_builder.cc \
-  src/utilities.cc
+  src/utilities.cc \
+  src/utilities.h
+
 libgmml_a_CPPFLAGS = -I$(top_srcdir)/include
 
 uninstall-hook:

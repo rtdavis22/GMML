@@ -14,7 +14,7 @@
 #include "gmml/internal/sequence_parser.h"
 #include "gmml/internal/structure.h"
 #include "gmml/internal/tree_residue.h"
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 using std::bitset;
 using std::map;

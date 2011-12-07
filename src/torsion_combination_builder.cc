@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "gmml/internal/glycam_code_set.h"
-#include "gmml/internal/utilities.h"
+#include "utilities.h"
 
 namespace gmml {
 

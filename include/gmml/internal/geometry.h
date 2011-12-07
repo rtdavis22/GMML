@@ -3,8 +3,8 @@
 // The file contains classes and functions for 3D coordinates and
 // statically-sized vectors and matrices.
 
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
+#ifndef GMML_INTERNAL_GEOMETRY_H_
+#define GMML_INTERNAL_GEOMETRY_H_
 
 #include <cmath>
 
@@ -13,9 +13,8 @@
 #include <numeric>
 #include <stdexcept>
 #include <vector>
-#include <iostream> //remove
 
-#include "utilities.h"
+#include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
@@ -32,7 +31,7 @@ struct Coordinate {
     double x, y, z;
 };
 
-// base class for statically sized vectors with numeric elements
+// A base class for statically-sized vectors with numeric elements
 template<size_t size_, typename T = double>
 class VectorBase {
   public:
@@ -304,7 +303,7 @@ inline double measure(const Coordinate& c1, const Coordinate& c2,
                   cross(b1, b2).dot(b2xb3));
 }
 
-// angles in radians
+// TODO: clean this up
 inline Coordinate calculate_point(const Coordinate& a, const Coordinate& b,
                                   const Coordinate& c, double angle,
                                   double dihedral, double distance) {
@@ -344,6 +343,6 @@ inline Coordinate calculate_point(const Coordinate& a, const Coordinate& b,
 
 }  // namespace gmml
 
-#include "geometry-inl.h"
+#include "gmml/internal/geometry-inl.h"
 
-#endif  // GEOMETRY_H
+#endif  // GMML_INTERNAL_GEOMETRY_H_

@@ -1,17 +1,17 @@
 // Author: Robert Davis
 
-#ifndef GLYCAM_CODE_SET_H_
-#define GLYCAM_CODE_SET_H_
+#ifndef GMML_INTERNAL_GLYCAM_CODE_SET_H_
+#define GMML_INTERNAL_GLYCAM_CODE_SET_H_
 
 #include <bitset>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "array_tree.h"
-#include "residue_classification.h"
-#include "tree.hh" // see if I can get out of including this
-#include "utilities.h"
+#include "gmml/internal/array_tree.h"
+#include "gmml/internal/residue_classification.h"
+#include "gmml/internal/stubs/common.h"
+#include "gmml/internal/tree.h"
 
 namespace gmml {
 
@@ -148,4 +148,4 @@ Structure *glycam_build_with_array_tree(const std::string& sequence);
 
 }  // namespace gmml
 
-#endif  // GLYCAM_CODE_SET_H_
+#endif  // GMML_INTERNAL_GLYCAM_CODE_SET_H_
