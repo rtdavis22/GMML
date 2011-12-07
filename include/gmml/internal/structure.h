@@ -1,7 +1,8 @@
-#ifndef GMML_STRUCTURE_H_
-#define GMML_STRUCTURE_H_
+#ifndef GMML_INTERNAL_STRUCTURE_H_
+#define GMML_INTERNAL_STRUCTURE_H_
 
 #include <algorithm>
+#include <iosfwd>
 #include <list>
 #include <map>
 #include <memory>
@@ -66,6 +67,10 @@ class Structure {
     // Build the Structure represented by the pdb file. This does not do
     // anything "smart", like infer bonding.
     static Structure *build_from_pdb(const PdbFile& pdb_file);
+
+    // 
+    static Structure *build_from_pdb(const PdbFile& pdb_file,
+                                     bool infer_protein_bonds);
 
     virtual Structure *clone() const;
 
@@ -314,6 +319,9 @@ class Structure {
     // velocites) are ignored.
     void load_coordinates(const CoordinateFile& coordinate_file);
 
+    // Print a representation of the structure.
+    void print(std::ostream&) const;
+
   protected:
     // This is an internal representation of the residues in the structure.
     struct StructureResidue {
@@ -330,13 +338,16 @@ class Structure {
     // are provided.
     struct IndexedAtom {
         IndexedAtom(AtomPtr atom, int index) : atom(atom), index(index) {}
+
         AtomPtr atom;
         int index;
     };
     struct IndexedResidue {
-        IndexedResidue() : name("") {}
+        IndexedResidue() : name(""), bonds(NULL) {}
+
         std::vector<IndexedAtom*> atoms;
         std::string name;
+        Graph *bonds;
     };
 
     // This is an alternative to the assignment operator.
@@ -345,8 +356,9 @@ class Structure {
     // Add the atoms from the indexed residue to the structure and update the
     // map in which the keys of the map are the indices of the indexed atoms
     // and the values are the indices of the atoms in the structure.
-    void add_indexed_residue(std::map<int, int>& atom_map,
-                             const IndexedResidue& residue);
+    // The return value is the residue index of the residue in the structure.
+    int add_indexed_residue(std::map<int, int>& atom_map,
+                            const IndexedResidue& residue);
 
     // The random access list of the atoms of the structure.
     AtomList atoms_;
@@ -387,4 +399,4 @@ class StructureAttach {
 
 #include "structure-inl.h"
 
-#endif  // GMML_STRUCTURE_H_
+#endif  // GMML_INTERNAL_STRUCTURE_H_

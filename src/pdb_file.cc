@@ -12,8 +12,7 @@
 #include "gmml/internal/utilities.h"
 #include "gmml/internal/geometry.h"
 
-namespace gmml
-{
+namespace gmml {
 
 using std::istringstream;
 using std::list;
@@ -173,6 +172,7 @@ void PdbFile::print() const {
 void PdbFile::read(std::istream& in) {
     string line;
     while (getline(in, line)) {
+        lines_.push_back(line);
         string card_type = line.substr(0, 6);
         card_type.resize(6, ' ');
         boost::shared_ptr<PdbCard> card_ptr;
@@ -210,16 +210,18 @@ void PdbFile::read(std::istream& in) {
     }
 }
 
-PdbFile::CardType PdbFile::get_card_type(const string& card_name) {
-    if (card_name == "ATOM  " || card_name == "HETATM")
+PdbFile::CardType PdbFile::get_card_type(const string& line) {
+    string first_six = line.substr(0, 6);
+    first_six.resize(6, ' ');
+    if (first_six == "ATOM  " || first_six == "HETATM")
         return PdbFile::ATOM;
-    else if (card_name == "TER   ")
+    else if (first_six == "TER   ")
         return PdbFile::TER;
-    else if (card_name == "CONECT")
+    else if (first_six == "CONECT")
         return PdbFile::CONECT;
-    else if (card_name == "END   ")
+    else if (first_six == "END   ")
         return PdbFile::END;
-    else if(card_name == "LINK  ")
+    else if (first_six == "LINK  ")
         return PdbFile::LINK;
     else
         return PdbFile::UNKNOWN;

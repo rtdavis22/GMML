@@ -1,7 +1,7 @@
 // Author: Robert Davis
 
-#ifndef COORDINATE_GRID_H
-#define COORDINATE_GRID_H
+#ifndef GMML_INTERNAL_COORDINATE_GRID_H_
+#define GMML_INTERNAL_COORDINATE_GRID_H_
 
 #include <map>
 #include <utility>
@@ -46,11 +46,8 @@ class CoordinateGrid {
     double grid_unit() const { return grid_unit_; }
 
   private:
-    struct TripletPtrCompare {
-        bool operator()(const Triplet<int> *lhs, const Triplet<int> *rhs) const;
-    };
     typedef typename std::map<Triplet<int>*, StorageType,
-                              TripletPtrCompare> GridType;
+                              TripletPtrLess<int> > GridType;
     typedef typename GridType::iterator iterator;
     typedef typename GridType::const_iterator const_iterator;
 
@@ -76,12 +73,17 @@ const typename CoordinateGrid<T>::StorageType CoordinateGrid<T>::insert(
     Triplet<int> *triplet = new Triplet<int>(coordinate.x/grid_unit_,
                                              coordinate.y/grid_unit_,
                                              coordinate.z/grid_unit_);
+
+    // The second element of the pair is false if an element already exists
+    // with the given key;
     std::pair<iterator, bool> ret = grid_.insert(
             std::make_pair(triplet, static_cast<StorageType>(NULL)));
+
     if (!ret.second)
         delete triplet;
     else
         ret.first->second = new std::vector<int>;
+
     ret.first->second->push_back(info);
 
     return ret.first->second;
@@ -135,20 +137,6 @@ CoordinateGrid<T>::retrieve_adjacent_cells(const Coordinate& coordinate) const {
     return found;
 }
 
-template<typename T>
-bool CoordinateGrid<T>::TripletPtrCompare::operator()(
-        const Triplet<int> *lhs, const Triplet<int> *rhs) const {
-    if (lhs->first == rhs->first) {
-        if (lhs->second == rhs->second) {
-            return lhs->third < rhs->third;
-        } else {
-            return lhs->second < rhs->second;
-        }
-    } else {
-        return lhs->first < rhs->first;
-    }
-}
-
 }  // namespace gmml
 
-#endif  // COORDINATE_GRID_H
+#endif  // GMML_INTERNAL_COORDINATE_GRID_H_

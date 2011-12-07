@@ -21,6 +21,7 @@
 #include "internal/sander_minimize.h"
 #include "internal/sequence_parser.h"
 #include "internal/solvated_structure.h"
+#include "internal/standard_proteins.h"
 #include "internal/structure.h"
 #include "internal/torsion_combination_builder.h"
 #include "internal/tree.hh"

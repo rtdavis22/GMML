@@ -304,6 +304,7 @@ inline double measure(const Coordinate& c1, const Coordinate& c2,
                   cross(b1, b2).dot(b2xb3));
 }
 
+// angles in radians
 inline Coordinate calculate_point(const Coordinate& a, const Coordinate& b,
                                   const Coordinate& c, double angle,
                                   double dihedral, double distance) {

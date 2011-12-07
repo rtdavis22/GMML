@@ -13,6 +13,7 @@
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/pdb_file.h"
 #include "gmml/internal/pdb_file_builder.h"
+#include "gmml/internal/pdb_file_structure.h"
 #include "gmml/internal/prep_file.h"
 #include "gmml/internal/sander_minimize.h"
 #include "gmml/internal/utilities.h"
@@ -26,68 +27,27 @@ using std::vector;
 namespace gmml {
 
 Structure *Structure::build_from_pdb(const PdbFile& pdb_file) {
-    // This is a map from the chain id to a map between the residue sequence
-    // id and a list of atoms indexed by a pdb atom sequence id. Either or
-    // both of the maps should probably be a hash table.
-    map<char, map<int, IndexedResidue> > residue_map;
-    const list<boost::shared_ptr<PdbAtomCard> >& atom_cards =
-        pdb_file.atom_cards();
-
-    typedef PdbFile::AtomCardPtr AtomCardPtr;
-    for (list<AtomCardPtr>::const_iterator it = atom_cards.begin();
-            it != atom_cards.end(); ++it) {
-        AtomPtr new_atom(new Atom(get_element_by_char((*it)->element[0]),
-                                  Coordinate((*it)->x, (*it)->y, (*it)->z),
-                                  (*it)->name, (*it)->charge));
-        residue_map[(*it)->chain_id][(*it)->res_seq].atoms.push_back(
-                new IndexedAtom(new_atom, (*it)->serial));
-        if (residue_map[(*it)->chain_id][(*it)->res_seq].name == "")
-            residue_map[(*it)->chain_id][(*it)->res_seq].name = (*it)->res_name;
-    }
-
-    Structure *structure = new Structure;
-    map<int, int> atom_map;
-    map<char, map<int, IndexedResidue> >::const_iterator chain_it;
-    map<int, IndexedResidue>::const_iterator residue_it;
-    for (chain_it = residue_map.begin(); chain_it != residue_map.end();
-            ++chain_it) {
-        for (residue_it = chain_it->second.begin();
-                residue_it != chain_it->second.end(); ++residue_it) {
-            structure->add_indexed_residue(atom_map, residue_it->second);
-            std::for_each(residue_it->second.atoms.begin(),
-                          residue_it->second.atoms.end(), DeletePtr());
-        }
-    }
-
-    typedef PdbFile::ConnectCardPtr ConnectCardPtr;
-    const list<ConnectCardPtr>& connect_cards = pdb_file.connect_cards();
-    for (list<ConnectCardPtr>::const_iterator it = connect_cards.begin();
-            it != connect_cards.end(); ++it) {
-        int source = atom_map[(*it)->connect1];
-        if ((*it)->connect2 != kNotSet && atom_map[(*it)->connect2] < source)
-             structure->add_bond(source, atom_map[(*it)->connect2]);
-        if ((*it)->connect3 != kNotSet && atom_map[(*it)->connect3] < source)
-             structure->add_bond(source, atom_map[(*it)->connect3]);
-        if ((*it)->connect4 != kNotSet && atom_map[(*it)->connect4] < source)
-             structure->add_bond(source, atom_map[(*it)->connect4]);
-        if ((*it)->connect5 != kNotSet && atom_map[(*it)->connect5] < source)
-             structure->add_bond(source, atom_map[(*it)->connect5]);
-    }
-
-    return structure;
+    return PdbFileStructure::build(pdb_file);
 }
 
-void Structure::add_indexed_residue(map<int, int>& atom_map,
-                                    const IndexedResidue& residue) {
+int Structure::add_indexed_residue(map<int, int>& atom_map,
+                                   const IndexedResidue& residue) {
     int cur_size = atoms_.size();
     residues_->push_back(new StructureResidue(
             residue.name, cur_size, residue.atoms.size()));
     for (int i = 0; i < residue.atoms.size(); i++) {
         AtomPtr atom = residue.atoms[i]->atom;
         atoms_.push_back(atom);
-        atom_map[residue.atoms[i]->index] = cur_size + i;
+        int atom_index = residue.atoms[i]->index;
+        if (atom_index >= 0)
+            atom_map[atom_index] = cur_size + i;
     }
-    bonds_->append(Graph(residue.atoms.size()));
+    if (residue.bonds != NULL && residue.bonds->size() == residue.atoms.size())
+        bonds_->append(*residue.bonds);
+    else
+        bonds_->append(Graph(residue.atoms.size()));
+
+    return residues_->size() - 1;
 }
 
 Structure *Structure::clone() const {
@@ -168,8 +128,7 @@ int Structure::attach(const string& prep_code, const string& new_atom_name,
 }
 
 MinimizationResults *Structure::minimize(const string& input_file) {
-    SanderMinimize minimize;
-    return minimize(*this, input_file);
+    return SanderMinimize()(*this, input_file);
 }
 
 void Structure::translate_residue(int residue_index, double x, double y,
@@ -351,7 +310,7 @@ void Structure::set_dihedral(size_t atom1, size_t atom2, size_t atom3,
 
     for (vector<size_t>::iterator it = atoms->begin();
             it != atoms->end(); ++it)
-        matrix.apply(atoms_[*it]->coordinate());
+        matrix.apply(atoms_[*it]->mutable_coordinate());
 
     delete atoms;
 }
@@ -565,13 +524,13 @@ void Structure::set_residue_angle(int atom1, int atom2, int atom3,
 
     int residue_start = residues_->at(residue_index)->start_index;
     int residue_size = residues_->at(residue_index)->size;
+
     for (int i = residue_start; i < residue_size + residue_start; i++)
-        matrix.apply(atoms_[i]->coordinate());
+        matrix.apply(atoms_[i]->mutable_coordinate());
 }
 
 PdbFile *Structure::build_pdb_file() const {
-    PdbFileBuilder builder;
-    return builder.build(*this);
+    return PdbFileBuilder().build(*this);
 }
 
 void Structure::print_pdb_file(const string& file_name) const {
@@ -662,6 +621,26 @@ std::auto_ptr<Structure::InternalResidue> Structure::residues(int index) const {
                             first + residues_->at(index)->size));
 }
 
+void Structure::print(std::ostream& out) const {
+    out << "Total atoms: " << atoms_.size() << std::endl;
+    for (int i = 0; i < residues_->size(); i++) {
+        StructureResidue *residue = (*residues_)[i];
+        out << "Residue: " << residue->name <<
+               ", start - " << residue->start_index <<
+               ", size - " << residue->size << std::endl;
+        for (int j = residue->start_index;
+                j < residue->start_index + residue->size; j++) {
+            AtomPtr atom = atoms_[j];
+            out << "Atom: name - " << atom->name() <<
+                   ", type - " << atom->type() <<
+                   ", element - " << static_cast<int>(atom->element()) <<
+                   ", coordinate - " << atom->coordinate().x << " " <<
+                   atom->coordinate().y << " " << atom->coordinate().z <<
+                   std::endl;
+        }
+    }
+}
+
 int StructureAttach::operator()(Structure& structure, Residue *new_residue,
                                 const string& new_atom_name, int residue_index,
                                 const string& target_atom_name) const {
@@ -690,7 +669,7 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
 
     // This constant should be changed and made static const in the class.
     double bond_length = 1.4;
-    if (parameter_bond == NULL && parameter_bond->length != kNotSet)
+    if (parameter_bond != NULL && parameter_bond->length != kNotSet)
         bond_length = parameter_bond->length;
 
     Vector<3> direction = get_connection_direction(structure,
@@ -699,8 +678,6 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
     direction.normalize();
     direction *= bond_length;
 
-    //Vector<3> oxygen_position(Vector<3>(atoms_[new_atom_index]->coordinate()) +
-    //                          direction);
     direction += Vector<3>(atoms[new_atom_index]->coordinate());
     Vector<3> oxygen_position = direction;
     VectorBase<3> offset(Vector<3>(atoms[target_atom_index]->coordinate()) -
@@ -711,7 +688,7 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
     // Set the bond angles
     const Structure::AdjList& adj_atoms = structure.bonds(target_atom_index);
     for (int i = 0; i < adj_atoms.size(); i++) {
-        if (adj_atoms[i] != new_atom_index){
+        if (adj_atoms[i] != new_atom_index) {
             int third_atom = adj_atoms[i];
             const ParameterFileAngle *parameter_angle = parm_set->lookup(
                 atoms[third_atom]->type(),
@@ -755,7 +732,7 @@ Vector<3> StructureAttach::get_connection_direction(const Structure& structure,
             v.normalize();
             direction += v;
             direction.normalize();
-         }
+        }
     }
     return direction;
 }
@@ -805,4 +782,4 @@ void StructureAttach::set_dihedrals(Structure& structure, int new_residue_index,
     }
 }
 
-}
+}  // namespace gmml

@@ -1,7 +1,7 @@
 // Author: Robert Davis
 
-#ifndef UTILITIES_H
-#define UTILITIES_H
+#ifndef GMML_INTERNAL_UTILITIES_H_
+#define GMML_INTERNAL_UTILITIES_H_
 
 #include <exception>
 #include <iomanip>
@@ -64,16 +64,6 @@ typename MapType::iterator add_or_update_map(MapType& map,
     }
 }
 
-template<typename T>
-struct Triplet {
-    Triplet(const T& first, const T& second, const T& third)
-            : first(first), second(second), third(third) {}
-
-    T first;
-    T second;
-    T third;
-};
-
 // Handy functors
 struct DeletePtr {
     template<class T>
@@ -83,6 +73,40 @@ struct DeletePtr {
 struct DereferenceLess {
     template<typename PtrType>
     bool operator()(PtrType lhs, PtrType rhs) const { return *lhs < *rhs; }
+};
+
+template<typename T, typename U = T, typename V = T>
+struct Triplet {
+    Triplet(const T& first, const U& second, const V& third)
+            : first(first), second(second), third(third) {}
+
+    T first;
+    U second;
+    V third;
+};
+
+template<typename T, typename U = T, typename V = T>
+struct TripletLess {
+    bool operator()(const Triplet<T, U, V>& lhs,
+                    const Triplet<T, U, V>& rhs) const {
+        if (lhs.first == rhs.first) {
+            if (lhs.second == rhs.second) {
+                return lhs.third < rhs.third;
+            } else {
+                return lhs.second < rhs.second;
+            }
+        } else {
+            return lhs.first < rhs.first;
+        }
+    }
+};
+
+template<typename T, typename U = T, typename V = T>
+struct TripletPtrLess {
+    bool operator()(const Triplet<T, U, V> *lhs,
+                    const Triplet<T, U, V> *rhs) const {
+        return TripletLess<T, U, V>()(*lhs, *rhs);
+    }
 };
 
 // File utilities
@@ -228,7 +252,7 @@ inline ExitException::ExitException(int status)
 
 // A value for numbers to indicate that they are not set. This obviously isn't
 // the safest thing to do, but it is useful in many situations.
-const double kNotSet = 12345678.0;
+const double kNotSet = 123456789.0;
 
 template<typename T>
 inline bool is_not_set(T val) {
@@ -252,4 +276,4 @@ inline double to_degrees(double radians) {
 
 }  // namespace gmml
 
-#endif  // UTILITIES_H
+#endif  // GMML_INTERNAL_UTILITIES_H_

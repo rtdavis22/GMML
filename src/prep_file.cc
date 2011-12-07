@@ -5,17 +5,13 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <sstream>
 #include <stack>
-#include <string>
-#include <vector>
 
 #include "boost/shared_ptr.hpp"
 
 #include "gmml/internal/environment.h"
-#include "gmml/internal/geometry.h"
-#include "gmml/internal/utilities.h"
+#include "gmml/internal/residue.h"
 
 namespace gmml {
 
@@ -24,22 +20,53 @@ using std::stack;
 using std::string;
 using std::vector;
 
-PrepFile::PrepFile() { read(std::cin); }
+// Private implementation
+class PrepFile::Impl {
+  public:
+    Impl() { read(std::cin); }
+    explicit Impl(const string& file) { read(file); }
 
-void PrepFile::read(const string& file_name) {
+    PrepFile::iterator begin() { return residues_.begin(); }
+    PrepFile::const_iterator begin() const { return residues_.begin(); }
+
+    PrepFile::iterator end() { return residues_.end(); }
+    PrepFile::const_iterator end() const { return residues_.end(); }
+
+  private:
+    void read(const std::string& file);
+    void read(std::istream&);
+    bool process_residue(std::istream&);
+    PrepFileResidue::CoordinateType extract_coordinate_type(
+            std::istream&) const;
+    PrepFileResidue::DummyAtomOmission extract_dummy_omission(
+            std::istream&) const;
+    PrepFileResidue::DummyAtomPosition extract_dummy_position(
+            std::istream&) const;
+    PrepFileResidue::OutputFormat extract_output_format(
+            std::istream&) const;
+    PrepFileResidue::GeometryType extract_geometry_type(
+            std::istream&) const;
+    PrepFileAtom::TopologicalType extract_topological_type(
+            std::istream&) const;
+    OtherSection get_other_section(const std::string& line) const;
+
+    map<string, ResiduePtr> residues_;
+};
+
+void PrepFile::Impl::read(const string& file_name) {
     std::ifstream stream(find_file(file_name).c_str());
     read(stream);
     stream.close();
 }
 
-void PrepFile::read(std::istream& in) {
+void PrepFile::Impl::read(std::istream& in) {
     string line;
     getline(in, line);
     getline(in, line);
     while (process_residue(in)) {}
 }
 
-bool PrepFile::process_residue(std::istream& in) {
+bool PrepFile::Impl::process_residue(std::istream& in) {
     ResiduePtr residue(new PrepFileResidue);
     string line;
     std::istringstream ss;
@@ -114,7 +141,7 @@ bool PrepFile::process_residue(std::istream& in) {
     return true;
 }
 
-PrepFileResidue::CoordinateType PrepFile::extract_coordinate_type(
+PrepFileResidue::CoordinateType PrepFile::Impl::extract_coordinate_type(
         std::istream& in) const {
     string s;
     in >> s;
@@ -124,7 +151,7 @@ PrepFileResidue::CoordinateType PrepFile::extract_coordinate_type(
         return PrepFileResidue::kINT;
 }
 
-PrepFileResidue::DummyAtomOmission PrepFile::extract_dummy_omission(
+PrepFileResidue::DummyAtomOmission PrepFile::Impl::extract_dummy_omission(
         std::istream& in) const {
     string s;
     in >> s;
@@ -134,7 +161,7 @@ PrepFileResidue::DummyAtomOmission PrepFile::extract_dummy_omission(
         return PrepFileResidue::kOmit;
 }
 
-PrepFileResidue::DummyAtomPosition PrepFile::extract_dummy_position(
+PrepFileResidue::DummyAtomPosition PrepFile::Impl::extract_dummy_position(
         std::istream& in) const {
     string s;
     in >> s;
@@ -144,7 +171,7 @@ PrepFileResidue::DummyAtomPosition PrepFile::extract_dummy_position(
         return PrepFileResidue::kPositionBeg;
 }
 
-PrepFileResidue::OutputFormat PrepFile::extract_output_format(
+PrepFileResidue::OutputFormat PrepFile::Impl::extract_output_format(
         std::istream& in) const {
     int val;
     in >> val;
@@ -154,7 +181,7 @@ PrepFileResidue::OutputFormat PrepFile::extract_output_format(
         return PrepFileResidue::kFormatted;
 }
 
-PrepFileResidue::GeometryType PrepFile::extract_geometry_type(
+PrepFileResidue::GeometryType PrepFile::Impl::extract_geometry_type(
         std::istream& in) const {
     string s;
     in >> s;
@@ -164,7 +191,7 @@ PrepFileResidue::GeometryType PrepFile::extract_geometry_type(
         return PrepFileResidue::kGeometryCorrect;
 }
 
-PrepFileAtom::TopologicalType PrepFile::extract_topological_type(
+PrepFileAtom::TopologicalType PrepFile::Impl::extract_topological_type(
         std::istream& in) const {
     string s;
     in >> s;
@@ -180,7 +207,8 @@ PrepFileAtom::TopologicalType PrepFile::extract_topological_type(
         return PrepFileAtom::kTopType3;
 }
 
-PrepFile::OtherSection PrepFile::get_other_section(const string& line) const {
+PrepFile::OtherSection PrepFile::Impl::get_other_section(
+        const string& line) const {
     if (line == "LOOP")
         return kSectionLoop;
     else if (line == "IMPROPER")
@@ -190,7 +218,59 @@ PrepFile::OtherSection PrepFile::get_other_section(const string& line) const {
     return kSectionOther;
 }
 
-void PrepFileSet::load(const PrepFile& prep_file) {
+// Public implementation
+PrepFile::PrepFile() : impl_(new Impl) {}
+PrepFile::PrepFile(const string& file) : impl_(new Impl(file)) {}
+PrepFile::~PrepFile() {}
+
+PrepFile::iterator PrepFile::begin() { return impl_->begin(); }
+PrepFile::const_iterator PrepFile::begin() const { return impl_->begin(); }
+
+PrepFile::iterator PrepFile::end() { return impl_->end(); }
+PrepFile::const_iterator PrepFile::end() const { return impl_->end(); }
+
+// Private implementation
+class PrepFileSet::Impl {
+  public:
+    Impl() {}
+
+    ~Impl() {}
+
+    PrepFile::ResiduePtr lookup(const string& name) const;
+
+    bool exists(const string& name) const {
+         return residues_.find(name) != residues_.end();
+    }
+
+    void load(const PrepFile& prep_file);
+
+    PrepFile::iterator begin() { return residues_.begin(); }
+    PrepFile::const_iterator begin() const { return residues_.begin(); }
+
+    PrepFile::iterator end() { return residues_.end(); }
+    PrepFile::const_iterator end() const { return residues_.end(); }
+
+    PrepFileResidue& operator[](const string& name) {
+        return *residues_[name];
+    }
+
+    const PrepFileResidue& operator[](const string& name) const {
+        return *(residues_.find(name)->second);
+    }
+
+  private:
+    map<string, PrepFile::ResiduePtr> residues_;
+};
+
+PrepFile::ResiduePtr PrepFileSet::Impl::lookup(const string& name) const {
+    PrepFile::const_iterator it;
+    if ((it = residues_.find(name)) == residues_.end())
+        return PrepFile::ResiduePtr();
+    else
+        return it->second;
+}
+
+void PrepFileSet::Impl::load(const PrepFile& prep_file) {
     PrepFile::const_iterator it;
     for (it = prep_file.begin(); it != prep_file.end(); ++it) {
         if (residues_.find(it->first) == residues_.end()) {
@@ -202,6 +282,95 @@ void PrepFileSet::load(const PrepFile& prep_file) {
         }
     }
 }
+
+// Public implementation
+PrepFileSet::PrepFileSet() : impl_(new Impl) {}
+
+PrepFileSet::~PrepFileSet() {}
+
+PrepFile::ResiduePtr PrepFileSet::lookup(const string& name) const {
+    return impl_->lookup(name);
+}
+
+bool PrepFileSet::exists(const string& name) const {
+    return impl_->exists(name);
+}
+
+void PrepFileSet::load(const PrepFile& prep_file) {
+    impl_->load(prep_file);
+}
+
+PrepFileResidue& PrepFileSet::operator[](const string& name) {
+    return impl_->operator[](name);
+}
+
+const PrepFileResidue& PrepFileSet::operator[](const string& name) const {
+    return impl_->operator[](name);
+}
+
+PrepFile::iterator PrepFileSet::begin() { return impl_->begin(); }
+PrepFile::const_iterator PrepFileSet::begin() const { return impl_->begin(); }
+
+PrepFile::iterator PrepFileSet::end() { return impl_->end(); }
+PrepFile::const_iterator PrepFileSet::end() const { return impl_->end(); }
+
+namespace {
+
+void set_parent_list(const vector<PrepFileAtom*>& atoms,
+                     vector<int>& parent_list) {
+    stack<int> st;
+    for (int i = atoms.size() - 1; i >= 0; i--) {
+        size_t stack_size = st.size();
+        switch (atoms[i]->topological_type) {
+            case PrepFileAtom::kTopTypeM:
+                while (!st.empty()) {
+                    parent_list[st.top()] = i;
+                    st.pop();
+                }
+                break;
+            case PrepFileAtom::kTopTypeS:
+                if (stack_size > 0) {
+                    parent_list[st.top()] = i;
+                    st.pop();
+                }
+                break;
+            case PrepFileAtom::kTopTypeB:
+                for (size_t j = 0; j < std::min((size_t)2, stack_size); j++) {
+                    parent_list[st.top()] = i;
+                    st.pop();
+                }
+                break;
+            case PrepFileAtom::kTopTypeE:
+                break;
+            case PrepFileAtom::kTopType3:
+                for (size_t j = 0; j < std::min((size_t)3, stack_size); j++) {
+                    parent_list[st.top()] = i;
+                    st.pop();
+                }
+                break;
+            default:
+                warning("Unrecognized topological type ");
+                break;
+        }
+        st.push(i);
+    }
+}
+
+void set_dummy_coordinates(const vector<PrepFileAtom*>& atoms,
+                           vector<Coordinate*>& coordinates) {
+    coordinates[0] = new Coordinate(0.0, 0.0, 0.0);
+
+    double dist1 = atoms[1]->bond_length;
+    coordinates[1] = new Coordinate(dist1, 0.0, 0.0);
+
+    double dist2 = atoms[2]->bond_length;
+    double angle = atoms[2]->angle;
+    coordinates[2] = new Coordinate(dist1 - cos(to_radians(angle))*dist2,
+                                    sin(to_radians(angle))*dist2,
+                                    0.0);
+}
+
+}  // namespace
 
 Residue *BuildPrepFileResidue::operator()(
         const PrepFileResidue& prep_file_residue) const {
@@ -252,61 +421,6 @@ Residue *BuildPrepFileResidue::operator()(
     std::for_each(coordinates.begin(), coordinates.end(), DeletePtr());
 
     return new Residue(bonds, prep_file_residue.name, atoms);
-}
-
-// Pretty sure there's a good way to simplify this
-void BuildPrepFileResidue::set_parent_list(const vector<PrepFileAtom*>& atoms,
-                                           vector<int>& parent_list) {
-    stack<int> st;
-    for (int i = atoms.size() - 1; i >= 0; i--) {
-        size_t stack_size = st.size();
-        switch (atoms[i]->topological_type) {
-            case PrepFileAtom::kTopTypeM:
-                while (!st.empty()) {
-                    parent_list[st.top()] = i;
-                    st.pop();
-                }
-                break;
-            case PrepFileAtom::kTopTypeS:
-                if (stack_size > 0) {
-                    parent_list[st.top()] = i;
-                    st.pop();
-                }
-                break;
-            case PrepFileAtom::kTopTypeB:
-                for (size_t j = 0; j < std::min((size_t)2, stack_size); j++) {
-                    parent_list[st.top()] = i;
-                    st.pop();
-                }
-                break;
-            case PrepFileAtom::kTopTypeE:
-                break;
-            case PrepFileAtom::kTopType3:
-                for (size_t j = 0; j < std::min((size_t)3, stack_size); j++) {
-                    parent_list[st.top()] = i;
-                    st.pop();
-                }
-                break;
-            default:
-                warning("Unrecognized topological type ");
-                break;
-        }
-        st.push(i);
-    }
-}
-
-void BuildPrepFileResidue::set_dummy_coordinates(
-        const vector<PrepFileAtom*>& atoms, vector<Coordinate*>& coordinates) {
-    coordinates[0] = new Coordinate(0.0, 0.0, 0.0);
-
-    double dist1 = atoms[1]->bond_length;
-    coordinates[1] = new Coordinate(dist1, 0.0, 0.0);
-
-    double dist2 = atoms[2]->bond_length;
-    double angle = atoms[2]->angle;
-    coordinates[2] = new Coordinate(dist1 - cos(to_radians(angle))*dist2,
-                                    sin(to_radians(angle))*dist2,
-                                    0.0);
 }
 
 }  // namespace gmml

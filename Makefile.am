@@ -47,14 +47,17 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/library_file.h \
   include/gmml/internal/parameter_file.h \
   include/gmml/internal/parameter_file-inl.h \
-  include/gmml/internal/pdb_file_builder.h \
   include/gmml/internal/pdb_file.h \
+  include/gmml/internal/pdb_file_builder.h \
+  include/gmml/internal/pdb_file_structure.h \
   include/gmml/internal/prep_file.h \
   include/gmml/internal/residue_classification.h \
   include/gmml/internal/residue.h \
   include/gmml/internal/sander_minimize.h \
+  include/gmml/internal/scoped_ptr.h \
   include/gmml/internal/sequence_parser.h \
   include/gmml/internal/solvated_structure.h \
+  include/gmml/internal/standard_proteins.h \
   include/gmml/internal/structure.h \
   include/gmml/internal/structure-inl.h \
   include/gmml/internal/torsion_combination_builder.h \
@@ -75,11 +78,13 @@ libgmml_a_SOURCES = \
   src/graph.cc \
   src/library_file.cc \
   src/parameter_file.cc \
-  src/pdb_file_builder.cc \
   src/pdb_file.cc \
+  src/pdb_file_builder.cc \
+  src/pdb_file_structure.cc \
   src/prep_file.cc \
   src/sander_minimize.cc \
   src/solvated_structure.cc \
+  src/standard_proteins.cc \
   src/structure.cc \
   src/torsion_combination_builder.cc \
   src/utilities.cc

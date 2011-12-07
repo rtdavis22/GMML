@@ -98,6 +98,9 @@ class Atom {
     void set_type(const std::string& type) { type_ = type; }
  
     const Coordinate& coordinate() const { return coordinate_; }
+    Coordinate& mutable_coordinate() { return coordinate_; }
+
+
     Element element() const { return element_; }
     const std::string& name() const { return name_; }
     const std::string& type() const { return type_; }
