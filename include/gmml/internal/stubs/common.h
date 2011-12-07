@@ -61,6 +61,17 @@ struct DereferenceLess {
     bool operator()(PtrType lhs, PtrType rhs) const { return *lhs < *rhs; }
 };
 
+// This is here so we don't have to include all of <algorithm> just to use
+// std::for_each() (with DeletePtr).
+template <class ForwardIterator>
+void STLDeleteContainerPointers(ForwardIterator begin, ForwardIterator end) {
+    while (begin != end) {
+        ForwardIterator temp = begin;
+        ++begin;
+        delete *temp;
+    }
+}
+
 }  // namespace gmml
 
 #endif  // GMML_INTERNAL_STUBS_COMMON_H_

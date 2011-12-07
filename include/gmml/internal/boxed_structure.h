@@ -12,9 +12,12 @@ class CoordinateFile;
 
 // Box only contains the dimensions of the box. See BoxedRegion below for
 // a structure that encapsulates the position of a box.
-//
-// TODO: Put a constructor in here.
 struct Box {
+    Box(double angle, double length, double width, double height)
+            : angle(angle), length(length), width(width), height(height) {}
+
+    ~Box() {}
+
     double angle;
     double length;
     double width;

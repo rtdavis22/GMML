@@ -1,4 +1,7 @@
 // Author: Robert Davis
+//
+// This file contains a representation of the AMBER topology file.
+// See http://ambermd.org/formats.html#topology for the specification.
 
 #ifndef GMML_INTERNAL_AMBER_TOP_FILE_H_
 #define GMML_INTERNAL_AMBER_TOP_FILE_H_
@@ -36,12 +39,13 @@ class AmberTopSection {
     void clear() { elements_.clear(); }
     virtual void print(std::ostream& out) = 0;
 
-    // Compute sum and minimum and maximum values of the section.
+    // Compute sum, minimum and maximum values of the section.
     GenericType sum() const;
     GenericType max() const;
     GenericType min() const;
 
     size_t size() const { return elements_.size(); }
+
     GenericType& operator[](size_t i) { return elements_[i]; }
     const GenericType& operator[](size_t i) const { return elements_[i]; }
 
@@ -99,7 +103,7 @@ class AmberTopStringSection : public AmberTopSection {
 
 class AmberTopFile {
   public:
-    // The 3 types of sections that are possible in the file.
+    // The three types of sections that are possible in the file.
     enum SectionType { kStringSection, kIntSection, kDoubleSection };
 
     // These classify the control lines of the file ("%FLAG", "%FORMAT")

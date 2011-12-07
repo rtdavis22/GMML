@@ -150,13 +150,7 @@ class TorsionCombinationBuilder {
         }
         void insert(const std::vector<double>& vec);
 
-        const std::vector<double>& at(int index) const {
-            std::set<std::vector<double> >::iterator it = values_.begin();
-            // TODO: Use advance instead.
-            for (int i = 0; i < index; i++)
-                it++;
-            return *it;
-        }
+        const std::vector<double>& at(int index) const;
 
         int size() const { return values_.size(); }
 

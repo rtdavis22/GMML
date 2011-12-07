@@ -172,7 +172,7 @@ void LibraryFileStructure::read_box(std::istream& in) {
         return;
     }
 
-    box_ = new Box;
+    box_ = new Box(kNotSet, kNotSet, kNotSet, kNotSet);
 
     getline(in, line);
     ss.str(line);

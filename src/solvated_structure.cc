@@ -129,8 +129,9 @@ void SolvatedStructure::solvate(const Structure& solvent,
     remove_close_solvent_residues(closeness);
 
     BoxedRegion *new_region = get_boxed_region(*this);
-    if (box_ == NULL)
-        box_ = new Box;
+    if (box_ == NULL) {
+        box_ = new Box(kNotSet, kNotSet, kNotSet, kNotSet);
+    }
     box_->angle = 90.0;
     box_->length = new_region->max_x - new_region->min_x;
     box_->width = new_region->max_y - new_region->min_y;

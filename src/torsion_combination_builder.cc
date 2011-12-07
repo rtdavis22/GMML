@@ -38,6 +38,13 @@ void TorsionCombinationBuilder::LinkageAngles::insert(
     }
 }
 
+const vector<double>& TorsionCombinationBuilder::LinkageAngles::at(
+        int index) const {
+    set<vector<double> >::iterator it = values_.begin();
+    std::advance(it, index);
+    return *it;
+}
+
 TorsionCombinationBuilder::TorsionCombinationBuilder(const Structure& structure)
             : structure(structure.clone()),
               linkage_angles(structure.get_residue_count()) {}
