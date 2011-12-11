@@ -12,7 +12,7 @@ struct ParsedResidue;
 
 class GlycanDrawer {
   public:
-    GlycanDrawer() : file_type_("png"), dpi_(72), show_edge_labels_(false) {}
+    GlycanDrawer() : dpi_(72), show_edge_labels_(false) {}
 
     ~GlycanDrawer() {}
 
@@ -22,13 +22,11 @@ class GlycanDrawer {
     void print_file(const std::string& glycan, const std::string& file) const;
 
     // Mutators
-    void set_file_type(const std::string& file_type) { file_type_ = file_type; }
     void set_dpi(int dpi) { dpi_ = dpi; }
     void show_edge_labels() { show_edge_labels_ = true; }
     void hide_edge_labels() { show_edge_labels_ = false; }
 
     // Accessors
-    std::string file_type() const { return file_type_; }
     int dpi() const { return dpi_; }
     bool show_edge_labels() const { return show_edge_labels_; }
 
@@ -36,7 +34,6 @@ class GlycanDrawer {
     void write(const ArrayTree<ParsedResidue*> *parsed_tree,
                std::ostream& out) const;
 
-    std::string file_type_;
     int dpi_;
     bool show_edge_labels_;
 };
