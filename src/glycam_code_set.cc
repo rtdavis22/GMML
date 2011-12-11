@@ -103,11 +103,16 @@ string GlycamCodeSet::get_code(const string& residue_name,
     string new_name = residue_name;
     ResidueClassification::RingType ring_type =
         ResidueClassification::kPyranose;
+    // I think this poses a problem if the fourth letter is 'p' or 'f' and is
+    // part of the residue name instead of the ring type.
     if (new_name.size() > 3) {
-        if (new_name[3] == 'p' || new_name[3] == 'f')
+        char ring_letter = new_name[3];
+        if (ring_letter == 'p' || ring_letter == 'f') {
             new_name.erase(new_name.begin() + 3);
-        if (new_name[3] == 'f')
-            ring_type = ResidueClassification::kFuranose;
+            if (ring_letter == 'f') {
+                ring_type = ResidueClassification::kFuranose;
+            }
+        }
     }
  
     return get_code(new_name, isomer, ring_type, config, open_valences);
