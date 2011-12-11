@@ -10,6 +10,7 @@
 #include "internal/geometry.h"
 #include "internal/glycam_code_set.h"
 #include "internal/glycam_parser.h"
+#include "internal/glycan_drawer.h"
 #include "internal/graph.h"
 #include "internal/library_file.h"
 #include "internal/parameter_file.h"
