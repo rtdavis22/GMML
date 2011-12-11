@@ -224,24 +224,28 @@ ParsedResidue *GlycamParser::parse_residue(const string& residue_string) const {
         residue->oxygen_position = 1;
     }
 
-    // Insert the derivatives, if any exist
     size_t l_brack = residue_string.find('[');
     size_t r_brack = residue_string.find(']');
     if (l_brack == string::npos || r_brack == string::npos) {
         residue->name = residue_string.substr(1, dash_index - 3);
     } else {
         residue->name = residue_string.substr(1, l_brack - 1);
-        string derivatives = residue_string.substr(l_brack + 1,
-                                                   r_brack - l_brack - 1);
-        vector<string> derivatives_tokens;
-        split(derivatives, ',', derivatives_tokens);
-        for (vector<string>::iterator it = derivatives_tokens.begin();
-                it != derivatives_tokens.end(); ++it) {
-            if (it->size() != 2)
-                throw ParseException("Invalid derivative in sequence");
-            if (!is_number(it->at(0)))
-                throw ParseException("Invalid derivative position in sequence");
-            residue->derivatives[char_to_number(it->at(0))] = it->at(1);
+        if (parse_derivatives_) {
+            string derivatives = residue_string.substr(l_brack + 1,
+                                                       r_brack - l_brack - 1);
+            vector<string> derivatives_tokens;
+            split(derivatives, ',', derivatives_tokens);
+            for (vector<string>::iterator it = derivatives_tokens.begin();
+                    it != derivatives_tokens.end(); ++it) {
+                if (it->size() != 2) {
+                    throw ParseException("Invalid derivative in sequence");
+                }
+                if (!is_number(it->at(0))) {
+                    throw ParseException(
+                            "Invalid derivative position in sequence");
+                }
+                residue->derivatives[char_to_number(it->at(0))] = it->at(1);
+            }
         }
     }
 
