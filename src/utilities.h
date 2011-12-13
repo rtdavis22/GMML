@@ -88,16 +88,6 @@ struct ExitException : public std::exception {
     std::string what_;
 };
 
-extern bool kEnableWarnings;
-
-inline void enable_warnings() {
-    kEnableWarnings = true;
-}
-
-inline void disable_warnings() {
-    kEnableWarnings = false;
-}
-
 void warning(const std::string& message);
 
 void error(const std::string& message);
