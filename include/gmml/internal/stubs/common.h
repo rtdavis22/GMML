@@ -72,6 +72,17 @@ void STLDeleteContainerPointers(ForwardIterator begin, ForwardIterator end) {
     }
 }
 
+// Is there a better place for these?
+extern bool kEnableWarnings;
+
+inline void enable_warnings() {
+    kEnableWarnings = true;
+}
+
+inline void disable_warnings() {
+    kEnableWarnings = false;
+}
+
 }  // namespace gmml
 
 #endif  // GMML_INTERNAL_STUBS_COMMON_H_
