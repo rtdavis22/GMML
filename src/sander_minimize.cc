@@ -38,6 +38,8 @@ MinimizationResults *SanderMinimize::operator()(
     warning("SanderMinimize - You must have sander in your path to minimize.");
     return NULL;
 #endif
+    string absolute_file = find_file(input_file);
+
     struct timeval tv;
     gettimeofday(&tv, NULL);
     string uid = to_string(static_cast<int>(tv.tv_usec));
@@ -50,7 +52,7 @@ MinimizationResults *SanderMinimize::operator()(
         structure.print_amber_top_file(uid + "_temp.top", parm_set);
         structure.print_coordinate_file(uid + "_temp.rst");
         char *args[] = { "sander", "-i",
-                         const_cast<char*>(input_file.c_str()),
+                         const_cast<char*>(absolute_file.c_str()),
                          "-p",
                          const_cast<char*>(string(uid + "_temp.top").c_str()),
                          "-c",
