@@ -43,6 +43,7 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/geometry-inl.h \
   include/gmml/internal/glycam_code_set.h \
   include/gmml/internal/glycam_parser.h \
+  include/gmml/internal/glycan_drawer.h \
   include/gmml/internal/graph.h \
   include/gmml/internal/library_file.h \
   include/gmml/internal/parameter_file.h \
@@ -76,6 +77,7 @@ libgmml_a_SOURCES = \
   src/generic_type.cc \
   src/glycam_code_set.cc \
   src/glycam_parser.cc \
+  src/glycan_drawer.cc \
   src/graph.cc \
   src/library_file.cc \
   src/parameter_file.cc \
@@ -95,6 +97,8 @@ libgmml_a_CPPFLAGS = -I$(top_srcdir)/include
 
 uninstall-hook:
 	rm -rf $(includedir)/gmml
+
+EXTRA_DIST = autogen.sh
 
 MAINTAINERCLEANFILES = \
   aclocal.m4 \
