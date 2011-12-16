@@ -1,11 +1,15 @@
-#include "gtest/gtest.h"
-#include "gmml/gmml.h"
+// Author: Robert Davis
 
-using namespace gmml;
+#include "gmml/gmml.h"
+#include "gtest/gtest.h"
+
+using gmml::Atom;
+using gmml::Coordinate;
+using gmml::Element;
 
 TEST(AtomTest, Constructor1) {
-    Atom atom(kElementC, Coordinate(1.0, 2.0, 3.0), "C", 0.2);
-    EXPECT_EQ(atom.element(), kElementC);
+    Atom atom(gmml::kElementC, Coordinate(1.0, 2.0, 3.0), "C", 0.2);
+    EXPECT_EQ(atom.element(), gmml::kElementC);
     EXPECT_EQ(atom.coordinate().x, 1.0);
     EXPECT_EQ(atom.coordinate().y, 2.0);
     EXPECT_EQ(atom.coordinate().z, 3.0);

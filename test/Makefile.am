@@ -12,4 +12,7 @@ gmml_test_SOURCES = \
 
 TESTS = gmml-test
 
+EXTRA_DIST = \
+  dat/test.prep
+
 MAINTAINERCLEANFILES = Makefile.in

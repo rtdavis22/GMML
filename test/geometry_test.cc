@@ -1,7 +1,9 @@
-#include "gtest/gtest.h"
-#include "gmml/gmml.h"
+// Author: Robert Davis
 
-using namespace gmml;
+#include "gmml/gmml.h"
+#include "gtest/gtest.h"
+
+using gmml::Coordinate;
 
 TEST(CoordinateTest, Constructor) {
     Coordinate c(20.0, 30.0, 40.0);

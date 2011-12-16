@@ -1,7 +1,13 @@
-#include "gtest/gtest.h"
-#include "gmml/gmml.h"
+// Author: Robert Davis
 
-using namespace gmml;
+#include "gmml/gmml.h"
+#include "gtest/gtest.h"
+
+using gmml::PrepFile;
+using gmml::PrepFileAtom;
+using gmml::PrepFileResidue;
+using gmml::PrepFileSet;
+using gmml::Residue;
 
 TEST(PrepFileTest, Constructor) {
     PrepFile file("dat/test.prep");
@@ -72,8 +78,7 @@ TEST(PrepFileSet, Constructor) {
     PrepFileSet set;
     PrepFile::iterator begin = set.begin();
     PrepFile::iterator end = set.end();
-    bool same = (begin == end);
-    EXPECT_EQ(same, true);
+    EXPECT_EQ(begin == end, true);
 }
 
 TEST(PrepFileSet, Exists) {
@@ -81,4 +86,27 @@ TEST(PrepFileSet, Exists) {
     set.load("dat/test.prep");
     EXPECT_EQ(set.exists("PeA"), true);
     EXPECT_EQ(set.exists("OME"), false);
+}
+
+TEST(PrepFileSet, Brackets) {
+    PrepFileSet set;
+    set.load("dat/test.prep");
+    const PrepFileResidue& residue = set["PeA"];
+    EXPECT_EQ(residue.name, "PeA");
+}
+
+TEST(PrepFileSet, Lookup) {
+    PrepFileSet set;
+    set.load("dat/test.prep");
+    PrepFile::ResiduePtr residue = set.lookup("PeA");
+    EXPECT_NE(residue, PrepFile::ResiduePtr());
+    EXPECT_EQ(residue->name, "PeA");
+    EXPECT_EQ(set.lookup("OME"), PrepFile::ResiduePtr());
+}
+
+TEST(BuildPrepFileResidue, TypicalResidue) {
+    PrepFileSet set;
+    set.load("dat/test.prep");
+    Residue *residue = gmml::build_prep_file(set["PeA"]);
+    EXPECT_EQ(residue->name(), "PeA");
 }
