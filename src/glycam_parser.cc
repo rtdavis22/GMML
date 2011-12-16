@@ -79,8 +79,10 @@ GlycamParser::ParseInfo *GlycamParser::get_parse_info(
         }
     }
     string terminal = sequence.substr(sequence.find_last_of('-') + 1);
-    residues->push_back(parse_residue(terminal));
-    tokens->push_back(kTokenResidue);
+    if (terminal != "") {
+        residues->push_back(parse_residue(terminal));
+        tokens->push_back(kTokenResidue);
+    }
 
     return new ParseInfo(residues, tokens);
 }
@@ -95,6 +97,12 @@ ArrayTree<ParsedResidue*> *GlycamParser::get_array_tree(
     vector<ParsedResidue*>::reverse_iterator cur_residue = residues->rbegin();
 
     ArrayTree<ParsedResidue*> *tree = new ArrayTree<ParsedResidue*>;
+    if (residues->size() == 0) {
+        delete parse_info;
+        delete residues;
+        delete tokens;
+        return tree;
+    }
 
     stack<int> st;
     st.push(tree->insert(*cur_residue));
@@ -145,6 +153,13 @@ tree<ParsedResidue*> *GlycamParser::parse(const string& sequence) const {
     vector<ParsedResidue*>::reverse_iterator cur_residue = residues->rbegin();
 
     tree<ParsedResidue*> *tr = new tree<ParsedResidue*>;
+
+    if (residues->size() == 0) {
+        delete parse_info;
+        delete residues;
+        delete tokens;
+        return tr;
+    }
 
     // The top of the stack is the residue we're currently attaching to.
     stack<tree<ParsedResidue*>::iterator> st;
