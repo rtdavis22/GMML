@@ -22,6 +22,9 @@ using std::vector;
 // Private implementation
 class PrepFile::Impl {
   public:
+    enum OtherSection { kSectionLoop, kSectionImproper, kSectionDone,
+                        kSectionOther };
+
     explicit Impl(const string& file) { read(file); }
 
     PrepFile::iterator begin() { return residues_.begin(); }
@@ -206,7 +209,7 @@ PrepFileAtom::TopologicalType PrepFile::Impl::extract_topological_type(
         return PrepFileAtom::kTopType3;
 }
 
-PrepFile::OtherSection PrepFile::Impl::get_other_section(
+PrepFile::Impl::OtherSection PrepFile::Impl::get_other_section(
         const string& line) const {
     if (line == "LOOP")
         return kSectionLoop;

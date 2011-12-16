@@ -25,9 +25,6 @@ class PrepFile {
     typedef std::map<std::string, ResiduePtr>::const_iterator
             const_iterator;
 
-    enum OtherSection { kSectionLoop, kSectionImproper, kSectionDone,
-                        kSectionOther };
-
     explicit PrepFile(const std::string& file_name);
 
     virtual ~PrepFile();
