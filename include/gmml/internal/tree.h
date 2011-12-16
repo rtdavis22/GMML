@@ -39,6 +39,8 @@
 #include <algorithm>
 #include <cstddef>
 
+namespace gmml {
+namespace internal {
 
 /// A node in the tree, combining links to other nodes as well as the actual data.
 template<class T>
@@ -2780,5 +2782,11 @@ typename tree<T, tree_node_allocator>::leaf_iterator& tree<T, tree_node_allocato
       }
    return (*this);
    }
+
+}  // namespace internal
+
+using internal::tree;
+
+}  // namespace gmml
 
 #endif  // GMML_INTERNAL_TREE_H_
