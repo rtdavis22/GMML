@@ -104,6 +104,7 @@ MAINTAINERCLEANFILES = \
   aclocal.m4 \
   config.h \
   config.h.in \
+  config.h.in~ \
   config.log \
   config.status \
   configure depcomp \
