@@ -67,19 +67,20 @@ void PrepFile::Impl::read(std::istream& in) {
 bool PrepFile::Impl::process_residue(std::istream& in) {
     ResiduePtr residue(new PrepFileResidue);
     string line;
-    std::istringstream ss;
 
     getline(in, residue->header);
     if (trim(residue->header) == "STOP")
         return false;
     getline(in, residue->file);
 
+    std::istringstream ss;
     getline(in, line);
     ss.str(line);
     ss >> residue->name;
     residue->coordinate_type = extract_coordinate_type(ss);
     residue->output_format = extract_output_format(ss);
 
+    ss.clear();
     getline(in, line);
     ss.str(line);
     residue->geometry_type = extract_geometry_type(ss);
