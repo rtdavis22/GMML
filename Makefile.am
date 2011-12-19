@@ -34,6 +34,7 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/amber_top_file.h \
   include/gmml/internal/array_tree.h \
   include/gmml/internal/atom.h \
+  include/gmml/internal/bimap.h \
   include/gmml/internal/boxed_structure.h \
   include/gmml/internal/coordinate_file.h \
   include/gmml/internal/coordinate_grid.h \

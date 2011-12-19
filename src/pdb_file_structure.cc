@@ -1,31 +1,249 @@
 #include "gmml/internal/pdb_file_structure.h"
 
+#include <deque>
 #include <iostream>
 #include <map>
 #include <utility>
 #include <vector>
 
 #include "gmml/internal/pdb_file.h"
+#include "gmml/internal/standard_proteins.h"
 #include "gmml/internal/stubs/utils.h"
 #include "utilities.h"
 
 using std::cout;
+using std::deque;
 using std::endl;
 using std::map;
+using std::pair;
 using std::vector;
 
 namespace gmml {
 namespace {
 
 
-
 }  // namespace
 
-PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file) {
+PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file,
+                                          const PdbMappingInfo& mapping_info) {
     RelevantPdbInfo *pdb_info = get_relevant_pdb_info(pdb_file);
 
     vector<PdbIndexedResidue*> *residues =
         get_indexed_residues(pdb_info->atom_cards);
+
+    vector<pair<int, int> > bonds_to_add;
+
+    StandardProteins proteins;
+    for (vector<PdbIndexedResidue*>::iterator it = residues->begin();
+            it != residues->end(); ++it) {
+        PdbIndexedResidue *cur_residue = *it;
+        PdbIndexedResidue *prev_residue = (*it)->prev_residue;
+
+        const Structure *protein = proteins.get_protein(cur_residue->name);
+        if (protein != NULL) {
+            vector<int> atom_indices(cur_residue->atoms.size(), -1);
+            deque<bool> marked(cur_residue->atoms.size(), false);
+
+            if (protein->size() >= cur_residue->atoms.size()) {
+
+                vector<IndexedAtom*> new_atoms(protein->size(),
+                                               static_cast<IndexedAtom*>(NULL));
+                bool success = true;
+                for (int i = 0; i < cur_residue->atoms.size(); i++) {
+                    bool found = false;
+                    for (int j = 0; j < protein->size(); j++) {
+                        if (protein->atoms(j)->name() ==
+                                cur_residue->atoms[i]->atom->name()) {
+                            new_atoms[j] = cur_residue->atoms[i];
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        // An atom in the residue did not have a corresponding
+                        // atom in the protein, so we quit.
+                        success = false;
+                        break;
+                    }
+                    if (!success)
+                         break;
+                }
+                if (success) {
+                    // Pick 3 representative points to set the positions of the
+                    // hydrogens.
+                    int repr_atoms[3];
+                    int num_found = 0;
+                    for (int i = 0; i < new_atoms.size(); i++) {
+                        if (new_atoms[i] != NULL) {
+                            repr_atoms[num_found++] = i;
+                            if (num_found == 3)
+                                break;
+                        }
+                    }
+                    for (int i = 0; i < new_atoms.size(); i++) {
+                        if (new_atoms[i] == NULL) {
+                            
+                            int atom1 = kNotSet;
+                            const AdjList& adj_atoms = protein->bonds(i);
+                            for (int j = 0; j < adj_atoms.size(); j++) {
+                                if (new_atoms[adj_atoms[j]] != NULL) {
+                                    atom1 = adj_atoms[j];
+                                    break;
+                                }
+                            }
+                            int atom2 = kNotSet;
+                            int atom3 = kNotSet;
+                            const AdjList& adj_atoms2 = protein->bonds(atom1);
+                            for (int j = 0; j < adj_atoms2.size(); j++) {
+                                if (new_atoms[adj_atoms2[j]] != NULL) {
+                                    bool found = false;
+                                    atom2 = adj_atoms2[j];
+                                    const AdjList& adj_atoms4 = protein->bonds(
+                                        atom2);
+                                    for (int k = 0; k < adj_atoms4.size(); k++){
+                                        if (adj_atoms4[k] != atom1 &&
+                                            new_atoms[adj_atoms4[k]] != NULL &&
+                                            adj_atoms4[k] != atom1) {
+                                            atom3 = adj_atoms4[k];
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (found)
+                                        break;
+                                }
+                            }
+                            if (atom3 == kNotSet) {
+                                cout << "AHHH" << endl;
+                            }
+/*
+                            int atom3 = kNotSet;
+                            const AdjList& adj_atoms3 = protein->bonds(atom2);
+                            for (int j = 0; j < adj_atoms3.size(); j++) {
+                                if (adj_atoms3[j] != atom1 &&
+                                        new_atoms[adj_atoms3[j]] != NULL &&
+                                        new_atoms[adj_atoms3[j]]->atom->element() != kElementH) {
+                                    atom3 = adj_atoms3[j];
+                                    break;
+                                }
+                            }
+*/
+
+                            AtomPtr new_atom(protein->atoms(i)->clone());
+
+
+
+
+                            double distance = measure(
+                                protein->atoms(atom1)->coordinate(),
+                                protein->atoms(i)->coordinate());
+                            double angle = measure(
+                                protein->atoms(atom2)->coordinate(),
+                                protein->atoms(atom1)->coordinate(),
+                                protein->atoms(i)->coordinate());
+                            double dihedral = measure(
+                                protein->atoms(atom3)->coordinate(),
+                                protein->atoms(atom2)->coordinate(),
+                                protein->atoms(atom1)->coordinate(),
+                                protein->atoms(i)->coordinate());
+                            Coordinate new_crd = calculate_point(
+                                new_atoms[atom3]->atom->coordinate(),
+                                new_atoms[atom2]->atom->coordinate(),
+                                new_atoms[atom1]->atom->coordinate(),
+                                angle, dihedral, distance);
+
+                            vector<Coordinate> close_crds;
+                            const AdjList& atom1_bonds = protein->bonds(atom1);
+                            for (int j = 0; j < atom1_bonds.size(); j++) {
+                                if (new_atoms[atom1_bonds[j]] != NULL) {
+                                    close_crds.push_back(
+                                        new_atoms[atom1_bonds[j]]->atom->coordinate());
+                                    
+                                }
+                            }
+
+
+                            bool too_close = false;
+                            for (int j = 0; j < close_crds.size(); j++) {
+                                if (measure(close_crds[j], new_crd) < 1.0) {
+                                    too_close = true;
+                                    dihedral += 2.0*kPi/3.0;
+                                    if (dihedral > kPi)
+                                        dihedral -= 2*kPi;
+                                    break;
+                                }
+                            }
+
+                            if (too_close) {
+                                new_crd = calculate_point(
+                                    new_atoms[atom3]->atom->coordinate(),
+                                    new_atoms[atom2]->atom->coordinate(),
+                                    new_atoms[atom1]->atom->coordinate(),
+                                    angle, dihedral, distance);
+
+                                too_close = false;
+                                for (int j = 0; j < close_crds.size(); j++) {
+                                    if (measure(close_crds[j], new_crd) < 1.0) {
+                                        too_close = true;
+                                        dihedral += 2.0*kPi/3.0;
+                                        if (dihedral > kPi)
+                                            dihedral -= 2*kPi;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (too_close) {
+                                new_crd = calculate_point(
+                                    new_atoms[atom3]->atom->coordinate(),
+                                    new_atoms[atom2]->atom->coordinate(),
+                                    new_atoms[atom1]->atom->coordinate(),
+                                    angle, dihedral, distance);
+
+                                too_close = false;
+                                for (int j = 0; j < close_crds.size(); j++) {
+                                    if (measure(close_crds[j], new_crd) < 1.0) {
+                                        too_close = true;
+                                        dihedral += 2.0*kPi/3.0;
+                                        if (dihedral > kPi)
+                                            dihedral -= 2*kPi;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (too_close)
+                                cout << "always too close =(" << endl;
+                            new_atom->set_coordinate(new_crd);
+                            new_atoms[i] = new IndexedAtom(new_atom, -1);
+                        } else {
+                            AtomPtr atom = new_atoms[i]->atom;
+                            AtomPtr protein_atom = protein->atoms(i);
+                            atom->set_type(protein_atom->type());
+                            atom->set_charge(protein_atom->charge());
+                            atom->set_element(protein_atom->element());
+                        }
+                        new_atoms[i]->atom->set_type("CG");
+                    }
+                    cur_residue->atoms = new_atoms;
+                    cur_residue->bonds = protein->bonds()->clone();
+                }
+            }
+        }
+
+        // the inter-protein N-C bonding
+        if (proteins.is_standard(cur_residue->name) && prev_residue != NULL &&
+                proteins.is_standard(prev_residue->name)) {
+            int carbon = cur_residue->get_atom_index_by_name("N");
+            int nitrogen = prev_residue->get_atom_index_by_name("C");
+            if (carbon != -1 && nitrogen != -1)
+                bonds_to_add.push_back(std::make_pair(carbon, nitrogen));
+        }
+
+
+
+    }
+ 
 
  
     PdbFileStructure *structure = new PdbFileStructure;
@@ -34,6 +252,8 @@ PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file) {
 
     // A map from the indexed residues to their indices within the structure.
     map<PdbIndexedResidue*, int> index_map;
+    typedef map<PdbIndexedResidue*, int>::iterator residue_iterator;
+
 
     for (int i = 0; i < residues->size(); i++) {
         PdbIndexedResidue *cur_residue = (*residues)[i];
@@ -41,7 +261,16 @@ PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file) {
         index_map[cur_residue] = index;
     }
 
+
+
+
     structure->add_protein_bonds(index_map);
+
+    for (int i = 0; i < bonds_to_add.size(); i++) {
+        int atom1 = atom_map[bonds_to_add[i].first];
+        int atom2 = atom_map[bonds_to_add[i].second];
+        structure->add_bond(atom1, atom2);
+    }
 
     for (vector<PdbConnectCard*>::const_iterator it =
                 pdb_info->connect_cards.begin();
