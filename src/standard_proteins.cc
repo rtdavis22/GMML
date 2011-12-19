@@ -23,8 +23,8 @@ StandardProteins::StandardProteins() {
     vector<string> names(kProteinNames,
                          kProteinNames + GOOGLE_ARRAYSIZE(kProteinNames));
     for (int i = 0; i < names.size(); i++) {
-        protein_map_.insert(std::make_pair(names[i],
-                                           build_library_file_structure(names[i])));
+        Structure *structure = build_library_file_structure(names[i]);
+        protein_map_.insert(std::make_pair(names[i], structure));
     }    
 }
 

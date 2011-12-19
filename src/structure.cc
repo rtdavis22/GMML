@@ -641,6 +641,16 @@ void Structure::print(std::ostream& out) const {
     }
 }
 
+int Structure::IndexedResidue::get_atom_index_by_name(
+        const string& name) const {
+    vector<IndexedAtom*>::const_iterator it = atoms.begin();
+    for (; it != atoms.end(); ++it) {
+        if ((*it)->atom->name() == name)
+            return (*it)->index;
+    }
+    return -1;
+}
+
 int StructureAttach::operator()(Structure& structure, Residue *new_residue,
                                 const string& new_atom_name, int residue_index,
                                 const string& target_atom_name) const {

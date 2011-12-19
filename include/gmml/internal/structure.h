@@ -345,6 +345,8 @@ class Structure {
     struct IndexedResidue {
         IndexedResidue() : name(""), bonds(NULL) {}
 
+        int get_atom_index_by_name(const std::string& name) const;
+
         std::vector<IndexedAtom*> atoms;
         std::string name;
         Graph *bonds;
