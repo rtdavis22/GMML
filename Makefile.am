@@ -36,6 +36,7 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/atom.h \
   include/gmml/internal/bimap.h \
   include/gmml/internal/boxed_structure.h \
+  include/gmml/internal/complete_residue.h \
   include/gmml/internal/coordinate_file.h \
   include/gmml/internal/coordinate_grid.h \
   include/gmml/internal/environment.h \
@@ -73,6 +74,7 @@ libgmml_a_SOURCES = \
   src/amber_top_builder.cc \
   src/amber_top_file.cc \
   src/boxed_structure.cc \
+  src/complete_residue.cc \
   src/coordinate_file.cc \
   src/environment.cc \
   src/generic_type.cc \

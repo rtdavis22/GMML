@@ -1,9 +1,10 @@
+// Author: Robert Davis
+
 #ifndef GMML_INTERNAL_PDB_FILE_STRUCTURE_H_
 #define GMML_INTERNAL_PDB_FILE_STRUCTURE_H_
 
-#include <map>
+#include <memory>
 #include <string>
-#include <vector>
 
 #include "gmml/internal/bimap.h"
 #include "gmml/internal/structure.h"
@@ -19,37 +20,34 @@ class PdbMappingInfo;
 
 class PdbFileStructure : public Structure {
   public:
-    PdbFileStructure() {}
-    virtual ~PdbFileStructure() {}
+    virtual ~PdbFileStructure();
 
     static PdbFileStructure *build(const PdbFile& pdb_file);
 
     static PdbFileStructure *build(const PdbFile& pdb_file,
                                    const PdbMappingInfo& mapping_info);
 
+    // Returns the index of the atom corresponding to the atom with the given
+    // pdb sequence number. -1 is returned if the sequence number is not in
+    // the pdb file.
+    int map_atom(int pdb_index) const;
+
+    // Returns the index of the residue corresponding to the residue with the
+    // given chain identifier, residue sequence number, and insertion code in
+    // the pdb file.
+    int map_residue(char chain_id, int residue_number,
+                    char insertion_code) const;
+
   private:
-    struct RelevantPdbInfo {
-        std::vector<PdbAtomCard*> atom_cards;
-        std::vector<PdbConnectCard*> connect_cards;
-    };
+    PdbFileStructure();
 
-    struct PdbIndexedResidue : public IndexedResidue {
-        PdbIndexedResidue() : prev_residue(NULL) {}
-
-        PdbIndexedResidue *prev_residue;
-    };
-
-    static RelevantPdbInfo *get_relevant_pdb_info(const PdbFile& pdb_file);
-
-    static std::vector<PdbIndexedResidue*> *get_indexed_residues(
-            const std::vector<PdbAtomCard*>& atom_cards);
-
-    void add_protein_bonds(const std::map<PdbIndexedResidue*, int>& index_map);
+    struct Impl;
+    std::auto_ptr<Impl> impl_;
 
     DISALLOW_COPY_AND_ASSIGN(PdbFileStructure);
 };
 
-class PdbMappingInfo {
+struct PdbMappingInfo {
     Bimap<std::string, std::string> residue_map;
     Bimap<std::string, std::string> n_terminus_map;
     Bimap<std::string, std::string> c_terminus_map;

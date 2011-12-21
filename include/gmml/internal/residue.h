@@ -25,7 +25,7 @@ class Residue {
     template<typename InputIterator>
     Residue(Graph *bonds, const std::string& name,
             InputIterator begin, InputIterator end)
-            : bonds_(bonds), name_(name) {
+            : bonds_(bonds), name_(name), atoms_(new std::vector<AtomPtr>) {
         atoms_->assign(begin, end);
     }
     Residue(Graph *bonds, const std::string& name,
@@ -50,6 +50,12 @@ class Residue {
 
     const Graph *bonds() const { return bonds_; }
     std::string name() const { return name_; }
+
+    AtomPtr atoms(int index) { return (*atoms_)[index]; }
+    const AtomPtr atoms(int index) const { return (*atoms_)[index]; }
+
+    void set_atoms(std::vector<AtomPtr> *atoms) { atoms_ = atoms; }
+    void set_bonds(Graph *bonds) { bonds_ = bonds; }
 
   private:
     Graph *bonds_;

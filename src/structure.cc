@@ -10,6 +10,8 @@
 #include "gmml/internal/coordinate_file.h"
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
+// Rearrage to get rid of this
+#include "gmml/internal/library_file.h"
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/pdb_file.h"
 #include "gmml/internal/pdb_file_builder.h"
@@ -25,6 +27,11 @@ using std::string;
 using std::vector;
 
 namespace gmml {
+
+Structure *Structure::build_from_pdb(const PdbFile& pdb_file,
+                                     const PdbMappingInfo& mapping_info) {
+    return PdbFileStructure::build(pdb_file, mapping_info);
+}
 
 Structure *Structure::build_from_pdb(const PdbFile& pdb_file) {
     return PdbFileStructure::build(pdb_file);
@@ -649,6 +656,191 @@ int Structure::IndexedResidue::get_atom_index_by_name(
             return (*it)->index;
     }
     return -1;
+}
+
+vector<int> *Structure::find_chain(int index, const vector<IndexedAtom*>& atoms,
+                                   const Graph *bonds) {
+    // Let's try to find three atoms that will set the space for this atom.
+    // If we only find two atoms, we can still use the distance and angle.
+    // If we just find one atom, we can use the distance. If we don't find
+    // any atoms, we can't do anything (so we bail).
+    int atom1 = -1;
+    int atom2 = -1;
+    int atom3 = -1;
+    int longest_chain = 0;
+    const AdjList& atom_bonds = bonds->edges(index);
+    for (int j = 0; j < atom_bonds.size(); j++) {
+        if (atoms[atom_bonds[j]] == NULL)
+            continue;
+        if (longest_chain == 0) {
+            atom1 = atom_bonds[j];
+            longest_chain = 1;
+        }
+        const AdjList& atom1_bonds = bonds->edges(atom_bonds[j]);
+        for (int k = 0; k < atom1_bonds.size(); k++) {
+            if (atoms[atom1_bonds[k]] == NULL)
+                continue;
+            if (longest_chain < 2) {
+                atom1 = atom_bonds[j];
+                atom2 = atom1_bonds[k];
+                longest_chain = 2;
+            }
+            const AdjList& atom2_bonds = bonds->edges(atom1_bonds[k]);
+            for (int l = 0; l < atom2_bonds.size(); l++) {
+                if (atom2_bonds[l] == atom1 || atoms[atom2_bonds[l]] == NULL)
+                    continue;
+                atom1 = atom_bonds[j];
+                atom2 = atom1_bonds[k];
+                atom3 = atom2_bonds[l];
+	        longest_chain = 3;
+	        break;
+            }
+            if (longest_chain == 3)
+                break;
+        }
+        if (longest_chain == 3)
+            break;
+    }
+
+    vector<int> *chain = new vector<int>;
+    if (atom1 == -1)
+        return chain;
+    else
+        chain->push_back(atom1);
+
+    if (atom2 == -1)
+        return chain;
+    else
+        chain->push_back(atom2);
+
+    if (atom3 != -1)
+        chain->push_back(atom3);
+
+    return chain;
+}
+
+namespace {
+
+Coordinate calc_crd(const Coordinate& parent, double distance) {
+    warning("Don't use this fcnt yet.");
+}
+
+Coordinate calc_crd(const Coordinate& parent1, const Coordinate& parent2,
+                    double distance, double angle) {
+    warning("Don't use this func yet.");
+}
+
+Coordinate calc_crd(const Coordinate& parent1, const Coordinate& parent2,
+                    const Coordinate& parent3, double distance, double angle,
+                    double dihedral, vector<Coordinate> *atoms_to_avoid) {
+    return calculate_point(parent3, parent2, parent1,
+                           angle, dihedral, distance);
+}
+
+}  // namespace
+
+// This should probably be moved to a different class that involves regular
+// residues (without an index). One that does use indices should call it.
+void Structure::replace_residue(IndexedResidue *residue, const string& name) {
+    // Change this to work with prep files too.
+    Structure *new_structure = build_library_file_structure(name);
+    if (new_structure == NULL) {
+        warning("residue not found: " + name);
+        return;
+    }
+
+    if (new_structure->size() < residue->atoms.size()) {
+        warning("residue too small: " + name);
+        return;
+    }
+
+    vector<IndexedAtom*> new_atoms(new_structure->size(), NULL);
+
+    bool success = true;
+    for (int i = 0; i < residue->atoms.size(); i++) {
+        bool found = false;
+        for (int j = 0; j < new_structure->size(); j++) {
+            if (new_structure->atoms(j)->name() ==
+                    residue->atoms[i]->atom->name()) {
+                new_atoms[j] = residue->atoms[i];
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            warning("residue doesn't match: " + name);
+            return;
+        }
+    }
+
+    for (int i = 0; i < new_atoms.size(); i++) {
+        if (new_atoms[i] != NULL) {
+            AtomPtr atom = new_atoms[i]->atom;
+            atom->set_type(new_structure->atoms(i)->type());
+            atom->set_charge(new_structure->atoms(i)->charge());
+            atom->set_element(new_structure->atoms(i)->element());
+            continue;
+        }
+
+        vector<int> *chain_ptr =
+                find_chain(i, new_atoms, new_structure->bonds());
+        const vector<int>& chain = *chain_ptr;
+
+        // Theoretically, we could choose nonbonded atoms to establish this
+        // atom's coordinate.
+        // We could skip this atom and come back to it. Only terminate with error if we've
+        // been over everything and not added anything new.
+        if (chain.size() == 0) {
+            warning("chain not found: " + name);
+            return;
+        }
+
+        AtomPtr new_atom(new_structure->atoms(i)->clone());
+
+        double distance = measure(new_structure->atoms(chain[0])->coordinate(),
+                                  new_structure->atoms(i)->coordinate());
+
+        Coordinate coordinate;
+        if (chain.size() >= 2) {
+            double angle = measure(new_structure->atoms(chain[1])->coordinate(),
+                                   new_structure->atoms(chain[0])->coordinate(),
+                                   new_structure->atoms(i)->coordinate());
+            if (chain.size() == 2) {
+                coordinate = calc_crd(new_atoms[chain[0]]->atom->coordinate(),
+                                      new_atoms[chain[1]]->atom->coordinate(),
+                                      distance, angle);
+                
+            } else {
+                double dihedral = measure(
+                        new_structure->atoms(chain[2])->coordinate(),
+                        new_structure->atoms(chain[1])->coordinate(),
+                        new_structure->atoms(chain[0])->coordinate(),
+                        new_structure->atoms(i)->coordinate());
+                vector<Coordinate> *to_avoid = new vector<Coordinate>;
+                const AdjList& atom1_bonds = new_structure->bonds(chain[0]);
+                for (int i = 0; i < atom1_bonds.size(); i++) {
+                    int atom_index = atom1_bonds[i];
+                    if (new_atoms[atom_index] != NULL) {
+                        to_avoid->push_back(
+                                new_atoms[atom_index]->atom->coordinate());
+                    }
+                }
+                coordinate = calc_crd(new_atoms[chain[0]]->atom->coordinate(),
+                                      new_atoms[chain[1]]->atom->coordinate(),
+                                      new_atoms[chain[2]]->atom->coordinate(),
+                                      distance, angle, dihedral, NULL);
+            }
+     
+        } else {
+            coordinate = calc_crd(new_atoms[chain[0]]->atom->coordinate(),
+                                  distance);
+        }
+
+        new_atom->set_coordinate(coordinate);
+        new_atoms[i] = new IndexedAtom(new_atom, -1);
+    }
+    residue->atoms = new_atoms;
+    residue->bonds = new_structure->bonds()->clone();
 }
 
 int StructureAttach::operator()(Structure& structure, Residue *new_residue,

@@ -18,6 +18,7 @@ class ParameterFileSet;
 class PrepFile;
 class PrepFileSet;
 class Residue;
+class Structure;
 
 // This class represents a workspace to consolidate parameter files, prep files,
 // and library files. Clients only needing a single environment can use the
@@ -118,6 +119,9 @@ LibraryFileStructure *build_library_file_structure(
         const std::string& name, const Environment& environment);
 
 LibraryFileStructure *build_library_file_structure(const std::string& name);
+
+// This function checks library files and prep files.
+Structure *build(const std::string& name);
 
 }  // namespace gmml
 

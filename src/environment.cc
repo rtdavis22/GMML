@@ -97,4 +97,16 @@ LibraryFileStructure *build_library_file_structure(const string& name) {
     return build_library_file_structure(name, kDefaultEnvironment);
 }
 
+Structure *build(const string& name) {
+    Structure *structure = build_library_file_structure(name);
+    if (structure == NULL) {
+        Residue *residue = build_prep_file(name);
+        if (residue != NULL) {
+            structure = new Structure;
+            structure->append(residue);
+        }
+    }
+    return structure;
+}
+
 }  // namespace gmml

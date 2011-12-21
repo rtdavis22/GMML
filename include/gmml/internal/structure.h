@@ -23,6 +23,7 @@ class CoordinateFile;
 struct MinimizationResults;
 class ParameterFileSet;
 class PdbFile;
+struct PdbMappingInfo;
 
 class Structure {
   public:
@@ -64,6 +65,9 @@ class Structure {
     //
     // Construction methods
     //
+    static Structure *build_from_pdb(const PdbFile& pdb_file,
+                                     const PdbMappingInfo& mapping_info);
+
     // Build the Structure represented by the pdb file. This does not do
     // anything "smart", like infer bonding.
     static Structure *build_from_pdb(const PdbFile& pdb_file);
@@ -362,6 +366,19 @@ class Structure {
     int add_indexed_residue(std::map<int, int>& atom_map,
                             const IndexedResidue& residue);
 
+    // This function attempts to fill in the missing atoms of the input residue
+    // using the structure with the given name. If it is unsuccessful for any
+    // reason, NULL is returned. If atoms are added to the input residue, their
+    // index is -1.
+    static void replace_residue(IndexedResidue *residue,
+                                const std::string& name);
+
+    // Find the longest chain (up to length 3) of non-NULL atoms that start
+    // with the atom index.
+    static std::vector<int> *find_chain(int index,
+                                        const std::vector<IndexedAtom*>& atoms,
+                                        const Graph *bonds);
+
     // The random access list of the atoms of the structure.
     AtomList atoms_;
 
@@ -374,6 +391,7 @@ class Structure {
   private:
     DISALLOW_COPY_AND_ASSIGN(Structure);
 };
+
 
 // The is the default attachment functor. It repositions the residue and
 // attaches it to the structure. If you need to make other modifications to

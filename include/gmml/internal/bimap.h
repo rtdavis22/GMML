@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #ifndef GMML_INTERNAL_BIMAP_H_
 #define GMML_INTERNAL_BIMAP_H_
 
@@ -10,20 +12,18 @@ namespace internal {
 template <typename T1, typename T2>
 class Bimap {
   public:
-    template<typename T>
-    std::pair<T2, bool> get(const T& key) {
-        typename std::map<T2, T1>::iterator it;
+    std::pair<T2, bool> get(const T1& key) const {
+        typename std::map<T1, T2>::const_iterator it;
         if ((it = forward_map_.find(key)) != forward_map_.end())
-            return std::make_pair(*it, true);
+            return std::make_pair(it->second, true);
         else
             return std::make_pair(T2(), false);
     }
 
-    template<typename T>
-    std::pair<T1, bool> get_inverse(const T& value) {
-        typename std::map<T1, T2>::iterator it;
+    std::pair<T1, bool> get_inverse(const T2& value) const {
+        typename std::map<T2, T1>::const_iterator it;
         if ((it = inverse_map_.find(value)) != inverse_map_.end())
-            return std::make_pair(*it, true);
+            return std::make_pair(it->second, true);
         else
             return std::make_pair(T1(), false);
     }
