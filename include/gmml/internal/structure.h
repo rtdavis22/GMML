@@ -1,70 +1,43 @@
 #ifndef GMML_INTERNAL_STRUCTURE_H_
 #define GMML_INTERNAL_STRUCTURE_H_
 
-#include <algorithm>
 #include <iosfwd>
-#include <list>
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
-#include "boost/shared_ptr.hpp"
-
-#include "gmml/internal/atom.h"
-#include "gmml/internal/graph.h"
-#include "gmml/internal/residue.h"
 #include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
+class Atom;
 class AmberTopFile;
+class Box;
 class CoordinateFile;
+class Graph;
+class IndexedResidue;
 struct MinimizationResults;
 class ParameterFileSet;
 class PdbFile;
 struct PdbMappingInfo;
+class Residue;
 
 class Structure {
   public:
-    typedef boost::shared_ptr<Atom> AtomPtr;
-    typedef std::vector<AtomPtr> AtomList;
-    typedef Graph::AdjList AdjList;
+    typedef std::vector<Atom*> AtomList;
     typedef AtomList::iterator iterator;
     typedef AtomList::const_iterator const_iterator;
+    typedef std::vector<size_t> AdjList;
 
-    // This class provides a convenient representation of a residue in the
-    // structure.
-    class InternalResidue {
-      public:
-        InternalResidue(const std::string& name,
-                        AtomList::const_iterator begin,
-                        AtomList::const_iterator end)
-                : name_(name), begin_(begin), end_(end) {}
+    Structure();
 
-        std::string name() const { return name_; }
-        AtomList::const_iterator begin() const { return begin_; }
-        AtomList::const_iterator end() const { return end_; }
-
-      private:
-        std::string name_;
-        AtomList::const_iterator begin_;
-        AtomList::const_iterator end_;
-    };
-
-    Structure() : atoms_(0),
-                  bonds_(new Graph),
-                  residues_(new std::vector<StructureResidue*>) {}
-
-    virtual ~Structure() {
-        delete bonds_;
-        std::for_each(residues_->begin(), residues_->end(), DeletePtr());
-        delete residues_;
-    }
+    virtual ~Structure();
 
     //
     // Construction methods
     //
+    virtual Structure *clone() const;
+
     static Structure *build_from_pdb(const PdbFile& pdb_file,
                                      const PdbMappingInfo& mapping_info);
 
@@ -75,8 +48,6 @@ class Structure {
     // 
     static Structure *build_from_pdb(const PdbFile& pdb_file,
                                      bool infer_protein_bonds);
-
-    virtual Structure *clone() const;
 
     //
     // Iteration
@@ -92,7 +63,7 @@ class Structure {
     // Bonding-related operations
     //
     // Add or remove the bond between the atoms with the given atom indices.
-    void add_bond(int atom1, int atom2) { bonds_->add_edge(atom1, atom2); }
+    void add_bond(int atom1, int atom2);
     void remove_bond(int atom1, int atom2);
 
     // Returns true if the atom with the given index is part of a cycle.
@@ -164,17 +135,24 @@ class Structure {
     // Insert the atoms of the structure at the end of the atoms of this
     // structure. The atoms are not copied. You must explicitly Clone() the
     // structure if you want a copy of the atoms.
-    virtual void append(const Structure& rhs);
+    virtual int append(const Structure *structure);
 
-    // This is similar to the above, but with a residue. The index of the new
-    // residue in the structure is returned.
-    virtual int append(const Residue *residue);
+    // Maybe this should be private or something?
+    virtual int append(const Residue *residue, bool load_bonds);
+
+    virtual int append(const Residue *residue) { return append(residue, true); }
+
+    // Add the atoms from the indexed residue to the structure and update the
+    // map in which the keys of the map are the indices of the indexed atoms
+    // and the values are the indices of the atoms in the structure.
+    // The return value is the residue index of the residue in the structure.
+    int append(std::map<int, int>& atom_map, const IndexedResidue *residue);
 
     // This builds the residue from a prep file in the prep file set of the
     // default environment and appends it. This should probably be changed to
     // look in library files (and more) as well. If the prep file code doesn't
     // exist in the default environment, -1 is returned.
-    virtual int append(const std::string& prep_code);
+    virtual int append(const std::string& name);
 
     // The attach operations reposition the atoms that are being attached to
     // the current structure according to StructureAttach below, and a bond
@@ -213,6 +191,9 @@ class Structure {
     // reason.
     MinimizationResults *minimize(const std::string& input_file);
 
+    // THIS should be overrided in BoxedStructure.
+    //virtual SolvatedStructure *solvate(
+
     //
     // Atom-related query operations
     //
@@ -228,6 +209,7 @@ class Structure {
     // Returns the index of the anomeric atom of the residue. This works by
     // looking for a non-oxygen atom which is bound to an oxygen from another
     // residue. If no such atom is found, -1 is returned.
+    // Note: do away with this and just use head() and tail().
     int get_anomeric_index(int residue_index) const;
 
     // Returns the index of the oxygen from the previous function. -1 is
@@ -242,23 +224,17 @@ class Structure {
     // Residue-related query operations
     //
     // Return information associated with the residue at index |index|.
-    std::auto_ptr<InternalResidue> residues(int index) const;
+    const Residue *residues(int index) const;
+
+    Residue *residues(int index);
+
+    int residue_count() const { return residues_.size(); }
+
+    size_t get_residue_index(size_t atom_index) const;
 
     // Returns the residue index of the oxygen atom in get_parent_atom().
     // -1 is returned if there is no such atom.
     int get_parent_residue(int residue_index) const;
-
-    // THESE ARE DEPRECATED!
-    size_t get_residue_index(size_t atom_index) const;
-    size_t get_residue_count() const { return residues_->size(); }
-    size_t get_residue_size(size_t i) const { return residues_->at(i)->size; }
-    size_t get_residue_start(size_t i) const {
-        return residues_->at(i)->start_index;
-    }
-    std::string get_residue_name(size_t i) const {
-        return residues_->at(i)->name;
-    }
-    // DONT USE THE ABOVE
 
     //
     // Accessors
@@ -268,11 +244,26 @@ class Structure {
 
     const AtomList& atoms() const { return atoms_; }
 
-    const AtomPtr atoms(size_t index) const { return atoms_[index]; }
-    AtomPtr atoms(size_t index) { return atoms_[index]; }
+    const Atom *atoms(size_t index) const { return atoms_[index]; }
+    Atom *atoms(size_t index) { return atoms_[index]; }
 
     const Graph *bonds() const { return bonds_; }
-    const AdjList& bonds(size_t index) const { return bonds_->edges(index); }
+    const AdjList& bonds(size_t index) const;
+
+    int head() const { return head_; }
+    int tail() const { return tail_; }
+
+    // This might be a good way to check if a solvent that's a Structure
+    // has a box.
+    virtual const Box *box() const { return NULL; }
+
+    //
+    // Mutators
+    //
+    void set_bonds(const Graph *bonds);
+
+    void set_head(int head) { head_ = head; }
+    void set_tail(int tail) { tail_ = tail; }
 
     //
     // File operations
@@ -312,10 +303,10 @@ class Structure {
     // structure in the order they are in the structure.
     virtual CoordinateFile *build_coordinate_file() const;
 
-    // Print the coordinate file to the file with the given name.
+    // Write the coordinate file to the file with the given name.
     void print_coordinate_file(const std::string& file_name) const;
 
-    // Print the coordinate file to stdout.
+    // Write the coordinate file to stdout.
     void print_coordinate_file() const;
 
     // Assign the coordinates from the coordinate file to the atoms of the
@@ -327,68 +318,26 @@ class Structure {
     void print(std::ostream&) const;
 
   protected:
-    // This is an internal representation of the residues in the structure.
-    struct StructureResidue {
-        StructureResidue(const std::string& name, size_t start_index,
-                         size_t size)
-                : name(name), start_index(start_index), size(size) {}
-
-        std::string name;
-        size_t start_index;
-        size_t size;
-    };
-
-    // It is often useful to attach an index to an atom or residue, so these
-    // are provided.
-    struct IndexedAtom {
-        IndexedAtom(AtomPtr atom, int index) : atom(atom), index(index) {}
-
-        AtomPtr atom;
-        int index;
-    };
-    struct IndexedResidue {
-        IndexedResidue() : name(""), bonds(NULL) {}
-
-        int get_atom_index_by_name(const std::string& name) const;
-
-        std::vector<IndexedAtom*> atoms;
-        std::string name;
-        Graph *bonds;
-    };
-
     // This is an alternative to the assignment operator.
     void clone_from(const Structure& structure);
 
-    // Add the atoms from the indexed residue to the structure and update the
-    // map in which the keys of the map are the indices of the indexed atoms
-    // and the values are the indices of the atoms in the structure.
-    // The return value is the residue index of the residue in the structure.
-    int add_indexed_residue(std::map<int, int>& atom_map,
-                            const IndexedResidue& residue);
+  private:
+    struct InternalResidue;
 
-    // This function attempts to fill in the missing atoms of the input residue
-    // using the structure with the given name. If it is unsuccessful for any
-    // reason, NULL is returned. If atoms are added to the input residue, their
-    // index is -1.
-    static void replace_residue(IndexedResidue *residue,
-                                const std::string& name);
-
-    // Find the longest chain (up to length 3) of non-NULL atoms that start
-    // with the atom index.
-    static std::vector<int> *find_chain(int index,
-                                        const std::vector<IndexedAtom*>& atoms,
-                                        const Graph *bonds);
-
-    // The random access list of the atoms of the structure.
+    // The random access list of atoms of the structure. This is redundant with
+    // the residues. It is here for efficiency.
     AtomList atoms_;
 
     // A graph representing the bonding information of the structure.
     Graph *bonds_;
 
-    // The internal representation of the residues within a structure.
-    std::vector<StructureResidue*> *residues_;
+    // The residues of the structure.
+    std::vector<InternalResidue*> residues_;
 
-  private:
+    // The indices of the head and tail atoms.
+    int head_;
+    int tail_;
+
     DISALLOW_COPY_AND_ASSIGN(Structure);
 };
 
@@ -397,6 +346,8 @@ class Structure {
 // attaches it to the structure. If you need to make other modifications to
 // the structure, it is recommended that you make a wrapper around this
 // functor.
+// TODO: This functor should be changed to be general enough to only
+// depend on the hybridizations of the atoms.
 class StructureAttach {
   public:
     // The return value is -1 if the attachment failed for any reason, such as
@@ -406,13 +357,7 @@ class StructureAttach {
                     const std::string& atom_name) const;
 
   private:
-    Vector<3> get_connection_direction(const Structure& structure,
-                                       int source_index,
-                                       int target_index) const;
-
-    void set_dihedrals(Structure& structure, int new_residue_index,
-                       int target_residue_index, int carbon_number,
-                       int oxygen_number) const;
+    struct Impl;
 };
 
 }  // namespace gmml

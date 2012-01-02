@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 
+#include "gmml/internal/atom.h"
 #include "gmml/internal/glycam_parser.h"
 #include "gmml/internal/residue.h"
 #include "gmml/internal/residue_classification.h"
@@ -387,7 +388,7 @@ int GlycamAttach::operator()(Structure& structure, Residue *residue,
                              const string& atom_name) const {
     if (residue->name() == "SUL") {
         int oxygen = structure.get_atom_index(residue_index, atom_name);
-        Structure::AtomPtr atom = structure.atoms(oxygen);
+        Atom *atom = structure.atoms(oxygen);
         atom->set_charge(atom->charge() + 0.031);
     }
 

@@ -1,68 +1,115 @@
 // Author: Robert Davis
-//
-// TODO: This class needs some rethinking.
 
 #ifndef GMML_INTERNAL_RESIDUE_H_
 #define GMML_INTERNAL_RESIDUE_H_
 
-#include <algorithm>
 #include <string>
 #include <vector>
 
-#include "boost/shared_ptr.hpp"
-
-#include "gmml/internal/atom.h"
-#include "gmml/internal/graph.h"
 #include "gmml/internal/stubs/common.h"
 
 namespace gmml {
 
+class Atom;
+class Graph;
+
 class Residue {
   public:
-    typedef boost::shared_ptr<Atom> AtomPtr;
-    // try to get rid of default ctor, i think
-    Residue() {}
-    template<typename InputIterator>
-    Residue(Graph *bonds, const std::string& name,
-            InputIterator begin, InputIterator end)
-            : bonds_(bonds), name_(name), atoms_(new std::vector<AtomPtr>) {
-        atoms_->assign(begin, end);
+    typedef std::vector<Atom*>::iterator iterator;
+    typedef std::vector<Atom*>::const_iterator const_iterator;
+
+    Residue();
+
+    Residue(const Residue *residue) { clone_from(residue); }
+
+    Residue(const std::string& name);
+
+    Residue(const std::string& name, const std::vector<Atom*> *atoms,
+            const Graph *bonds);
+
+    virtual ~Residue();
+
+    virtual Residue *clone() const {
+        return new Residue(name_, &atoms_, bonds_);
     }
-    Residue(Graph *bonds, const std::string& name,
-            std::vector<AtomPtr> *atoms)
-            : bonds_(bonds), name_(name), atoms_(atoms) {}
 
-    virtual ~Residue() {
-        //delete bonds_;
-        //std::for_each(begin(), end(), DeletePtr());
-    }
+    void append(const Atom *atom);
 
-    typedef std::vector<AtomPtr>::iterator iterator;
-    typedef std::vector<AtomPtr>::const_iterator const_iterator;
+    int get_index(const std::string& atom_name) const;
 
-    iterator begin() { return atoms_->begin(); }
-    const_iterator begin() const { return atoms_->begin(); }
+    //
+    // Mutators
+    //
+    void set_name(const std::string& name) { name_ = name; }
 
-    iterator end() { return atoms_->end(); }
-    const_iterator end() const { return atoms_->end(); }
+    void set_atoms(const std::vector<Atom*> *atoms);
 
-    size_t size() const { return atoms_->size(); }
+    void set_bonds(const Graph *bonds);
 
-    const Graph *bonds() const { return bonds_; }
+    void set_head(int head) { head_ = head; }
+
+    void set_tail(int tail) { tail_ = tail; }
+
+    //
+    // Accessors
+    //
     std::string name() const { return name_; }
 
-    AtomPtr atoms(int index) { return (*atoms_)[index]; }
-    const AtomPtr atoms(int index) const { return (*atoms_)[index]; }
+    size_t size() const { return atoms_.size(); }
 
-    void set_atoms(std::vector<AtomPtr> *atoms) { atoms_ = atoms; }
-    void set_bonds(Graph *bonds) { bonds_ = bonds; }
+    Atom *atoms(int i) { return atoms_[i]; }
+    const Atom *atoms(int i) const { return atoms_[i]; }
+
+    iterator begin() { return atoms_.begin(); }
+    const_iterator begin() const { return atoms_.begin(); }
+
+    iterator end() { return atoms_.end(); }
+    const_iterator end() const { return atoms_.end(); }
+
+    const Graph *bonds() const { return bonds_; }
+
+    int head() const { return head_; }
+    int tail() const { return tail_; }
+
+  protected:
+    void clone_from(const Residue *residue);
 
   private:
-    Graph *bonds_;
     std::string name_;
-    std::vector<AtomPtr> *atoms_;
+    std::vector<Atom*> atoms_;
+    Graph *bonds_;
+    int head_;
+    int tail_;
 
     DISALLOW_COPY_AND_ASSIGN(Residue);
+};
+
+class IndexedResidue : public Residue {
+  public:
+    IndexedResidue(const std::string& name, const std::vector<Atom*> *atoms,
+                   const Graph *bonds) : Residue(name, atoms, bonds),
+                                         indices_(atoms->size(), -1) {}
+
+    IndexedResidue(const Residue *residue) : Residue(residue),
+                                             indices_(residue->size(), -1) {}
+
+    IndexedResidue(const std::string& name) : Residue(name) {}
+
+    virtual ~IndexedResidue() {}
+
+    void append(const Atom *atom, int index) {
+        Residue::append(atom);
+        indices_.push_back(index);
+    }
+
+    void set_atom_index(int atom, int index) { indices_[atom] = index; }
+    void set_atom_index(const std::string& atom_name, int index);
+
+    int get_atom_index(int atom) const { return indices_[atom]; }
+    int get_atom_index(const std::string& atom_name) const;
+
+  private:
+    std::vector<int> indices_;
 };
 
 } //namespace gmml

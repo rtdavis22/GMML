@@ -7,16 +7,18 @@
 
 #include "gmml/internal/amber_top_builder.h"
 #include "gmml/internal/amber_top_file.h"
+#include "gmml/internal/atom.h"
 #include "gmml/internal/coordinate_file.h"
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
-// Rearrage to get rid of this
+#include "gmml/internal/graph.h"
 #include "gmml/internal/library_file.h"
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/pdb_file.h"
 #include "gmml/internal/pdb_file_builder.h"
 #include "gmml/internal/pdb_file_structure.h"
 #include "gmml/internal/prep_file.h"
+#include "gmml/internal/residue.h"
 #include "gmml/internal/sander_minimize.h"
 #include "utilities.h"
 
@@ -28,6 +30,32 @@ using std::vector;
 
 namespace gmml {
 
+struct Structure::InternalResidue : public Residue {
+    InternalResidue(const Residue *residue, int start_index)
+            : start_index(start_index) {
+        clone_from(residue);
+    }
+
+    virtual ~InternalResidue() {}
+
+    int start_index;
+};
+
+Structure::Structure() : atoms_(0), bonds_(new Graph), head_(-1), tail_(-1) {}
+
+Structure::~Structure() {
+    if (bonds_ != NULL)
+        delete bonds_;
+    std::for_each(residues_.begin(), residues_.end(), DeletePtr());
+}
+
+// Construction methods
+Structure *Structure::clone() const {
+    Structure *structure = new Structure;
+    structure->clone_from(*this);
+    return structure;
+}
+
 Structure *Structure::build_from_pdb(const PdbFile& pdb_file,
                                      const PdbMappingInfo& mapping_info) {
     return PdbFileStructure::build(pdb_file, mapping_info);
@@ -37,159 +65,46 @@ Structure *Structure::build_from_pdb(const PdbFile& pdb_file) {
     return PdbFileStructure::build(pdb_file);
 }
 
-int Structure::add_indexed_residue(map<int, int>& atom_map,
-                                   const IndexedResidue& residue) {
-    int cur_size = atoms_.size();
-    residues_->push_back(new StructureResidue(
-            residue.name, cur_size, residue.atoms.size()));
-    for (int i = 0; i < residue.atoms.size(); i++) {
-        AtomPtr atom = residue.atoms[i]->atom;
-        atoms_.push_back(atom);
-        int atom_index = residue.atoms[i]->index;
-        if (atom_index >= 0)
-            atom_map[atom_index] = cur_size + i;
-    }
-    if (residue.bonds != NULL && residue.bonds->size() == residue.atoms.size())
-        bonds_->append(*residue.bonds);
-    else
-        bonds_->append(Graph(residue.atoms.size()));
-
-    return residues_->size() - 1;
+// Bonding-related operations
+void Structure::add_bond(int atom1, int atom2) {
+    bonds_->add_edge(atom1, atom2);
 }
 
-Structure *Structure::clone() const {
-    Structure *structure = new Structure;
-    structure->clone_from(*this);
-    return structure;
-}
-
-void Structure::clone_from(const Structure& structure) {
-    atoms_.reserve(structure.atoms_.size());
-    for (size_t i = 0; i < structure.atoms_.size(); i++)
-        atoms_.push_back(AtomPtr(structure.atoms_[i]->clone()));
-
-    residues_->reserve(structure.residues_->size());
-    for (size_t i = 0; i < structure.residues_->size(); i++) {
-        residues_->push_back(new StructureResidue(*(*structure.residues_)[i]));
-    }
-
-    bonds_ = structure.bonds_->clone();
-}
-
-void Structure::append(const Structure& rhs) {
-    size_t old_size = size();
-    atoms_.reserve(old_size + rhs.atoms_.size());
-    atoms_.insert(end(), rhs.begin(), rhs.end());
-
-    bonds_->append(*rhs.bonds_);
-
-    residues_->reserve(residues_->size() + rhs.residues_->size());
-    for (size_t i = 0; i < rhs.residues_->size(); i++) {
-	residues_->push_back(
-	    new StructureResidue(rhs.residues_->at(i)->name,
-                                 rhs.residues_->at(i)->start_index + old_size,
-                                 rhs.residues_->at(i)->size)
-        );
-    }
-}
-
-int Structure::append(const Residue *residue) {
-    if (residue == NULL)
-        return -1;
-    size_t old_size = size();
-    atoms_.reserve(old_size + residue->size());
-    atoms_.insert(end(), residue->begin(), residue->end());
-
-    bonds_->append(*residue->bonds());
-
-    residues_->push_back(new StructureResidue(residue->name(), old_size,
-                                              residue->size()));
-    return residues_->size() - 1;
-}
-
-int Structure::append(const string& prep_code) {
-    Residue *residue = build_prep_file(prep_code);
-    if (residue == NULL)
-        return -1;
-    return append(residue);
-}
-
-void Structure::shift(double x, double y, double z) {
-    for (iterator it = begin(); it != end(); ++it)
-        (*it)->translate(x, y, z);
-}
-
-int Structure::attach(Residue *new_residue, const string& new_atom_name,
-                      int residue_index, const string& target_atom_name) {
-    StructureAttach s;
-    return s(*this, new_residue, new_atom_name, residue_index,
-             target_atom_name);
-}
-
-int Structure::attach(const string& prep_code, const string& new_atom_name,
-                      int residue_index, const string& target_atom_name) {
-    Residue *residue = build_prep_file(prep_code);
-    if (residue == NULL)
-        return -1;
-    return attach(residue, new_atom_name, residue_index, target_atom_name);
-}
-
-MinimizationResults *Structure::minimize(const string& input_file) {
-    return SanderMinimize()(*this, input_file);
-}
-
-void Structure::translate_residue(int residue_index, double x, double y,
-                                  double z) {
-    int residue_start = residues_->at(residue_index)->start_index;
-    int residue_size = residues_->at(residue_index)->size;
-    for (int i = residue_start; i < residue_size + residue_start; i++)
-        atoms_[i]->translate(x, y, z);
-}
-
-void Structure::remove_residues(const std::vector<int>& residues) {
-    vector<size_t> atoms;
-    vector<int> new_indices(residues_->size());
-    for (int i = 0; i < residues.size(); i++)
-        new_indices[residues[i]] = -1;
-
-    deque<bool> is_deleted(atoms_.size(), false);
-    int cur_shift = 0;
-    int i = 0;
-    int k = 0;
-    while (i < residues_->size()) {
-        if (new_indices[k] == -1) {
-            int start_index = (*residues_)[i]->start_index;
-            int residue_size = (*residues_)[i]->size;
-            cur_shift += residue_size;
-            for (int j = start_index; j < start_index + residue_size; j++) {
-                atoms.push_back(j);
-                is_deleted[j] = true;
-            }
-            delete (*residues_)[i];
-            residues_->erase(residues_->begin() + i);
-        } else {
-            (*residues_)[i]->start_index -= cur_shift;
-            i++;
+bool Structure::is_cyclic(int atom_index) const {
+    const AdjList& adj_list = bonds(atom_index);
+    bool in_cycle = false;
+    for (int i = 0; i < adj_list.size(); i++) {
+        vector<size_t> *found_atoms = bonds_->edge_bfs(atom_index, adj_list[i]);
+        if (std::find(found_atoms->begin(), found_atoms->end(), atom_index) !=
+                found_atoms->end()) {
+            in_cycle = true;
+            delete found_atoms;
+            break;
         }
-        k++;
+        delete found_atoms;
+    }
+    return in_cycle;
+}
+
+Graph *Structure::get_residue_link_table() const {
+    vector<size_t> *residue_index_table = get_residue_index_table();
+
+    Graph *links = new Graph(residues_.size());
+    for (size_t i = 0; i < atoms_.size(); i++) {
+        for (size_t j = 0; j < bonds_->edges(i).size(); j++)
+            if (residue_index_table->at(bonds_->edges(i)[j]) !=
+                    residue_index_table->at(i))
+                links->add_edge(residue_index_table->at(i),
+                                residue_index_table->at(bonds_->edges(i)[j]));
     }
 
-    i = 0;
-    k = 0;
-    while (i < atoms_.size()) {
-        if (is_deleted[k]) {
-            atoms_.erase(atoms_.begin() + i);
-        } else {
-            i++;
-        }
-        k++;
-    }
+    delete residue_index_table;
 
-    bonds_->remove_vertex_list(atoms);
+    return links;
 }
 
 Graph *Structure::get_link_graph() const {
-    Graph *graph = new Graph(residues_->size());
+    Graph *graph = new Graph(residues_.size());
     vector<size_t> *index_table = get_residue_index_table();
     for (int i = 0; i < atoms_.size(); i++) {
         int residue_index = (*index_table)[i];
@@ -205,65 +120,9 @@ Graph *Structure::get_link_graph() const {
     return graph;
 }
 
-int Structure::get_atom_index(int residue_index, int atom_index) const {
-    int residue_start = residues_->at(residue_index)->start_index;
-    return residue_start + atom_index;
-}
-
-int Structure::get_atom_index(int residue_index,
-                              const string& atom_name) const {
-    int residue_start = residues_->at(residue_index)->start_index;
-    int residue_size = residues_->at(residue_index)->size;
-    for (int i = residue_start; i < residue_size + residue_start; i++)
-        if (atoms_[i]->name() == atom_name)
-            return i;
-    
-    return -1;
-}
-
-int Structure::get_anomeric_index(int residue_index) const {
-    int residue_start = get_residue_start(residue_index);
-    int residue_size = get_residue_size(residue_index);
-    int residue_end = residue_start + residue_size - 1;
-    for (int i = residue_start; i <= residue_end; i++) {
-        if (atoms_[i]->element() == kElementO)
-            continue;
-        const AdjList& adj_list = bonds(i);
-        for (int j = 0; j < adj_list.size(); j++) {
-            if ((adj_list[j] < residue_start || adj_list[j] > residue_end) &&
-                    atoms_[adj_list[j]]->element() == kElementO)
-                return i;
-        }
-    }
-    return -1;
-}
-
-int Structure::get_parent_atom(int residue_index) const {
-    int anomeric_index = get_anomeric_index(residue_index);
-    if (anomeric_index != -1) {
-        int residue_start = get_residue_start(residue_index);
-        int residue_size = get_residue_size(residue_index);
-        int residue_end = residue_start + residue_size - 1;
-        const AdjList& adj_list = bonds(anomeric_index);
-        for (int i = 0; i < adj_list.size(); i++) {
-            if ((adj_list[i] < residue_start || adj_list[i] > residue_end) &&
-                    atoms_[adj_list[i]]->element() == kElementO)
-                return adj_list[i];
-        }
-    }
-    return -1;
-}
-
-int Structure::get_parent_residue(int residue_index) const {
-    int parent_atom = get_parent_atom(residue_index);
-    if (parent_atom != -1)
-        return get_residue_index(parent_atom);
-    return -1;
-}
-
 vector<int> *Structure::get_flexible_linkages() const {
     vector<int> *residues = new vector<int>;
-    for (int i = 0; i < residues_->size(); i++) {
+    for (int i = 0; i < residues_.size(); i++) {
         int parent_atom = get_parent_atom(i);
         int parent_index = get_residue_index(parent_atom);
         if (parent_atom == -1)
@@ -284,31 +143,28 @@ vector<int> *Structure::get_flexible_linkages() const {
     return residues;
 }
 
-bool Structure::is_cyclic(int atom_index) const {
-    const AdjList& adj_list = bonds(atom_index);
-    bool in_cycle = false;
-    for (int i = 0; i < adj_list.size(); i++) {
-        vector<size_t> *found_atoms = bonds_->edge_bfs(atom_index, adj_list[i]);
-        if (std::find(found_atoms->begin(), found_atoms->end(), atom_index) !=
-                found_atoms->end()) {
-            in_cycle = true;
-            delete found_atoms;
-            break;
-        }
-        delete found_atoms;
+// Geometric operations
+void Structure::shift(double x, double y, double z) {
+    for (iterator it = begin(); it != end(); ++it)
+        (*it)->translate(x, y, z);
+}
+
+void Structure::translate_residue(int residue_index, double x, double y,
+                                  double z) {
+    for (Residue::iterator it = residues(residue_index)->begin();
+            it != residues(residue_index)->end(); ++it) {
+        (*it)->translate(x, y, z);
     }
-    return in_cycle;
 }
 
 void Structure::set_dihedral(size_t atom1, size_t atom2, size_t atom3,
                              size_t atom4, double degrees) {
     vector<size_t> *atoms = bonds_->edge_bfs(atom2, atom3);
 
-    double current_dihedral = 
-        measure(atoms_[atom1]->coordinate(), 
-                atoms_[atom2]->coordinate(),
-                atoms_[atom3]->coordinate(), 
-                atoms_[atom4]->coordinate());
+    double current_dihedral = measure(atoms_[atom1]->coordinate(),
+                                      atoms_[atom2]->coordinate(),
+                                      atoms_[atom3]->coordinate(),
+                                      atoms_[atom4]->coordinate());
 
     RotationMatrix matrix(atoms_[atom2]->coordinate(),
                           Vector<3>(atoms_[atom3]->coordinate(),
@@ -338,6 +194,28 @@ void Structure::set_dihedral(int residue1_index, const string& atom1_name,
     }
 
     set_dihedral(atom1_index, atom2_index, atom3_index, atom4_index, degrees);
+}
+
+void Structure::set_residue_angle(int atom1, int atom2, int atom3,
+                                  int residue_index, double radians) {
+    double cur_angle = measure(atoms_[atom1]->coordinate(),
+                               atoms_[atom2]->coordinate(),
+                               atoms_[atom3]->coordinate());
+
+    RotationMatrix matrix(
+        atoms_[atom2]->coordinate(),
+        Vector<3>(atoms_[atom1]->coordinate(),
+                  atoms_[atom2]->coordinate()).cross(
+                      Vector<3>(atoms_[atom3]->coordinate(),
+                                atoms_[atom2]->coordinate())),
+        radians - cur_angle
+    );
+
+    int residue_start = residues_[residue_index]->start_index;
+    int residue_size = residues(residue_index)->size();
+
+    for (int i = residue_start; i < residue_size + residue_start; i++)
+        matrix.apply(atoms_[i]->mutable_coordinate());
 }
 
 bool Structure::set_phi(int residue_index, double degrees) {
@@ -381,7 +259,7 @@ bool Structure::set_phi(int residue_index, double degrees) {
         const AdjList& adj_list = bonds(oxygen_index);
         for (int i = 0; i < adj_list.size(); i++) {
             int atom_index = adj_list[i];
-            if (get_residue_index(atom_index) == 
+            if (get_residue_index(atom_index) ==
                         get_residue_index(oxygen_index) &&
                     atoms_[atom_index]->name() ==
                         "C" + to_string(oxygen_number))
@@ -497,45 +375,228 @@ bool Structure::set_omega(int residue_index, double degrees) {
     return true;
 }
 
-Graph *Structure::get_residue_link_table() const {
-    vector<size_t> *residue_index_table = get_residue_index_table();
-
-    Graph *links = new Graph(residues_->size());
-    for (size_t i = 0; i < atoms_.size(); i++) {
-        for (size_t j = 0; j < bonds_->edges(i).size(); j++)
-            if (residue_index_table->at(bonds_->edges(i)[j]) !=
-                    residue_index_table->at(i))
-                links->add_edge(residue_index_table->at(i),
-                                residue_index_table->at(bonds_->edges(i)[j]));
+// Augmenting operations
+int Structure::append(const Structure *structure) {
+    if (structure->residue_count() == 0)
+        return -1;
+    int first_residue = residue_count();
+    for (int i = 0; i < structure->residue_count(); i++) {
+        // We don't want to use the bonding information in the residues.
+        append(structure->residues(i), false);
+    }
+    
+    if (structure->bonds() == NULL) {
+        bonds_->append(Graph(structure->size()));
+    } else if (structure->bonds()->size() != structure->size()) {
+        // Error message here maybe? See below.
+        bonds_->append(Graph(structure->size()));
+    } else {
+        bonds_->append(*structure->bonds());
     }
 
-    delete residue_index_table;
-
-    return links;
+    return first_residue;
 }
 
-void Structure::set_residue_angle(int atom1, int atom2, int atom3,
-                                  int residue_index, double radians) {
-    double cur_angle = measure(atoms_[atom1]->coordinate(),
-                               atoms_[atom2]->coordinate(),
-                               atoms_[atom3]->coordinate());
+int Structure::append(const Residue *residue, bool load_bonds) {
+    InternalResidue *new_residue = new InternalResidue(residue, size());
+    residues_.push_back(new_residue);
 
-    RotationMatrix matrix(
-	atoms_[atom2]->coordinate(),
-	Vector<3>(atoms_[atom1]->coordinate(),
-                  atoms_[atom2]->coordinate()).cross(
-	              Vector<3>(atoms_[atom3]->coordinate(),
-                                atoms_[atom2]->coordinate())),
-        radians - cur_angle
-    );
+    if (load_bonds) {
+        if (new_residue->bonds() == NULL) {
+            bonds_->append(Graph(new_residue->size()));
+        } else if (new_residue->bonds()->size() != new_residue->size()) {
+            // The user is trying to append a residue whose bond graph is a
+            // different size than the number of atoms in the residue. Maybe
+            // some error should go here?
+            bonds_->append(Graph(new_residue->size()));
+        } else {
+            bonds_->append(*residue->bonds());
+        }
+    }
 
-    int residue_start = residues_->at(residue_index)->start_index;
-    int residue_size = residues_->at(residue_index)->size;
-
-    for (int i = residue_start; i < residue_size + residue_start; i++)
-        matrix.apply(atoms_[i]->mutable_coordinate());
+    atoms_.insert(end(), new_residue->begin(), new_residue->end());
+    return residue_count() - 1;
 }
 
+int Structure::append(map<int, int>& atom_map, const IndexedResidue *residue) {
+    int prev_size = size();
+    int index = append(residue);
+    for (int i = 0; i < residue->size(); i++) {
+        atom_map[residue->get_atom_index(i)] = prev_size + i;
+    }
+    return index;
+}
+
+int Structure::append(const string& name) {
+    Structure *structure = build(name);
+    if (structure == NULL)
+        return -1;
+    int index = append(structure);
+    delete structure;
+    return index;
+}
+
+int Structure::attach(Residue *new_residue, const string& new_atom_name,
+                      int residue_index, const string& target_atom_name) {
+    StructureAttach()(*this, new_residue, new_atom_name, residue_index,
+                      target_atom_name);
+}
+
+int Structure::attach(const string& prep_code, const string& new_atom_name,
+                      int residue_index, const string& target_atom_name) {
+    // change to use build().
+    Residue *residue = build_prep_file(prep_code);
+    if (residue == NULL)
+        return -1;
+    return attach(residue, new_atom_name, residue_index, target_atom_name);
+}
+
+// Removal operations
+void Structure::remove_residues(const std::vector<int>& indices) {
+    vector<size_t> atoms;
+    vector<int> new_indices(residue_count());
+    for (int i = 0; i < indices.size(); i++)
+        new_indices[indices[i]] = -1;
+
+    deque<bool> is_deleted(size(), false);
+    int cur_shift = 0;
+    int i = 0;
+    int k = 0;
+    while (i < residue_count()) {
+        if (new_indices[k] == -1) {
+            int start_index = residues_[i]->start_index;
+            int residue_size = residues(i)->size();
+            cur_shift += residue_size;
+            for (int j = start_index; j < start_index + residue_size; j++) {
+                atoms.push_back(j);
+                is_deleted[j] = true;
+            }
+            delete residues_[i];
+            residues_.erase(residues_.begin() + i);
+        } else {
+            residues_[i]->start_index -= cur_shift;
+            i++;
+        }
+        k++;
+    }
+
+    i = 0;
+    k = 0;
+    while (i < size()) {
+        if (is_deleted[k]) {
+            atoms_.erase(atoms_.begin() + i);
+        } else {
+            i++;
+        }
+        k++;
+    }
+
+    bonds_->remove_vertex_list(atoms);
+}
+
+// Advanced modification operations
+MinimizationResults *Structure::minimize(const string& input_file) {
+    return SanderMinimize()(*this, input_file);
+}
+
+// Atom-related query operations
+int Structure::get_atom_index(int residue_index, int atom_index) const {
+    if (atom_index < 0 || atom_index >= residues(residue_index)->size())
+        return -1;
+    return residues_[residue_index]->start_index + atom_index;
+}
+
+int Structure::get_atom_index(int residue_index,
+                              const string& atom_name) const {
+    if (residue_index >= residue_count() || residue_index < 0)
+        return -1;
+
+    int atom_index = residues(residue_index)->get_index(atom_name);
+    if (atom_index == -1)
+        return -1;
+
+    return get_atom_index(residue_index, atom_index);
+}
+
+int Structure::get_anomeric_index(int residue_index) const {
+    int residue_start = residues_[residue_index]->start_index;
+    int residue_size = residues(residue_index)->size();
+    int residue_end = residue_start + residue_size - 1;
+    for (int i = residue_start; i <= residue_end; i++) {
+        if (atoms(i)->element() == kElementO)
+            continue;
+        const AdjList& adj_list = bonds(i);
+        for (int j = 0; j < adj_list.size(); j++) {
+            if ((adj_list[j] < residue_start || adj_list[j] > residue_end) &&
+                    atoms_[adj_list[j]]->element() == kElementO)
+                return i;
+        }
+    }
+    return -1;
+}
+
+int Structure::get_parent_atom(int residue_index) const {
+    int anomeric_index = get_anomeric_index(residue_index);
+    if (anomeric_index != -1) {
+        int residue_start = residues_[residue_index]->start_index;
+        int residue_size = residues(residue_index)->size();
+        int residue_end = residue_start + residue_size - 1;
+        const AdjList& adj_list = bonds(anomeric_index);
+        for (int i = 0; i < adj_list.size(); i++) {
+            if ((adj_list[i] < residue_start || adj_list[i] > residue_end) &&
+                    atoms_[adj_list[i]]->element() == kElementO)
+                return adj_list[i];
+        }
+    }
+    return -1;
+}
+
+vector<size_t> *Structure::get_residue_index_table() const {
+    vector<size_t> *table = new vector<size_t>(size());
+    size_t current_index = 0;
+    for (size_t i = 0; i < residue_count(); i++)
+        for (size_t j = 0; j < residues(i)->size(); j++)
+            (*table)[current_index++] = i;
+    return table;
+}
+
+// Residue-related query operations
+const Residue *Structure::residues(int index) const {
+    return residues_[index];
+}
+
+Residue *Structure::residues(int index) {
+    return residues_[index];
+}
+
+size_t Structure::get_residue_index(size_t atom_index) const {
+    for (size_t i = 1; i < residue_count(); i++) {
+        if (atom_index < residues_[i]->start_index)
+            return i - 1;
+    }
+    return residue_count() - 1;
+}
+
+int Structure::get_parent_residue(int residue_index) const {
+    int parent_atom = get_parent_atom(residue_index);
+    if (parent_atom != -1)
+        return get_residue_index(parent_atom);
+    return -1;
+}
+
+// Accessors
+const Structure::AdjList& Structure::bonds(size_t index) const {
+    return bonds_->edges(index);
+}
+
+// Mutators
+void Structure::set_bonds(const Graph *bonds) {
+    if (bonds_ != NULL)
+        delete bonds_;
+    bonds_ = bonds->clone();
+}
+
+// File operations
 PdbFile *Structure::build_pdb_file() const {
     return PdbFileBuilder().build(*this);
 }
@@ -611,33 +672,16 @@ void Structure::load_coordinates(const CoordinateFile& coordinate_file) {
         atoms_[i]->set_coordinate(coordinate_file[i]);
 }
 
-vector<size_t> *Structure::get_residue_index_table() const {
-    vector<size_t> *table = new vector<size_t>(atoms_.size());
-    size_t current_index = 0;
-    for (size_t i = 0; i < residues_->size(); i++)
-        for (size_t j = 0; j < residues_->at(i)->size; j++)
-            (*table)[current_index++] = i;
-    return table;
-}
-
-std::auto_ptr<Structure::InternalResidue> Structure::residues(int index) const {
-    AtomList::const_iterator first = atoms_.begin() +
-                                     residues_->at(index)->start_index;
-    return std::auto_ptr<InternalResidue>(
-        new InternalResidue(residues_->at(index)->name, first,
-                            first + residues_->at(index)->size));
-}
-
 void Structure::print(std::ostream& out) const {
-    out << "Total atoms: " << atoms_.size() << std::endl;
-    for (int i = 0; i < residues_->size(); i++) {
-        StructureResidue *residue = (*residues_)[i];
-        out << "Residue: " << residue->name <<
+    out << "Total atoms: " << size() << std::endl;
+    for (int i = 0; i < residue_count(); i++) {
+        InternalResidue *residue = residues_[i];
+        out << "Residue: " << residue->name() <<
                ", start - " << residue->start_index <<
-               ", size - " << residue->size << std::endl;
+               ", size - " << residue->size() << std::endl;
         for (int j = residue->start_index;
-                j < residue->start_index + residue->size; j++) {
-            AtomPtr atom = atoms_[j];
+                j < residue->start_index + residue->size(); j++) {
+            Atom *atom = atoms_[j];
             out << "Atom: name - " << atom->name() <<
                    ", type - " << atom->type() <<
                    ", element - " << static_cast<int>(atom->element()) <<
@@ -648,200 +692,30 @@ void Structure::print(std::ostream& out) const {
     }
 }
 
-int Structure::IndexedResidue::get_atom_index_by_name(
-        const string& name) const {
-    vector<IndexedAtom*>::const_iterator it = atoms.begin();
-    for (; it != atoms.end(); ++it) {
-        if ((*it)->atom->name() == name)
-            return (*it)->index;
-    }
-    return -1;
+void Structure::clone_from(const Structure& structure) {
+    if (bonds_ != NULL)
+        delete bonds_;
+    bonds_ = new Graph;
+
+    std::for_each(residues_.begin(), residues_.end(), DeletePtr());
+    residues_.clear();
+    atoms_.clear();
+
+    head_ = structure.head();
+    tail_ = structure.tail();
+
+    append(&structure);
 }
 
-vector<int> *Structure::find_chain(int index, const vector<IndexedAtom*>& atoms,
-                                   const Graph *bonds) {
-    // Let's try to find three atoms that will set the space for this atom.
-    // If we only find two atoms, we can still use the distance and angle.
-    // If we just find one atom, we can use the distance. If we don't find
-    // any atoms, we can't do anything (so we bail).
-    int atom1 = -1;
-    int atom2 = -1;
-    int atom3 = -1;
-    int longest_chain = 0;
-    const AdjList& atom_bonds = bonds->edges(index);
-    for (int j = 0; j < atom_bonds.size(); j++) {
-        if (atoms[atom_bonds[j]] == NULL)
-            continue;
-        if (longest_chain == 0) {
-            atom1 = atom_bonds[j];
-            longest_chain = 1;
-        }
-        const AdjList& atom1_bonds = bonds->edges(atom_bonds[j]);
-        for (int k = 0; k < atom1_bonds.size(); k++) {
-            if (atoms[atom1_bonds[k]] == NULL)
-                continue;
-            if (longest_chain < 2) {
-                atom1 = atom_bonds[j];
-                atom2 = atom1_bonds[k];
-                longest_chain = 2;
-            }
-            const AdjList& atom2_bonds = bonds->edges(atom1_bonds[k]);
-            for (int l = 0; l < atom2_bonds.size(); l++) {
-                if (atom2_bonds[l] == atom1 || atoms[atom2_bonds[l]] == NULL)
-                    continue;
-                atom1 = atom_bonds[j];
-                atom2 = atom1_bonds[k];
-                atom3 = atom2_bonds[l];
-	        longest_chain = 3;
-	        break;
-            }
-            if (longest_chain == 3)
-                break;
-        }
-        if (longest_chain == 3)
-            break;
-    }
+struct StructureAttach::Impl {
+    static Vector<3> get_connection_direction(const Structure& structure,
+                                              int source_index,
+                                              int target_index);
 
-    vector<int> *chain = new vector<int>;
-    if (atom1 == -1)
-        return chain;
-    else
-        chain->push_back(atom1);
-
-    if (atom2 == -1)
-        return chain;
-    else
-        chain->push_back(atom2);
-
-    if (atom3 != -1)
-        chain->push_back(atom3);
-
-    return chain;
-}
-
-namespace {
-
-Coordinate calc_crd(const Coordinate& parent, double distance) {
-    warning("Don't use this fcnt yet.");
-}
-
-Coordinate calc_crd(const Coordinate& parent1, const Coordinate& parent2,
-                    double distance, double angle) {
-    warning("Don't use this func yet.");
-}
-
-Coordinate calc_crd(const Coordinate& parent1, const Coordinate& parent2,
-                    const Coordinate& parent3, double distance, double angle,
-                    double dihedral, vector<Coordinate> *atoms_to_avoid) {
-    return calculate_point(parent3, parent2, parent1,
-                           angle, dihedral, distance);
-}
-
-}  // namespace
-
-// This should probably be moved to a different class that involves regular
-// residues (without an index). One that does use indices should call it.
-void Structure::replace_residue(IndexedResidue *residue, const string& name) {
-    // Change this to work with prep files too.
-    Structure *new_structure = build_library_file_structure(name);
-    if (new_structure == NULL) {
-        warning("residue not found: " + name);
-        return;
-    }
-
-    if (new_structure->size() < residue->atoms.size()) {
-        warning("residue too small: " + name);
-        return;
-    }
-
-    vector<IndexedAtom*> new_atoms(new_structure->size(), NULL);
-
-    bool success = true;
-    for (int i = 0; i < residue->atoms.size(); i++) {
-        bool found = false;
-        for (int j = 0; j < new_structure->size(); j++) {
-            if (new_structure->atoms(j)->name() ==
-                    residue->atoms[i]->atom->name()) {
-                new_atoms[j] = residue->atoms[i];
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            warning("residue doesn't match: " + name);
-            return;
-        }
-    }
-
-    for (int i = 0; i < new_atoms.size(); i++) {
-        if (new_atoms[i] != NULL) {
-            AtomPtr atom = new_atoms[i]->atom;
-            atom->set_type(new_structure->atoms(i)->type());
-            atom->set_charge(new_structure->atoms(i)->charge());
-            atom->set_element(new_structure->atoms(i)->element());
-            continue;
-        }
-
-        vector<int> *chain_ptr =
-                find_chain(i, new_atoms, new_structure->bonds());
-        const vector<int>& chain = *chain_ptr;
-
-        // Theoretically, we could choose nonbonded atoms to establish this
-        // atom's coordinate.
-        // We could skip this atom and come back to it. Only terminate with error if we've
-        // been over everything and not added anything new.
-        if (chain.size() == 0) {
-            warning("chain not found: " + name);
-            return;
-        }
-
-        AtomPtr new_atom(new_structure->atoms(i)->clone());
-
-        double distance = measure(new_structure->atoms(chain[0])->coordinate(),
-                                  new_structure->atoms(i)->coordinate());
-
-        Coordinate coordinate;
-        if (chain.size() >= 2) {
-            double angle = measure(new_structure->atoms(chain[1])->coordinate(),
-                                   new_structure->atoms(chain[0])->coordinate(),
-                                   new_structure->atoms(i)->coordinate());
-            if (chain.size() == 2) {
-                coordinate = calc_crd(new_atoms[chain[0]]->atom->coordinate(),
-                                      new_atoms[chain[1]]->atom->coordinate(),
-                                      distance, angle);
-                
-            } else {
-                double dihedral = measure(
-                        new_structure->atoms(chain[2])->coordinate(),
-                        new_structure->atoms(chain[1])->coordinate(),
-                        new_structure->atoms(chain[0])->coordinate(),
-                        new_structure->atoms(i)->coordinate());
-                vector<Coordinate> *to_avoid = new vector<Coordinate>;
-                const AdjList& atom1_bonds = new_structure->bonds(chain[0]);
-                for (int i = 0; i < atom1_bonds.size(); i++) {
-                    int atom_index = atom1_bonds[i];
-                    if (new_atoms[atom_index] != NULL) {
-                        to_avoid->push_back(
-                                new_atoms[atom_index]->atom->coordinate());
-                    }
-                }
-                coordinate = calc_crd(new_atoms[chain[0]]->atom->coordinate(),
-                                      new_atoms[chain[1]]->atom->coordinate(),
-                                      new_atoms[chain[2]]->atom->coordinate(),
-                                      distance, angle, dihedral, NULL);
-            }
-     
-        } else {
-            coordinate = calc_crd(new_atoms[chain[0]]->atom->coordinate(),
-                                  distance);
-        }
-
-        new_atom->set_coordinate(coordinate);
-        new_atoms[i] = new IndexedAtom(new_atom, -1);
-    }
-    residue->atoms = new_atoms;
-    residue->bonds = new_structure->bonds()->clone();
-}
+    static void set_dihedrals(Structure& structure, int new_residue_index,
+                              int target_residue_index, int carbon_number,
+                              int oxygen_number);
+};
 
 int StructureAttach::operator()(Structure& structure, Residue *new_residue,
                                 const string& new_atom_name, int residue_index,
@@ -874,9 +748,9 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
     if (parameter_bond != NULL && parameter_bond->length != kNotSet)
         bond_length = parameter_bond->length;
 
-    Vector<3> direction = get_connection_direction(structure,
-                                                   new_atom_index,
-                                                   target_atom_index);
+    Vector<3> direction = Impl::get_connection_direction(structure,
+                                                         new_atom_index,
+                                                         target_atom_index);
     direction.normalize();
     direction *= bond_length;
 
@@ -915,15 +789,14 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
         oxygen_number = 1;
 
     if (is_set(carbon_number) && is_set(oxygen_number))
-        set_dihedrals(structure, new_residue_index, residue_index,
-                      carbon_number, oxygen_number);
+        Impl::set_dihedrals(structure, new_residue_index, residue_index,
+                            carbon_number, oxygen_number);
 
     return new_residue_index;
 }
 
-Vector<3> StructureAttach::get_connection_direction(const Structure& structure,
-                                                    int source_index,
-                                                    int target_index) const {
+Vector<3> StructureAttach::Impl::get_connection_direction(
+        const Structure& structure, int source_index, int target_index) {
     Vector<3> direction(0.0, 0.0, 0.0);
     const Structure::AtomList& atoms = structure.atoms();
     const Structure::AdjList& adj_atoms  = structure.bonds(source_index);
@@ -939,9 +812,11 @@ Vector<3> StructureAttach::get_connection_direction(const Structure& structure,
     return direction;
 }
 
-void StructureAttach::set_dihedrals(Structure& structure, int new_residue_index,
-                                    int target_residue_index, int carbon_number,
-                                    int oxygen_number) const {
+void StructureAttach::Impl::set_dihedrals(Structure& structure, 
+                                          int new_residue_index,
+                                          int target_residue_index,
+                                          int carbon_number,
+                                          int oxygen_number) {
     string oxygen = to_string(oxygen_number);
     string carbon = to_string(carbon_number);
 

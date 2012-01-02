@@ -6,7 +6,7 @@
 #ifndef GMML_INTERNAL_AMBER_TOP_BUILDER_H_
 #define GMML_INTERNAL_AMBER_TOP_BUILDER_H_
 
-#include <algorithm>
+#include <exception>
 #include <string>
 #include <utility>
 #include <vector>
@@ -236,9 +236,6 @@ class AmberTopBuilder {
     std::pair<double, double> get_radius_and_screen(const Structure& structure,
                                                     int atom_index) const;
 
-    // Invokes gmml::error
-    void error(const std::string& message) const;
-
     // These are used to format the error message. They are called when there
     // is insufficient information in the parameter file set for
     // atom types (1 argument), bonds (2 arguments), angles (3 arguments),
@@ -255,28 +252,46 @@ class AmberTopBuilder {
     DISALLOW_COPY_AND_ASSIGN(AmberTopBuilder);
 };
 
+class InsufficientParameterException : public std::exception {
+  public:
+    explicit InsufficientParameterException(const std::string& what) {
+        what_ = what;
+    }
+
+    virtual const char *what() const throw() { return what_.c_str(); }
+
+    virtual ~InsufficientParameterException() throw() {}
+
+  private:
+    std::string what_;
+};
+
 inline void AmberTopBuilder::type_error(const std::string& type) const {
-    error("Insufficient parameters for atom type " + type);
+    throw InsufficientParameterException(
+            "Insufficient parameters for atom type " + type);
 }
 
 inline void AmberTopBuilder::type_error(const std::string& type1,
                                         const std::string& type2) const {
-    error("Insufficient parameters for bond " + type1 + "-" + type2);
+    throw InsufficientParameterException(
+            "Insufficient parameters for bond " + type1 + "-" + type2);
 }
 
 inline void AmberTopBuilder::type_error(const std::string& type1,
                                         const std::string& type2,
                                         const std::string& type3) const {
-    error("Insufficient parameters for angle  " +
-          type1 + "-" + type2 + "-" + type3);
+    throw InsufficientParameterException(
+            "Insufficient parameters for angle  " +
+             type1 + "-" + type2 + "-" + type3);
 }
 
 inline void AmberTopBuilder::type_error(const std::string& type1,
                                         const std::string& type2,
                                         const std::string& type3,
                                         const std::string& type4) const {
-    error("Insufficient parameters for dihedral " +
-          type1 + "-" + type2 + "-" + type3 + "-" + type4);
+    throw InsufficientParameterException(
+            "Insufficient parameters for dihedral " +
+            type1 + "-" + type2 + "-" + type3 + "-" + type4);
 }
 
 // This class is populated with a list of topology file section names in the

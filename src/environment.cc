@@ -6,7 +6,9 @@
 
 #include "gmml/internal/library_file.h"
 #include "gmml/internal/parameter_file.h"
+#include "gmml/internal/pdb_file_structure.h"
 #include "gmml/internal/prep_file.h"
+#include "gmml/internal/residue.h"
 #include "gmml/internal/structure.h"
 #include "utilities.h"
 
@@ -17,12 +19,14 @@ using std::vector;
 
 Environment::Environment() : library_files_(new LibraryFileSet),
                              parameter_files_(new ParameterFileSet),
-                             prep_files_(new PrepFileSet) {}
+                             prep_files_(new PrepFileSet),
+                             pdb_mapping_info_(new PdbMappingInfo) {}
 
 Environment::~Environment() {
     delete library_files_;
     delete parameter_files_;
     delete prep_files_;
+    delete pdb_mapping_info_;
 }
 
 void Environment::load_library_file(const string& file_name) {
@@ -47,6 +51,18 @@ void Environment::load_prep_file(const string& file_name) {
 
 void Environment::load_prep_file(const PrepFile& prep_file) {
     prep_files_->load(prep_file);
+}
+
+void Environment::add_residue_mapping(const string& from, const string& to) {
+    pdb_mapping_info_->residue_map.put(from, to);
+}
+
+void Environment::add_head_mapping(const string& from, const string& to) {
+    pdb_mapping_info_->head_map.put(from, to);
+}
+
+void Environment::add_tail_mapping(const string& from, const string& to) {
+    pdb_mapping_info_->tail_map.put(from, to);
 }
 
 string Environment::find_file(const std::string& file_name) const {
@@ -104,7 +120,7 @@ Structure *build(const string& name) {
         if (residue != NULL) {
             structure = new Structure;
             structure->append(residue);
-        }
+       }
     }
     return structure;
 }

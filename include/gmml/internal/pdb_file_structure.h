@@ -22,6 +22,8 @@ class PdbFileStructure : public Structure {
   public:
     virtual ~PdbFileStructure();
 
+    static PdbFileStructure *build(const std::string& file);
+
     static PdbFileStructure *build(const PdbFile& pdb_file);
 
     static PdbFileStructure *build(const PdbFile& pdb_file,
@@ -49,8 +51,8 @@ class PdbFileStructure : public Structure {
 
 struct PdbMappingInfo {
     Bimap<std::string, std::string> residue_map;
-    Bimap<std::string, std::string> n_terminus_map;
-    Bimap<std::string, std::string> c_terminus_map;
+    Bimap<std::string, std::string> head_map;
+    Bimap<std::string, std::string> tail_map;
     Bimap<std::string, std::string> atom_map;
 };
 

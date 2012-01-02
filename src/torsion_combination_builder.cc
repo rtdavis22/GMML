@@ -8,7 +8,9 @@
 #include <string>
 #include <vector>
 
+#include "gmml/internal/atom.h"
 #include "gmml/internal/glycam_code_set.h"
+#include "gmml/internal/residue.h"
 #include "utilities.h"
 
 namespace gmml {
@@ -47,7 +49,7 @@ const vector<double>& TorsionCombinationBuilder::LinkageAngles::at(
 
 TorsionCombinationBuilder::TorsionCombinationBuilder(const Structure& structure)
             : structure(structure.clone()),
-              linkage_angles(structure.get_residue_count()) {}
+              linkage_angles(structure.residue_count()) {}
 
 vector<vector<vector<double> > > 
 *TorsionCombinationBuilder::get_build_info() const {
@@ -151,7 +153,7 @@ void TorsionCombinationBuilder::add_likely_omega_values() {
         add_omega_value(residue_index, -60.0);
         add_omega_value(residue_index, 60.0);
         string oxygen_residue_name = 
-            structure->get_residue_name(oxygen_residue);
+            structure->residues(oxygen_residue)->name();
         char letter = oxygen_residue_name[1];
         if (letter != 'G' &&  letter != 'g' && letter != 'M' && letter != 'm' &&
                 letter != 'Y' && letter != 'y' && letter != 'W' && 
@@ -205,9 +207,8 @@ vector<int> *TorsionCombinationBuilder::get_linkages(
         int parent_index = structure->get_parent_atom((*all_linkages)[i]);
         if (parent_index == -1)
             continue;
-        const Structure::AtomPtr anomeric_atom =
-            structure->atoms(anomeric_index);
-        const Structure::AtomPtr parent_atom = structure->atoms(parent_index);
+        const Atom *anomeric_atom = structure->atoms(anomeric_index);
+        const Atom *parent_atom = structure->atoms(parent_index);
         if (anomeric_atom->name().size() < 2 ||
                 !is_number(anomeric_atom->name()[1]) ||
                 char_to_number(anomeric_atom->name()[1]) != carbon_number)
@@ -226,14 +227,14 @@ vector<int> *TorsionCombinationBuilder::get_linkages(
         const string& carbon_residue, const string& oxygen_residue) const {
     GlycamCodeSet code_set;
     vector<int> *residues = new vector<int>;
-    int num_residues = structure->get_residue_count();
+    int num_residues = structure->residue_count();
     for (int i = 0; i < num_residues; i++) {
-        string carbon_code = structure->get_residue_name(i);
+        string carbon_code = structure->residues(i)->name();
         int oxygen_residue_index = structure->get_parent_residue(i);
         if (oxygen_residue_index == -1)
             continue;
         string oxygen_code =
-            structure->get_residue_name(oxygen_residue_index);
+            structure->residues(oxygen_residue_index)->name();
         string carbon_residue_name = code_set.get_name_from_code(carbon_code);
         string oxygen_residue_name = code_set.get_name_from_code(oxygen_code);
         if (carbon_residue != "*" && carbon_residue != carbon_residue_name)

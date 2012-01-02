@@ -2,19 +2,22 @@
 
 #include "gmml/internal/pdb_file_structure.h"
 
+#include <cassert>
+
 #include <deque>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "gmml/internal/atom.h"
 #include "gmml/internal/complete_residue.h"
+#include "gmml/internal/environment.h"
 #include "gmml/internal/pdb_file.h"
+#include "gmml/internal/residue.h"
 #include "gmml/internal/standard_proteins.h"
 #include "gmml/internal/stubs/utils.h"
 #include "utilities.h"
-
-using boost::shared_ptr;
 
 using std::deque;
 using std::map;
@@ -32,7 +35,16 @@ struct PdbFileStructure::Impl {
     };
 
     struct PdbIndexedResidue : public IndexedResidue {
-        PdbIndexedResidue() : prev_residue(NULL), next_residue(NULL) {}
+        PdbIndexedResidue(const Residue *residue, PdbIndexedResidue *prev,
+                          PdbIndexedResidue *next) : IndexedResidue(residue),
+                                                     prev_residue(prev),
+                                                     next_residue(next) {}
+
+        PdbIndexedResidue(const std::string& name) : IndexedResidue(name),
+                                                     prev_residue(NULL),
+                                                     next_residue(NULL) {
+            set_bonds(NULL);
+        }
 
         // These help to determine if the residue is a c-terminus or
         // an n-terminus.
@@ -78,9 +90,9 @@ PdbFileStructure::Impl::get_indexed_residues(
             continue;
         }
 
-        AtomPtr new_atom(new Atom(get_element_by_char((*it)->element[0]),
+        Atom *new_atom = new Atom(get_element_by_char((*it)->element[0]),
                                   Coordinate((*it)->x, (*it)->y, (*it)->z),
-                                  (*it)->name, "", (*it)->charge));
+                                  (*it)->name, "", (*it)->charge);
 
         // Get the triple representing this atom's residue.
         Triplet<int> *triple = new Triplet<int>((*it)->chain_id,
@@ -92,13 +104,12 @@ PdbFileStructure::Impl::get_indexed_residues(
         if (!ret.second)
             delete triple;
         else
-            ret.first->second = new PdbIndexedResidue;
+            ret.first->second = new PdbIndexedResidue((*it)->res_name);
 
         PdbIndexedResidue *cur_residue = ret.first->second;
-        cur_residue->atoms.push_back(new IndexedAtom(new_atom,
-                                                     (*it)->serial));
-        if (cur_residue->name == "")
-            cur_residue->name = (*it)->res_name;
+        cur_residue->append(new_atom, (*it)->serial);
+        //if (cur_residue->name == "")
+        //    cur_residue->name = (*it)->res_name;
 
         if (cur_residue != prev_residue) {
             cur_residue->prev_residue = prev_residue;
@@ -163,7 +174,7 @@ int PdbFileStructure::map_residue(char chain_id, int residue_number,
 PdbFileStructure::~PdbFileStructure() { }
 
 PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file) {
-    build(pdb_file, PdbMappingInfo());
+    return build(pdb_file, *kDefaultEnvironment.pdb_mapping_info());
 }
 
 namespace {
@@ -182,6 +193,11 @@ vector<int> *get_connect_atoms(const PdbConnectCard *card) {
 }
 
 }  // namespace
+
+PdbFileStructure *PdbFileStructure::build(const string& file) {
+    PdbFile pdb(file);
+    return build(pdb);
+}
 
 // This should probably be trimmed down.
 PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file,
@@ -203,78 +219,78 @@ PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file,
         PdbIndexedResidue *prev_residue = cur_residue->prev_residue;
         PdbIndexedResidue *next_residue = cur_residue->next_residue;
 
-        // We first convert the current PdbIndexedResidue to a Residue so
-        // we can call CompleteResidue().
-        vector<shared_ptr<Atom> > *atoms = new vector<shared_ptr<Atom> >;
-        for (int i = 0; i < cur_residue->atoms.size(); i++) {
-            atoms->push_back(cur_residue->atoms[i]->atom);
-        }
-
-        Residue *residue = new Residue(cur_residue->bonds, cur_residue->name,
-                                       atoms->begin(), atoms->end());
         pair<string, bool> mapped_value;
         if (prev_residue == NULL) {
-            mapped_value = mapping_info.n_terminus_map.get(cur_residue->name);
+            mapped_value = mapping_info.head_map.get(cur_residue->name());
         } else if (next_residue == NULL) {
-            mapped_value = mapping_info.c_terminus_map.get(cur_residue->name);
+            mapped_value = mapping_info.tail_map.get(cur_residue->name());
         } else {
-            mapped_value = mapping_info.residue_map.get(cur_residue->name);
+            mapped_value = mapping_info.residue_map.get(cur_residue->name());
         }
         string mapped_name;
         if (mapped_value.second)
             mapped_name = mapped_value.first;
         else
-            mapped_name = cur_residue->name;
+            mapped_name = cur_residue->name();
 
-        bool success = CompleteResidue()(residue, mapped_name);
+        Residue *result = CompleteResidue()(cur_residue, mapped_name);
+
+  if (result == NULL)
+  warning("no match for " + mapped_name);
 
         // Now we apply the information in the Residue to the PdbIndexedResidue.
         // We need to set the atom indices of the original IndexedAtoms.
-        if (success) {
-            cur_residue->bonds = residue->bonds()->clone();
-            vector<IndexedAtom*> new_atoms;
-            for (int i = 0; i < residue->size(); i++) {
-                new_atoms.push_back(new IndexedAtom(residue->atoms(i), -1));
+        if (result != NULL) {
+            map<string, int> name_map;
+            for (int i = 0; i < cur_residue->size(); i++) {
+                name_map[cur_residue->atoms(i)->name()] =
+                        cur_residue->get_atom_index(i);
             }
 
-            for (int i = 0; i < cur_residue->atoms.size(); i++) {
-                AtomPtr old_atom = cur_residue->atoms[i]->atom;
-                for (int j = 0; j < new_atoms.size(); j++) {
-                    if (old_atom->name() == new_atoms[j]->atom->name()) {
-                        new_atoms[j]->index = cur_residue->atoms[i]->index;
-                        break;
-                    }
-                }
+            PdbIndexedResidue *new_residue =
+                    new (cur_residue) PdbIndexedResidue(result, prev_residue,
+                                                        next_residue);
+            
+            cur_residue = new_residue;
+
+            for (map<string, int>::iterator it = name_map.begin();
+                    it != name_map.end(); ++it) {
+                new_residue->set_atom_index(it->first, it->second);
             }
-            cur_residue->atoms = new_atoms;
         }
 
         // the inter-protein N-C bonding
-        if (proteins.is_standard(cur_residue->name) && prev_residue != NULL &&
-                proteins.is_standard(prev_residue->name)) {
-            int carbon = cur_residue->get_atom_index_by_name("N");
-            int nitrogen = prev_residue->get_atom_index_by_name("C");
+        if (proteins.is_standard(cur_residue->name()) && prev_residue != NULL &&
+                proteins.is_standard(prev_residue->name())) {
+            int carbon = cur_residue->get_atom_index("N");
+            int nitrogen = prev_residue->get_atom_index("C");
             if (carbon != -1 && nitrogen != -1)
                 bonds_to_add.push_back(std::make_pair(carbon, nitrogen));
         }
 
     }
-  
+ 
     PdbFileStructure *structure = new PdbFileStructure;
     
     for (map<Triplet<int>*, PdbIndexedResidue*>::iterator it =
             residues->begin(); it != residues->end(); ++it) {
         PdbIndexedResidue *cur_residue = it->second;
-        int index = structure->add_indexed_residue(structure->impl_->atom_map,
-                                                   *cur_residue);
+        int index = structure->append(structure->impl_->atom_map, cur_residue);
         structure->impl_->residue_map[it->first] = index;
     }
 
     for (int i = 0; i < bonds_to_add.size(); i++) {
+        assert(structure->impl_->atom_map.find(bonds_to_add[i].first) !=
+                structure->impl_->atom_map.end());
+        assert(structure->impl_->atom_map.find(bonds_to_add[i].second) !=
+                structure->impl_->atom_map.end());
         int atom1 = structure->impl_->atom_map[bonds_to_add[i].first];
         int atom2 = structure->impl_->atom_map[bonds_to_add[i].second];
+        assert(atom1 < structure->size() && atom1 >= 0);
+        assert(atom2 < structure->size() && atom2 >= 0);
         structure->add_bond(atom1, atom2);
     }
+
 
     for (vector<PdbConnectCard*>::const_iterator it =
                 pdb_info->connect_cards.begin();

@@ -136,6 +136,7 @@ class BuildPrepFileResidue {
     Residue *operator()(const PrepFileResidue& residue) const;
 };
 
+// shouldn't this return a const ptr?
 inline Residue *build_prep_file(const PrepFileResidue& residue) {
     return BuildPrepFileResidue()(residue);
 }

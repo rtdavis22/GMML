@@ -15,6 +15,7 @@ class LibraryFileSet;
 class LibraryFileStructure;
 class ParameterFile;
 class ParameterFileSet;
+struct PdbMappingInfo;
 class PrepFile;
 class PrepFileSet;
 class Residue;
@@ -45,15 +46,23 @@ class Environment {
     void load_prep_file(const std::string& file_name);
     void load_prep_file(const PrepFile& prep_file);
 
+    void add_residue_mapping(const std::string& from, const std::string& to);
+    void add_head_mapping(const std::string& from, const std::string& to);
+    void add_tail_mapping(const std::string& from, const std::string& to);
+
     const LibraryFileSet *library_files() const { return library_files_; }
     const ParameterFileSet *parm_set() const { return parameter_files_; }
     const PrepFileSet *prep_files() const { return prep_files_; }
+
+    const PdbMappingInfo *pdb_mapping_info() const { return pdb_mapping_info_; }
 
   private:
     std::vector<std::string> paths_;
     LibraryFileSet *library_files_;
     ParameterFileSet *parameter_files_;
     PrepFileSet *prep_files_;
+
+    PdbMappingInfo *pdb_mapping_info_;
 
     DISALLOW_COPY_AND_ASSIGN(Environment);
 };
@@ -108,8 +117,23 @@ inline void load_prep_file(const PrepFile& prep_file) {
     kDefaultEnvironment.load_prep_file(prep_file);
 }
 
+inline void add_residue_mapping(const std::string& from,
+                                const std::string& to) {
+    kDefaultEnvironment.add_residue_mapping(from, to);
+}
+
+inline void add_head_mapping(const std::string& from, const std::string& to) {
+    kDefaultEnvironment.add_head_mapping(from, to);
+}
+
+inline void add_tail_mapping(const std::string& from, const std::string& to) {
+    kDefaultEnvironment.add_tail_mapping(from, to);
+}
+
 // Build the prep file with the prep file code from the prep file set in the
 // given environment. NULL is returned if the residue doesn't exist.
+// I'm pretty sure these should return a const ptr. The client can clone()
+// to get a regular ptr. Also, I should get rid of the Environment arg.
 Residue *build_prep_file(const std::string& prep_code,
                          const Environment& environment);
 

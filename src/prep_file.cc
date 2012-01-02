@@ -8,7 +8,10 @@
 #include <sstream>
 #include <stack>
 
+#include "gmml/internal/atom.h"
 #include "gmml/internal/environment.h"
+#include "gmml/internal/geometry.h"
+#include "gmml/internal/graph.h"
 #include "gmml/internal/residue.h"
 #include "utilities.h"
 
@@ -417,22 +420,19 @@ Residue *BuildPrepFileResidue::operator()(
         bonds->add_edge(loop.from - 3, loop.to - 3);
     }
 
-    vector<boost::shared_ptr<Atom> > *atoms =
-        new vector<boost::shared_ptr<Atom> >;
+    vector<Atom*> *atoms = new vector<Atom*>;
     atoms->reserve(atom_list.size() - 3);
 
     for (size_t i = 3; i < atom_list.size(); i++) {
         Element element = get_element_by_char(atom_list[i]->name[0]);
-        boost::shared_ptr<Atom> atom_ptr(new Atom(element, *coordinates[i],
-                                                  atom_list[i]->name,
-                                                  atom_list[i]->type,
-                                                  atom_list[i]->charge));
-        atoms->push_back(atom_ptr);
+        Atom *atom = new Atom(element, *coordinates[i], atom_list[i]->name,
+                              atom_list[i]->type, atom_list[i]->charge);
+        atoms->push_back(atom);
     }
 
     std::for_each(coordinates.begin(), coordinates.end(), DeletePtr());
 
-    return new Residue(bonds, prep_file_residue.name, atoms);
+    return new Residue(prep_file_residue.name, atoms, bonds);
 }
 
 }  // namespace gmml

@@ -114,7 +114,7 @@ class LibraryFileStructure : public BoxedStructure {
     void clone_from(const LibraryFileStructure& structure);
 
     void read(std::istream& in);
-    std::pair<AtomPtr, int> read_atom(std::istream& in) const;
+    std::pair<Atom*, int> read_atom(std::istream& in) const;
     void read_box(std::istream& in);
     void read_connectivity_info(std::istream& in,
                                 const std::map<int, int>& atom_map);

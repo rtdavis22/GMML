@@ -10,10 +10,13 @@
 #include <vector>
 
 #include "gmml/internal/amber_top_file.h"
+#include "gmml/internal/atom.h"
 #include "gmml/internal/boxed_structure.h"
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
+#include "gmml/internal/graph.h"
 #include "gmml/internal/parameter_file.h"
+#include "gmml/internal/residue.h"
 #include "gmml/internal/solvated_structure.h"
 #include "gmml/internal/structure.h"
 #include "utilities.h"
@@ -137,16 +140,16 @@ void AmberTopBuilder::build_residues(const Structure& structure,
 
     int count = 1;
     int largest_residue_size = 0;
-    for (size_t i = 0; i < structure.get_residue_count(); i++) {
-        labels->insert(structure.get_residue_name(i));
+    for (size_t i = 0; i < structure.residue_count(); i++) {
+        labels->insert(structure.residues(i)->name());
         pointers->insert(count);
-        int residue_size = structure.get_residue_size(i);
+        int residue_size = structure.residues(i)->size();
         count += residue_size;
         if (residue_size > largest_residue_size)
             largest_residue_size = residue_size;
     }
 
-    (*file)["POINTERS"][11] = structure.get_residue_count();
+    (*file)["POINTERS"][11] = structure.residue_count();
     (*file)["POINTERS"][28] = largest_residue_size;
 }
 
@@ -157,29 +160,29 @@ void AmberTopBuilder::build_atoms(const Structure& structure,
     SectionPtr charges = file->create_section("CHARGE", "5E16.8");
     SectionPtr masses = file->create_section("MASS", "5E16.8");
 
-    const AtomList& atoms = structure.atoms();
-    for (int i = 0; i < atoms.size(); i++) {
-        std::string type = atoms[i]->type();
-        const ParameterFileAtom *parameter_atom =
-            parameter_file_set_.lookup(type);
+    for (int i = 0; i < structure.size(); i++) {
+        const Atom *atom = structure.atoms(i);
+        std::string type = atom->type();
+        const ParameterFileAtom *parameter_atom = 
+                parameter_file_set_.lookup(type);
         if (parameter_atom == NULL)
             type_error(type);
         types->insert(type);
-        names->insert(atoms[i]->name());
-        charges->insert(atoms[i]->charge()*kChargeFactor);
+        names->insert(atom->name());
+        charges->insert(atom->charge()*kChargeFactor);
         masses->insert(parameter_atom->mass);
     }
 
-    (*file)["POINTERS"][0] = atoms.size();
+    (*file)["POINTERS"][0] = structure.size();
 }
 
 void AmberTopBuilder::build_type_info(const Structure& structure,
                                       AmberTopFile *file) const {
     SectionPtr indices = file->create_section("ATOM_TYPE_INDEX", "10I8");
 
-    const AtomList& atoms = structure.atoms();
     vector<string> types;
-    for (AtomList::const_iterator it = atoms.begin(); it != atoms.end(); ++it) {
+    for (Structure::const_iterator it = structure.begin();
+            it != structure.end(); ++it) {
         string type = (*it)->type();
         vector<string>::iterator it2 =
             std::find(types.begin(), types.end(), type);
@@ -275,19 +278,18 @@ void AmberTopBuilder::build_excluded_atoms(const Structure& structure,
 void AmberTopBuilder::build_bonds(const Structure& structure,
                                   AmberTopFile *file) const {
     SectionPtr bonds_with_hydrogen =
-        file->create_section("BONDS_INC_HYDROGEN", "10I8");
+            file->create_section("BONDS_INC_HYDROGEN", "10I8");
     SectionPtr bonds_without_hydrogen =
-        file->create_section("BONDS_WITHOUT_HYDROGEN", "10I8");
+            file->create_section("BONDS_WITHOUT_HYDROGEN", "10I8");
 
-    const Structure::AtomList& atoms = structure.atoms();
     vector<BondType*> bond_types;
     for (int i = 0; i < structure.size(); i++) {
-        const vector<size_t>& adj_atoms = structure.bonds()->edges(i);
+        const vector<size_t>& adj_atoms = structure.bonds(i);
         for (int j = 0; j < adj_atoms.size(); j++) {
             if (adj_atoms[j] < i)
                 continue;
-            const Structure::AtomPtr atom1 = atoms[i];
-            const Structure::AtomPtr atom2 = atoms[adj_atoms[j]];
+            const Atom *atom1 = structure.atoms(i);
+            const Atom *atom2 = structure.atoms(adj_atoms[j]);
             int type_index = get_bond_type_index(bond_types, atom1->type(),
                                                  atom2->type());
             SectionPtr section;
@@ -326,11 +328,10 @@ void AmberTopBuilder::build_angles(const Structure& structure,
     SectionPtr angles_without_hydrogen =
         file->create_section("ANGLES_WITHOUT_HYDROGEN", "10I8");
 
-    const Structure::AtomList& atoms = structure.atoms();
     const Graph *bonds = structure.bonds();
     vector<AngleType*> angle_types;
-    for (int i = 0; i < atoms.size(); i++) {
-        const vector<size_t>& adj_atoms = bonds->edges(i);
+    for (int i = 0; i < structure.size(); i++) {
+        const vector<size_t>& adj_atoms = structure.bonds(i);
         for (int j = 0; j < adj_atoms.size(); j++) {
             for (int k = j + 1; k < adj_atoms.size(); k++) {
                 int adj_atom1 = adj_atoms[j];
@@ -345,9 +346,9 @@ void AmberTopBuilder::build_angles(const Structure& structure,
                         bonds->edges(adj_atom1).end()) {
                     continue;
                 }
-                const Structure::AtomPtr atom1 = atoms[adj_atom1];
-                const Structure::AtomPtr atom2 = atoms[i];
-                const Structure::AtomPtr atom3 = atoms[adj_atom2];
+                const Atom *atom1 = structure.atoms(adj_atom1);
+                const Atom *atom2 = structure.atoms(i);
+                const Atom *atom3 = structure.atoms(adj_atom2);
                 int type_index = get_angle_type_index(angle_types,
                                                       atom1->type(),
                                                       atom2->type(),
@@ -580,7 +581,6 @@ void AmberTopBuilder::insert_dihedrals(const Structure& structure,
                                        vector<DihedralType*>& dihedral_types,
                                        SectionPtr with_hydrogen,
                                        SectionPtr without_hydrogen) const {
-    const Structure::AtomList& atoms = structure.atoms();
     const Structure::AdjList& adj_atoms1 = structure.bonds(atom1_index);
     const Structure::AdjList& adj_atoms2 = structure.bonds(atom2_index);
 
@@ -592,10 +592,10 @@ void AmberTopBuilder::insert_dihedrals(const Structure& structure,
                 continue;
             }
 
-            const Structure::AtomPtr atom1 = atoms[adj_atoms1[i]];
-            const Structure::AtomPtr atom2 = atoms[atom1_index];
-            const Structure::AtomPtr atom3 = atoms[atom2_index];
-            const Structure::AtomPtr atom4 = atoms[adj_atoms2[j]];
+            const Atom *atom1 = structure.atoms(adj_atoms1[i]);
+            const Atom *atom2 = structure.atoms(atom1_index);
+            const Atom *atom3 = structure.atoms(atom2_index);
+            const Atom *atom4 = structure.atoms(adj_atoms2[j]);
 
             const ParameterFileDihedral *parameter_dihedral =
                 parameter_file_set_.lookup(atom1->type(), atom2->type(),
@@ -642,16 +642,15 @@ void AmberTopBuilder::insert_improper_dihedrals(
         vector<DihedralType*>& dihedral_types,
         SectionPtr dihedrals_with_hydrogen,
         SectionPtr dihedrals_without_hydrogen) const {
-    const Structure::AtomList& atoms = structure.atoms();
     const Structure::AdjList& adj_atoms = structure.bonds(atom_index);
 
-    const Structure::AtomPtr center_atom = atoms[atom_index];
+    const Atom *center_atom = structure.atoms(atom_index);
     for (int i = 0; i < adj_atoms.size(); i++) {
-        const Structure::AtomPtr adj_atom1 = atoms[adj_atoms[i]];
+        const Atom *adj_atom1 = structure.atoms(adj_atoms[i]);
         for (int j = i + 1; j < adj_atoms.size(); j++) {
-            const Structure::AtomPtr adj_atom2 = atoms[adj_atoms[j]];
+            const Atom *adj_atom2 = structure.atoms(adj_atoms[j]);
             for (int k = j + 1; k < adj_atoms.size(); k++) {
-                const Structure::AtomPtr adj_atom3 = atoms[adj_atoms[k]];
+                const Atom *adj_atom3 = structure.atoms(adj_atoms[k]);
                 std::pair<ParameterFileDihedralTerm, bool> parameter_term =
                     parameter_file_set_.lookup_improper_dihedral(
                             center_atom->type(),
@@ -713,7 +712,7 @@ std::pair<double, double> AmberTopBuilder::get_lennard_jones_coefficients(
 std::pair<double, double> AmberTopBuilder::get_radius_and_screen(
         const Structure& structure,
         int atom_index) const {
-    const Structure::AtomPtr atom = structure.atoms(atom_index);
+    const Atom *atom = structure.atoms(atom_index);
     double radius;
     double screen;
     if (atom->element() == kElementH) {
@@ -779,10 +778,6 @@ std::pair<double, double> AmberTopBuilder::get_radius_and_screen(
         screen = 0.8;
 
     return std::make_pair(radius, screen);
-}
-
-void AmberTopBuilder::error(const std::string& message) const {
-    gmml::error("AmberTopBuilder: " + message);
 }
 
 SectionComparer::SectionComparer()

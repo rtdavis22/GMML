@@ -88,6 +88,7 @@ libgmml_a_SOURCES = \
   src/pdb_file_builder.cc \
   src/pdb_file_structure.cc \
   src/prep_file.cc \
+  src/residue.cc \
   src/sander_minimize.cc \
   src/solvated_structure.cc \
   src/standard_proteins.cc \

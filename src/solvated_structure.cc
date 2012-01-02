@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "gmml/internal/amber_top_builder.h"
+#include "gmml/internal/atom.h"
 #include "gmml/internal/coordinate_file.h"
 #include "gmml/internal/coordinate_grid.h"
 #include "gmml/internal/geometry.h"
@@ -22,17 +23,6 @@ using detail::TrimmedSolvents;
 
 SolvatedStructure::SolvatedStructure(const Structure& structure,
                                      const Structure& solvent,
-                                     double distance,
-                                     double closeness) : BoxedStructure() {
-    Structure::clone_from(structure);
-    BoxedRegion *solvent_region = get_boxed_region(solvent);
-    solvate(solvent, solvent_region, distance, closeness);
-    delete solvent_region;
-}
-
-
-SolvatedStructure::SolvatedStructure(const Structure& structure,
-                                     const BoxedStructure& solvent,
                                      double distance,
                                      double closeness)
         : BoxedStructure(), last_solute_atom_(structure.size() - 1) {
@@ -118,7 +108,7 @@ void SolvatedStructure::solvate(const Structure& solvent,
                 }
                 solvent_copy->shift(i*solvent_length, j*solvent_width,
                                     k*solvent_height);
-                append(*solvent_copy);
+                append(solvent_copy);
                 delete solvent_copy;
             }
         }
@@ -142,8 +132,8 @@ void SolvatedStructure::solvate(const Structure& solvent,
 void SolvatedStructure::remove_close_solvent_residues(double closeness) {
     // We insert all solvent atoms into a coordinate grid.
     CoordinateGrid<int> grid(closeness);
-    for (int i = last_solute_atom_ + 1; i < atoms_.size(); i++) {
-        grid.insert(atoms_[i]->coordinate(), i);
+    for (int i = last_solute_atom_ + 1; i < size(); i++) {
+        grid.insert(atoms(i)->coordinate(), i);
     }
 
     vector<size_t> *residue_index_table =  get_residue_index_table();
@@ -156,12 +146,12 @@ void SolvatedStructure::remove_close_solvent_residues(double closeness) {
     // our closeness parameter, only these atoms have a chance at being too
     // close to the solute atom.
     for (int i = 0; i <= last_solute_atom_; i++) {
-        const Coordinate& coordinate = atoms_[i]->coordinate();
+        const Coordinate& coordinate = atoms(i)->coordinate();
         vector<int> *found = grid.retrieve_adjacent_cells(coordinate);
         for (int j = 0; j < found->size(); j++) {
             int solvent_atom = (*found)[j];
             double distance = measure(coordinate,
-                                      atoms_[solvent_atom]->coordinate());
+                                      atoms(solvent_atom)->coordinate());
             // It's possible we insert the same residue twice, but that's OK.
             if (distance < closeness)
                 to_remove.push_back((*residue_index_table)[solvent_atom]);
@@ -169,6 +159,7 @@ void SolvatedStructure::remove_close_solvent_residues(double closeness) {
         delete found;
     }
     delete residue_index_table;
+
     remove_residues(to_remove);
 }
 

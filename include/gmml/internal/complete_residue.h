@@ -19,9 +19,13 @@ class Structure;
 // in the corresponding residue.
 struct CompleteResidue {
   public:
-    bool operator()(Residue *residue, const std::string& residue_name) const;
+    // TODO: make these take a const residue and return a new residue, NULL
+    // if there was a problem.
+    Residue *operator()(const Residue *residue,
+                        const std::string& residue_name) const;
 
-    bool operator()(Residue *residue, const Structure *complete_residue) const;
+    Residue *operator()(const Residue *residue,
+                        const Structure *complete_residue) const;
 
   private:
     struct Impl;

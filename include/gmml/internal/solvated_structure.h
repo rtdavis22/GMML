@@ -10,10 +10,10 @@ namespace gmml {
 
 class SolvatedStructure : public BoxedStructure {
   public:
-    SolvatedStructure(const Structure& structure, const Structure& solvent,
-                      double distance, double closeness);
+    //SolvatedStructure(const Structure& structure, const Structure& solvent,
+    //                  double distance, double closeness);
     SolvatedStructure(const Structure& structure,
-                      const BoxedStructure& solvent, double distance,
+                      const Structure& solvent, double distance,
                       double closeness);
 
     virtual AmberTopFile *build_amber_top_file() const;

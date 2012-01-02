@@ -2,10 +2,12 @@
 
 #include "gmml/internal/complete_residue.h"
 
-#include <iostream>
 #include <vector>
 
+#include "gmml/internal/atom.h"
 #include "gmml/internal/environment.h"
+#include "gmml/internal/geometry.h"
+#include "gmml/internal/graph.h"
 #include "gmml/internal/residue.h"
 #include "gmml/internal/structure.h"
 #include "utilities.h"
@@ -34,19 +36,17 @@ bool check_candidate(const Coordinate& coordinate,
 
 // Private implementation
 struct CompleteResidue::Impl {
-    typedef Residue::AtomPtr AtomPtr;
-
     // This function attempts to find a chain of up to three atoms with known
     // coordinates that starts with the atom at the given index.
-    // Any NULL (AtomPtr()) atoms in the list indicate unknown atoms, which
-    // can't be use to set the current atom's coordinate.
-    static vector<int> *find_chain(int index, const vector<AtomPtr> *atoms,
+    // Any NULL atoms in the list indicate unknown atoms, which can't be use to
+    // set the current atom's coordinate.
+    static vector<int> *find_chain(int index, const vector<Atom*> *atoms,
                                    const Graph *bonds);
 
     // The function uses the chain atoms calculated in the previous function
     // to find a coordinate for the atom with the given index, using the
     // internal coordinates in the structure.
-    static Coordinate place_coordinate(int index, const vector<AtomPtr> *atoms,
+    static Coordinate place_coordinate(int index, const vector<Atom*> *atoms,
                                        const vector<int>& chain,
                                        const Structure *structure);
 
@@ -79,7 +79,7 @@ struct CompleteResidue::Impl {
 };
 
 vector<int> *CompleteResidue::Impl::find_chain(
-        int index, const vector<Residue::AtomPtr> *atoms, const Graph *bonds) {
+        int index, const vector<Atom*> *atoms, const Graph *bonds) {
     typedef Structure::AdjList AdjList;
 
     // We try to find three atoms that will set the space for this atom.
@@ -92,7 +92,7 @@ vector<int> *CompleteResidue::Impl::find_chain(
     int longest_chain = 0;
     const AdjList& atom_bonds = bonds->edges(index);
     for (int j = 0; j < atom_bonds.size(); j++) {
-        if ((*atoms)[atom_bonds[j]] == AtomPtr())
+        if ((*atoms)[atom_bonds[j]] == NULL)
             continue;
         if (longest_chain == 0) {
             atom1 = atom_bonds[j];
@@ -100,7 +100,7 @@ vector<int> *CompleteResidue::Impl::find_chain(
         }
         const AdjList& atom1_bonds = bonds->edges(atom_bonds[j]);
         for (int k = 0; k < atom1_bonds.size(); k++) {
-            if ((*atoms)[atom1_bonds[k]] == AtomPtr())
+            if ((*atoms)[atom1_bonds[k]] == NULL)
                 continue;
             if (longest_chain < 2) {
                 atom1 = atom_bonds[j];
@@ -110,7 +110,7 @@ vector<int> *CompleteResidue::Impl::find_chain(
             const AdjList& atom2_bonds = bonds->edges(atom1_bonds[k]);
             for (int l = 0; l < atom2_bonds.size(); l++) {
                 if (atom2_bonds[l] == atom_bonds[j] ||
-                        (*atoms)[atom2_bonds[l]] == AtomPtr())
+                        (*atoms)[atom2_bonds[l]] == NULL)
                     continue;
                 atom1 = atom_bonds[j];
                 atom2 = atom1_bonds[k];
@@ -143,7 +143,7 @@ vector<int> *CompleteResidue::Impl::find_chain(
 }
 
 Coordinate CompleteResidue::Impl::place_coordinate(
-        int index, const vector<AtomPtr> *atoms,
+        int index, const vector<Atom*> *atoms,
         const vector<int>& chain, const Structure *structure) {
     typedef Structure::AdjList AdjList;
     Coordinate coordinate;
@@ -169,7 +169,7 @@ Coordinate CompleteResidue::Impl::place_coordinate(
             const AdjList& atom1_bonds = structure->bonds(chain[0]);
             for (int i = 0; i < atom1_bonds.size(); i++) {
                 int atom_index = atom1_bonds[i];
-                if ((*atoms)[atom_index] != Residue::AtomPtr()) {
+                if ((*atoms)[atom_index] != NULL) {
                     to_avoid->push_back((*atoms)[atom_index]->coordinate());
                 }
             }
@@ -232,40 +232,42 @@ Coordinate CompleteResidue::Impl::calculate_unknown_coordinate(
 
 
 // Public implementation
-bool CompleteResidue::operator()(Residue *residue, const string& name) const {
+Residue *CompleteResidue::operator()(const Residue *residue,
+                                     const string& name) const {
     const Structure *complete_structure = build(name);
     if (complete_structure == NULL)
-        return false;
+        return NULL;
     return operator()(residue, complete_structure);
 }
 
-bool CompleteResidue::operator()(Residue *residue,
-                                 const Structure *complete_structure) const {
-    typedef Residue::AtomPtr AtomPtr;
-
+Residue *CompleteResidue::operator()(
+        const Residue *residue, const Structure *complete_structure) const {
     if (complete_structure->size() < residue->size())
-        return false;
+        return NULL;
 
-    vector<AtomPtr> *new_atoms = new vector<AtomPtr>(complete_structure->size(),
-                                                     AtomPtr());
-
+    vector<Atom*> *new_atoms = new vector<Atom*>(complete_structure->size(),
+                                                 static_cast<Atom*>(NULL));
     for (int i = 0; i < residue->size(); i++) {
         bool found = false;
         for (int j = 0; j < complete_structure->size(); j++) {
-            AtomPtr atom_ptr = residue->atoms(i);
             if (residue->atoms(i)->name() ==
                     complete_structure->atoms(j)->name()) {
-                (*new_atoms)[j] = residue->atoms(i);
+                (*new_atoms)[j] = residue->atoms(i)->clone();
                 found = true;
                 break;
             }
         }
-        if (!found)
-            return false;
+        if (!found) {
+            for (int j = 0; j < new_atoms->size(); j++) {
+                if ((*new_atoms)[j] != NULL)
+                    delete (*new_atoms)[j];
+            }
+            return NULL;
+        }
     }
 
     for (int i = 0; i < new_atoms->size(); i++) {
-        if ((*new_atoms)[i] != AtomPtr()) {
+        if ((*new_atoms)[i] != NULL) {
             (*new_atoms)[i]->set_type(complete_structure->atoms(i)->type());
             (*new_atoms)[i]->set_charge(complete_structure->atoms(i)->charge());
             (*new_atoms)[i]->set_element(
@@ -275,20 +277,18 @@ bool CompleteResidue::operator()(Residue *residue,
 
         vector<int> *chain = Impl::find_chain(i, new_atoms, 
                                               complete_structure->bonds());
-        if (chain->size() == 0)
-            return false;
+        if (chain->empty())
+            return NULL;
 
         Coordinate coordinate = Impl::place_coordinate(i, new_atoms, *chain,
                                                        complete_structure);
 
-        AtomPtr new_atom(complete_structure->atoms(i)->clone());
+        Atom *new_atom = complete_structure->atoms(i)->clone();
         new_atom->set_coordinate(coordinate);
         (*new_atoms)[i] = new_atom;
     }
 
-    residue->set_atoms(new_atoms);
-    residue->set_bonds(complete_structure->bonds()->clone());
-    return true;
+    return new Residue(residue->name(), new_atoms, complete_structure->bonds());
 }
 
 }  // namespace gmml

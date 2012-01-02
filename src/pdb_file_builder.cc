@@ -9,8 +9,10 @@
 #include <string>
 #include <utility>
 
+#include "gmml/internal/atom.h"
 #include "gmml/internal/graph.h"
 #include "gmml/internal/pdb_file.h"
+#include "gmml/internal/residue.h"
 #include "gmml/internal/structure.h"
 
 namespace gmml {
@@ -48,7 +50,7 @@ pair<vector<int>*, vector<int>*> PdbFileBuilder::build_atom_section(
 
     Graph *link_graph = structure.get_link_graph();
     
-    int residue_count = structure.get_residue_count();
+    int residue_count = structure.residue_count();
     deque<bool> marked(residue_count, false);
     marked[0] = true;
     stack<int> st;
@@ -69,10 +71,12 @@ pair<vector<int>*, vector<int>*> PdbFileBuilder::build_atom_section(
             marked[molecule_start] = true;
         }
         int top = st.top();
-        auto_ptr<Structure::InternalResidue> residue = structure.residues(top);
-        for (Structure::AtomList::const_iterator it = residue->begin();
+        const Residue *residue = structure.residues(top);
+        for (Residue::const_iterator it = residue->begin();
                 it != residue->end(); ++it) {
-            int atom_index = std::distance(structure.begin(), it);
+            //int atom_index = std::distance(structure.begin(), it);
+            int atom_index = structure.get_atom_index(
+                    top, std::distance(residue->begin(), it));
             (*atom_map)[atom_index] = cur_atom;
             sequence->push_back(atom_index);
             file->insert_atom_card(PdbFile::AtomCardPtr(new PdbAtomCard(

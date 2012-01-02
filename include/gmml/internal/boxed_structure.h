@@ -39,7 +39,7 @@ class BoxedStructure : public Structure {
     virtual CoordinateFile *build_coordinate_file() const;
 
     // If the box is not set, NULL is returned.
-    const Box *box() const { return box_; }
+    virtual const Box *box() const { return box_; }
 
   protected:
     // An alternative to the assignment operator.
@@ -94,6 +94,7 @@ inline void BoxedRegion::contract(double x, double y, double z) {
     max_z -= z;
 }
 
+//change to call above
 inline void BoxedRegion::expand(double x, double y, double z) {
     min_x -= x;
     max_x += x;
