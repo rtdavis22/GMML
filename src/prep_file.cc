@@ -408,11 +408,11 @@ Residue *BuildPrepFileResidue::operator()(
             bonds->add_edge(i - 3, parent1 - 3);
 
         coordinates[i] = new Coordinate(
-            calculate_point(*coordinates[parent3], *coordinates[parent2],
-                            *coordinates[parent1],
-                            to_radians(atom_list[i]->angle),
-                            to_radians(atom_list[i]->dihedral),
-                            atom_list[i]->bond_length)
+                calculate_point(*coordinates[parent3], *coordinates[parent2],
+                                *coordinates[parent1],
+                                to_radians(atom_list[i]->angle),
+                                to_radians(atom_list[i]->dihedral),
+                                atom_list[i]->bond_length)
         );
     }
     for (size_t i = 0; i < prep_file_residue.loops.size(); i++) {
@@ -423,16 +423,29 @@ Residue *BuildPrepFileResidue::operator()(
     vector<Atom*> *atoms = new vector<Atom*>;
     atoms->reserve(atom_list.size() - 3);
 
+    int head = -1;
+    int tail = -1;
     for (size_t i = 3; i < atom_list.size(); i++) {
         Element element = get_element_by_char(atom_list[i]->name[0]);
         Atom *atom = new Atom(element, *coordinates[i], atom_list[i]->name,
                               atom_list[i]->type, atom_list[i]->charge);
         atoms->push_back(atom);
+
+        if (atom_list[i]->topological_type == PrepFileAtom::kTopTypeM) {
+            if (head == -1)
+                head = i - 3;
+            if (head != i - 3)
+                tail = i - 3;
+        }
     }
 
     std::for_each(coordinates.begin(), coordinates.end(), DeletePtr());
 
-    return new Residue(prep_file_residue.name, atoms, bonds);
+    Residue *result = new Residue(prep_file_residue.name, atoms, bonds);
+    result->set_head(head);
+    result->set_tail(tail);
+
+    return result;
 }
 
 }  // namespace gmml

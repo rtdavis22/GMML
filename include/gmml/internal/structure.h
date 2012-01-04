@@ -157,19 +157,57 @@ class Structure {
     // The attach operations reposition the atoms that are being attached to
     // the current structure according to StructureAttach below, and a bond
     // is created.
+    // TODO: Should these really be virtual?
+    // TODO: First arg should be a const Residue* for all, I think.
     //
-    // Attach |new_atom_name| of residue |new_residue| to |target_atom_name| of
-    // residue |residue_index|. The index of the appended residue within the
+    // Attach |head_name| of residue |new_residue| to |tail_name| of
+    // residue |residue|. The index of the appended residue within the
     // structure is returned.
-    virtual int attach(Residue *new_residue, const std::string& new_atom_name,
-                       int residue_index, const std::string& target_atom_name);
 
-    // This is similar to the above function, but the residue's prep file code
-    // is given.
-    virtual int attach(const std::string& prep_code,
-                       const std::string& new_atom_name,
-                       int residue_index,
-                       const std::string& target_atom_name);
+    // Attach residue's head atom to the structure's tail atom.
+    int attach(Residue *residue);
+
+    // Attach the atom in the residue with the given head name to the atom in
+    // the given target residue of the structure with the specified tail name.
+    int attach(Residue *residue, const std::string& head_name,
+               int target_residue, const std::string& tail_name);
+
+    // Attach the atom in the residue with the given head index to the
+    // atom in the structure with the given tail index.
+    int attach(Residue *new_residue, int head, int tail);
+
+    // Attach the head atom in the residue to the atom with the given tail
+    // name in the specified target residue of the structure.
+    int attach_from_head(Residue *new_residue, int target_residue,
+                         const std::string& tail_name);
+
+    // Attach the head atom in the residue to the given tail atom index of
+    // the structure.
+    int attach_from_head(Residue *new_residue, int tail_atom);
+
+    // Attach the atom in the residue with the given name to the structure's
+    // tail atom.
+    int attach_to_tail(Residue *new_residue, const std::string& head_name);
+
+    // Attach the atom in the residue with the given head index to the
+    // structure's tail atom.
+    int attach_to_tail(Residue *new_residue, int head_index);
+
+/*
+    int attach(Residue *new_residue, const std::string& head_name,
+               int residue, const std::string& tail_name);
+
+    int attach(const std::string& code, int residue);
+
+    // Attach the head atom of the new residue to the specified tail atom in
+    // the specified target residue.
+    int attach_from_head(Residue *new_residue, int target_residue,
+                         const std::string& tail_name);
+
+*/
+
+
+
 
     //
     // Removal operations
@@ -191,8 +229,6 @@ class Structure {
     // reason.
     MinimizationResults *minimize(const std::string& input_file);
 
-    // THIS should be overrided in BoxedStructure.
-    //virtual SolvatedStructure *solvate(
 
     //
     // Atom-related query operations
@@ -345,16 +381,33 @@ class Structure {
 // The is the default attachment functor. It repositions the residue and
 // attaches it to the structure. If you need to make other modifications to
 // the structure, it is recommended that you make a wrapper around this
-// functor.
+// functor. EDIT: you should wrap around Structure::attach instead?
 // TODO: This functor should be changed to be general enough to only
 // depend on the hybridizations of the atoms.
 class StructureAttach {
   public:
     // The return value is -1 if the attachment failed for any reason, such as
     // the atom names don't exist in the residue.
-    int operator()(Structure& structure, Residue *residue,
-                    const std::string& new_atom_name, int residue_index,
-                    const std::string& atom_name) const;
+    //int operator()(Structure& structure, Residue *new_residue,
+    //               const std::string& head_name, int residue,
+    //               const std::string& tail_name) const;
+
+    //int operator()(Structure& structure, Residue *new_residue,
+    //               int head, int residue, int tail) const;
+
+    //int operator()(Structure& structure, const std::string& code,
+    //               int residue) const;
+
+    // Attach the head 
+    //int operator()(Structure& structure, const std::string& code,
+    //               int head) const;
+
+    //int operator()(Structure& structure, const std::string& code,
+    //               const std::string& head_name) const;
+
+    // Attach the head atom of the new residue to the structure's tail atom.
+    int operator()(Structure& structure, Residue *new_residue,
+                   int head, int tail) const;
 
   private:
     struct Impl;

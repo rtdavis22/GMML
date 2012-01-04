@@ -398,6 +398,8 @@ int Structure::append(const Structure *structure) {
 }
 
 int Structure::append(const Residue *residue, bool load_bonds) {
+    int prev_size = size();
+
     InternalResidue *new_residue = new InternalResidue(residue, size());
     residues_.push_back(new_residue);
 
@@ -415,6 +417,10 @@ int Structure::append(const Residue *residue, bool load_bonds) {
     }
 
     atoms_.insert(end(), new_residue->begin(), new_residue->end());
+
+    set_head(prev_size + new_residue->head());
+    set_tail(prev_size + new_residue->tail());
+
     return residue_count() - 1;
 }
 
@@ -436,20 +442,106 @@ int Structure::append(const string& name) {
     return index;
 }
 
-int Structure::attach(Residue *new_residue, const string& new_atom_name,
-                      int residue_index, const string& target_atom_name) {
-    StructureAttach()(*this, new_residue, new_atom_name, residue_index,
-                      target_atom_name);
+
+
+
+
+
+
+
+
+/*
+int Structure::attach(const string& code, const string& head_name,
+                      int residue, const string& tail_name) {
+    int tail_index = get_atom_index(residue, tail_name);
+
+    return attach(code, head_name, tail_index);
+
+
+    //Residue *new_residue = build_prep_file(code);
+    //if (new_residue == NULL)
+    //    return -1;
+    //return attach(new_residue, head_name, residue, tail_name);
 }
 
-int Structure::attach(const string& prep_code, const string& new_atom_name,
-                      int residue_index, const string& target_atom_name) {
-    // change to use build().
-    Residue *residue = build_prep_file(prep_code);
-    if (residue == NULL)
-        return -1;
-    return attach(residue, new_atom_name, residue_index, target_atom_name);
+
+int Structure::attach(const string& code, int head_index, int tail_index) {
+    Residue *new_residue = build_prep_file(code);
+    return attach(new_residue, head_index, tail_index);
 }
+*/
+
+/*
+int Structure::attach(const string& code, int tail) {
+    Residue *new_residue = build_prep_file(code);
+    if (new_residue == NULL)
+        return -1;
+    int head = new_residue->head();
+    if (head == -1)
+        return -1
+    return attach(new_residue, head, tail);
+}
+
+int Structure::attach(const string& code) {
+    int tail_index = tail();
+
+    if (tail_index == -1)
+        return -1;
+    
+    return attach(code, tail_index);
+}
+*/
+
+
+int Structure::attach(Residue *new_residue) {
+    int tail_index = tail();
+    if (tail_index == -1)
+        return -1;
+    return attach_from_head(new_residue, tail_index);
+}
+
+int Structure::attach(Residue *new_residue, const string& head_name,
+                      int residue, const string& tail_name) {
+    int head_index = new_residue->get_index(head_name);
+    int tail_index = get_atom_index(residue, tail_name);
+    return attach(new_residue, head_index, tail_index);
+}
+
+int Structure::attach(Residue *new_residue, int head, int tail) {
+    return StructureAttach()(*this, new_residue, head, tail);
+}
+
+int Structure::attach_from_head(Residue *new_residue, int target_residue,
+                                const string& tail_name) {
+    int tail_atom = get_atom_index(target_residue, tail_name);
+    if (tail_atom == -1)
+        return -1;
+    return attach_from_head(new_residue, tail_atom);
+}
+
+int Structure::attach_from_head(Residue *new_residue, int tail_atom) {
+    int head_atom = new_residue->head();
+    if (head_atom == -1)
+        return -1;
+    return attach(new_residue, head_atom, tail_atom);
+}
+
+int Structure::attach_to_tail(Residue *new_residue, const string& head_name) {
+    int head_index = new_residue->get_index(head_name);
+    if (head_index == -1)
+        return -1;
+    return attach_to_tail(new_residue, head_index);
+}
+
+int Structure::attach_to_tail(Residue *new_residue, int head_index) {
+    int tail_index = tail();
+    if (tail_index == -1)
+        return -1;
+    return attach(new_residue, head_index, tail_index);
+}
+
+
+
 
 // Removal operations
 void Structure::remove_residues(const std::vector<int>& indices) {
@@ -717,23 +809,52 @@ struct StructureAttach::Impl {
                               int oxygen_number);
 };
 
+/*
+int StructureAttach::operator()(Structure& structure, const string& code,
+                                int residue) const {
+    Residue *new_residue = build_prep_file(code);
+    if (new_residue == NULL)
+        return -1;
+    int tail = structure.tail();
+    int head = new_residue->head();
+    if (tail == -1 || head == -1)
+        return -1;
+    return operator()(structure, new_residue, head, tail);
+}
+
 int StructureAttach::operator()(Structure& structure, Residue *new_residue,
-                                const string& new_atom_name, int residue_index,
-                                const string& target_atom_name) const {
+                                const string& head_atom, int residue,
+                                const string& tail_atom) const {
+    int head_index = new_residue->get_index(head_atom);
+    int tail_index = structure.get_atom_index(residue, tail_atom);
+    return operator()(structure, new_residue, head_index, tail_index);
+}
+*/
+
+// tail is redundant with residue_index! FIX!
+int StructureAttach::operator()(Structure& structure, Residue *new_residue,
+                                int head, int tail) const {
     const Structure::AtomList& atoms = structure.atoms();
+
+    int prev_size = structure.size();
+
     int new_residue_index = structure.append(new_residue);
     if (new_residue_index == -1)
         return -1;
 
-    int new_atom_index = structure.get_atom_index(new_residue_index,
-                                                  new_atom_name);
-    if (new_atom_index == -1)
-        return -1;
+    int new_atom_index = prev_size + head;
 
-    int target_atom_index = structure.get_atom_index(residue_index,
-                                                     target_atom_name);
-    if (target_atom_index == -1)
-        return -1;
+    int target_atom_index = tail;
+
+    int residue_index = structure.get_residue_index(tail);
+
+    string new_atom_name = structure.atoms(new_atom_index)->name();
+    
+    string target_atom_name = structure.atoms(tail)->name();
+
+
+
+
 
     structure.add_bond(new_atom_index, target_atom_index);
 

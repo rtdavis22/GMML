@@ -392,9 +392,12 @@ int GlycamAttach::operator()(Structure& structure, Residue *residue,
         atom->set_charge(atom->charge() + 0.031);
     }
 
-    StructureAttach structure_attach;
-    return structure_attach(structure, residue, new_atom_name, residue_index,
-                            atom_name);
+    //StructureAttach structure_attach;
+
+    return structure.attach(residue, new_atom_name, residue_index, atom_name);
+
+    //return structure_attach(structure, residue, new_atom_name, residue_index,
+    //                        atom_name);
 }
 
 Structure *glycam_build(ArrayTree<TreeResidue*> *residue_tree) {
