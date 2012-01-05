@@ -31,6 +31,8 @@ class Structure {
 
     Structure();
 
+    Structure(const Residue *residue);
+
     virtual ~Structure();
 
     //
@@ -90,6 +92,9 @@ class Structure {
     // Translate a given residue.
     void translate_residue(int residue_index, double x, double y, double z);
 
+    // Translate all residues after the given residue index.
+    void translate_residues_after(int index, double x, double y, double z);
+
     // Set the dihedral of the atoms with the given atom indices. Note that the
     // dihedral angle should be given in degrees.
     void set_dihedral(size_t atom1, size_t atom2, size_t atom3, size_t atom4,
@@ -108,6 +113,13 @@ class Structure {
     // Note: change this to use degrees.
     void set_residue_angle(int atom1, int atom2, int atom3, int residue_index,
                            double radians);
+
+    void set_angle_in_range(int start_atom, int end_atom, int atom1, int atom2,
+                            int atom3, double radians);
+
+    // Modify all residues including and after the given residue index.
+    void set_angle_after(int residue, int atom1, int atom2, int atom3,
+                         double radians);
 
     // The following three functions set the glycosidic angles between the
     // residue with the given residue index and it's parent (the residue at
@@ -157,56 +169,55 @@ class Structure {
     // The attach operations reposition the atoms that are being attached to
     // the current structure according to StructureAttach below, and a bond
     // is created.
-    // TODO: Should these really be virtual?
-    // TODO: First arg should be a const Residue* for all, I think.
     //
     // Attach |head_name| of residue |new_residue| to |tail_name| of
     // residue |residue|. The index of the appended residue within the
     // structure is returned.
 
     // Attach residue's head atom to the structure's tail atom.
-    int attach(Residue *residue);
+    int attach(const Structure *structure);
+    int attach(const Residue *residue);
+    int attach(const std::string& code);
+
+    int attach(const Structure *new_structure,
+               int head_residue, const std::string& head_name,
+               int tail_residue, const std::string& tail_name);
 
     // Attach the atom in the residue with the given head name to the atom in
     // the given target residue of the structure with the specified tail name.
-    int attach(Residue *residue, const std::string& head_name,
+    int attach(const Residue *residue, const std::string& head_name,
                int target_residue, const std::string& tail_name);
 
     // Attach the atom in the residue with the given head index to the
     // atom in the structure with the given tail index.
-    int attach(Residue *new_residue, int head, int tail);
+    int attach(const Structure *residue, int head, int tail);
+
+
+
+
 
     // Attach the head atom in the residue to the atom with the given tail
     // name in the specified target residue of the structure.
-    int attach_from_head(Residue *new_residue, int target_residue,
+    int attach_from_head(const Structure *structure, int target_residue,
                          const std::string& tail_name);
 
     // Attach the head atom in the residue to the given tail atom index of
     // the structure.
-    int attach_from_head(Residue *new_residue, int tail_atom);
+    int attach_from_head(const Structure *structure, int tail_atom);
+
+
+
+
+    int attach_to_tail(const Structure *structure, int head_residue,
+                       const std::string& head_name);
 
     // Attach the atom in the residue with the given name to the structure's
     // tail atom.
-    int attach_to_tail(Residue *new_residue, const std::string& head_name);
+    int attach_to_tail(const Residue *residue, const std::string& head_name);
 
     // Attach the atom in the residue with the given head index to the
     // structure's tail atom.
-    int attach_to_tail(Residue *new_residue, int head_index);
-
-/*
-    int attach(Residue *new_residue, const std::string& head_name,
-               int residue, const std::string& tail_name);
-
-    int attach(const std::string& code, int residue);
-
-    // Attach the head atom of the new residue to the specified tail atom in
-    // the specified target residue.
-    int attach_from_head(Residue *new_residue, int target_residue,
-                         const std::string& tail_name);
-
-*/
-
-
+    int attach_to_tail(const Structure *residue, int head_index);
 
 
     //
@@ -378,35 +389,12 @@ class Structure {
 };
 
 
-// The is the default attachment functor. It repositions the residue and
-// attaches it to the structure. If you need to make other modifications to
-// the structure, it is recommended that you make a wrapper around this
-// functor. EDIT: you should wrap around Structure::attach instead?
 // TODO: This functor should be changed to be general enough to only
 // depend on the hybridizations of the atoms.
 class StructureAttach {
   public:
-    // The return value is -1 if the attachment failed for any reason, such as
-    // the atom names don't exist in the residue.
-    //int operator()(Structure& structure, Residue *new_residue,
-    //               const std::string& head_name, int residue,
-    //               const std::string& tail_name) const;
-
-    //int operator()(Structure& structure, Residue *new_residue,
-    //               int head, int residue, int tail) const;
-
-    //int operator()(Structure& structure, const std::string& code,
-    //               int residue) const;
-
-    // Attach the head 
-    //int operator()(Structure& structure, const std::string& code,
-    //               int head) const;
-
-    //int operator()(Structure& structure, const std::string& code,
-    //               const std::string& head_name) const;
-
-    // Attach the head atom of the new residue to the structure's tail atom.
-    int operator()(Structure& structure, Residue *new_residue,
+    // Attach the head atom of the new structure to the structure's tail atom.
+    int operator()(Structure& structure, const Structure *new_structure,
                    int head, int tail) const;
 
   private:

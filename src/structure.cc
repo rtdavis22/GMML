@@ -43,6 +43,11 @@ struct Structure::InternalResidue : public Residue {
 
 Structure::Structure() : atoms_(0), bonds_(new Graph), head_(-1), tail_(-1) {}
 
+Structure::Structure(const Residue *residue) : atoms_(0), bonds_(new Graph),
+                                               head_(-1), tail_(-1) {
+    append(residue);
+}
+
 Structure::~Structure() {
     if (bonds_ != NULL)
         delete bonds_;
@@ -157,6 +162,14 @@ void Structure::translate_residue(int residue_index, double x, double y,
     }
 }
 
+void Structure::translate_residues_after(int index, double x, double y,
+                                         double z) {
+    int num_residues = residue_count();
+    for (int i = index; i < num_residues; i++) {
+        translate_residue(i, x, y, z);
+    }
+}
+
 void Structure::set_dihedral(size_t atom1, size_t atom2, size_t atom3,
                              size_t atom4, double degrees) {
     vector<size_t> *atoms = bonds_->edge_bfs(atom2, atom3);
@@ -198,6 +211,15 @@ void Structure::set_dihedral(int residue1_index, const string& atom1_name,
 
 void Structure::set_residue_angle(int atom1, int atom2, int atom3,
                                   int residue_index, double radians) {
+    int start_atom = residues_[residue_index]->start_index;
+    int end_atom = size() - 1;
+
+    set_angle_in_range(start_atom, end_atom, atom1, atom2, atom3, radians);
+}
+
+void Structure::set_angle_in_range(int start_atom, int end_atom,
+                                   int atom1, int atom2, int atom3,
+                                   double radians) {
     double cur_angle = measure(atoms_[atom1]->coordinate(),
                                atoms_[atom2]->coordinate(),
                                atoms_[atom3]->coordinate());
@@ -211,11 +233,16 @@ void Structure::set_residue_angle(int atom1, int atom2, int atom3,
         radians - cur_angle
     );
 
-    int residue_start = residues_[residue_index]->start_index;
-    int residue_size = residues(residue_index)->size();
+    for (int i = start_atom; i <= end_atom; i++)
+        matrix.apply(atoms(i)->mutable_coordinate());
+}
 
-    for (int i = residue_start; i < residue_size + residue_start; i++)
-        matrix.apply(atoms_[i]->mutable_coordinate());
+void Structure::set_angle_after(int residue, int atom1, int atom2, int atom3,
+                                double radians) {
+    int num_residues = residue_count();
+    for (int i = residue; i < num_residues; i++) {
+        set_residue_angle(atom1, atom2, atom3, i, radians);
+    }
 }
 
 bool Structure::set_phi(int residue_index, double degrees) {
@@ -492,52 +519,89 @@ int Structure::attach(const string& code) {
 }
 */
 
-
-int Structure::attach(Residue *new_residue) {
+int Structure::attach(const Structure *structure) {
     int tail_index = tail();
     if (tail_index == -1)
         return -1;
-    return attach_from_head(new_residue, tail_index);
+    return attach_from_head(structure, tail_index);
 }
 
-int Structure::attach(Residue *new_residue, const string& head_name,
-                      int residue, const string& tail_name) {
-    int head_index = new_residue->get_index(head_name);
-    int tail_index = get_atom_index(residue, tail_name);
-    return attach(new_residue, head_index, tail_index);
+int Structure::attach(const Residue *residue) {
+    Structure structure(residue);
+    return attach(&structure);
 }
 
-int Structure::attach(Residue *new_residue, int head, int tail) {
-    return StructureAttach()(*this, new_residue, head, tail);
+int Structure::attach(const std::string& code) {
+    Structure *new_structure = build(code);
+    if (new_structure == NULL)
+        return -1;
+    int ret_val = attach(new_structure);
+    delete new_structure;
+    return ret_val;
 }
 
-int Structure::attach_from_head(Residue *new_residue, int target_residue,
+int Structure::attach(const Structure *structure,
+                      int head_residue, const string& head_name,
+                      int tail_residue, const string& tail_name) {
+    int head_index = structure->get_atom_index(head_residue, head_name);
+    int tail_index = get_atom_index(tail_residue, tail_name);
+    if (head_index == -1 || tail_index == -1)
+        return -1;
+    return attach(structure, head_index, tail_index);
+}
+
+int Structure::attach(const Residue *residue, const string& head_name,
+                      int target_residue, const string& tail_name) {
+    int head_index = residue->get_index(head_name);
+    int tail_index = get_atom_index(target_residue, tail_name);
+    Structure structure(residue);
+    return attach(&structure, head_index, tail_index);
+}
+
+int Structure::attach(const Structure *structure, int head, int tail) {
+    return StructureAttach()(*this, structure, head, tail);
+}
+
+
+
+
+
+int Structure::attach_from_head(const Structure *structure, int target_residue,
                                 const string& tail_name) {
     int tail_atom = get_atom_index(target_residue, tail_name);
     if (tail_atom == -1)
         return -1;
-    return attach_from_head(new_residue, tail_atom);
+    return attach_from_head(structure, tail_atom);
 }
 
-int Structure::attach_from_head(Residue *new_residue, int tail_atom) {
-    int head_atom = new_residue->head();
+int Structure::attach_from_head(const Structure *structure, int tail_atom) {
+    int head_atom = structure->head();
     if (head_atom == -1)
         return -1;
-    return attach(new_residue, head_atom, tail_atom);
+    return attach(structure, head_atom, tail_atom);
 }
 
-int Structure::attach_to_tail(Residue *new_residue, const string& head_name) {
-    int head_index = new_residue->get_index(head_name);
+
+
+int Structure::attach_to_tail(const Structure *structure, int head_residue,
+                              const string& head_name) {
+    int head_index = structure->get_atom_index(head_residue, head_name);
+    return attach_to_tail(structure, head_index);
+}
+
+int Structure::attach_to_tail(const Residue *residue, const string& head_name) {
+    int head_index = residue->get_index(head_name);
     if (head_index == -1)
         return -1;
-    return attach_to_tail(new_residue, head_index);
+    Structure structure(residue);
+    return attach_to_tail(&structure, head_index);
 }
 
-int Structure::attach_to_tail(Residue *new_residue, int head_index) {
+int Structure::attach_to_tail(const Structure *structure, int head_index) {
     int tail_index = tail();
     if (tail_index == -1)
         return -1;
-    return attach(new_residue, head_index, tail_index);
+    return attach(structure, head_index, tail_index);
 }
 
 
@@ -831,14 +895,21 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
 }
 */
 
-// tail is redundant with residue_index! FIX!
-int StructureAttach::operator()(Structure& structure, Residue *new_residue,
+int StructureAttach::operator()(Structure& structure,
+                                const Structure *new_structure,
                                 int head, int tail) const {
     const Structure::AtomList& atoms = structure.atoms();
 
     int prev_size = structure.size();
 
-    int new_residue_index = structure.append(new_residue);
+
+    // THE FIRST RESIDUE IN THE NEW STRUCTURE MIGHT NOT BE THE ONE YOU'RE
+    // ATTACHING TO. NEED TO FIX.
+    int structure_head = structure.head();
+    int new_residue_index = structure.append(new_structure);
+
+    // Append modifies the head atom. This is not what we want on attach.
+    structure.set_head(structure_head);
     if (new_residue_index == -1)
         return -1;
 
@@ -879,8 +950,8 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
     Vector<3> oxygen_position = direction;
     VectorBase<3> offset(Vector<3>(atoms[target_atom_index]->coordinate()) -
                          oxygen_position);
-    structure.translate_residue(new_residue_index, offset[0], offset[1],
-                                offset[2]);
+    structure.translate_residues_after(new_residue_index, offset[0], offset[1],
+                                       offset[2]);
 
     // Set the bond angles
     const Structure::AdjList& adj_atoms = structure.bonds(target_atom_index);
@@ -893,9 +964,10 @@ int StructureAttach::operator()(Structure& structure, Residue *new_residue,
                 atoms[new_atom_index]->type());
 
             if (parameter_angle != NULL)
-                structure.set_residue_angle(third_atom, target_atom_index,
-                                            new_atom_index, new_residue_index,
-                                            to_radians(parameter_angle->angle));
+                structure.set_angle_after(new_residue_index,
+                                          third_atom, target_atom_index,
+                                          new_atom_index,
+                                          to_radians(parameter_angle->angle));
          }
     }
 

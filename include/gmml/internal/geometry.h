@@ -248,12 +248,6 @@ class RotationMatrix : Matrix<3, 4, double> {
     RotationMatrix(const Coordinate& coordinate, const Vector<3> direction,
                    double radians);
 
-    // Apply the matrix to a coordinate
-    Coordinate apply(const Coordinate& coordinate) const {
-        Coordinate c(coordinate);
-        apply(c);
-        return c;
-    }
     void apply(Coordinate& coordinate) const {
         Vector<4> vec;
         vec[0] = coordinate.x;
