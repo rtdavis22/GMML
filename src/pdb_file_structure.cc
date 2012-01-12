@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include <deque>
+#include <iostream> // remove
 #include <map>
 #include <string>
 #include <utility>
@@ -19,6 +20,8 @@
 #include "gmml/internal/stubs/utils.h"
 #include "utilities.h"
 
+using std::cout; // remove
+using std::endl; //remove
 using std::deque;
 using std::map;
 using std::pair;
@@ -99,6 +102,10 @@ PdbFileStructure::Impl::get_indexed_residues(
                                                 (*it)->res_seq,
                                                 (*it)->i_code);
 
+        cout << "chain_id: " << (*it)->chain_id <<
+                " res_seq: " << (*it)->res_seq <<
+                " i_code: " << (*it)->i_code << endl;
+
         std::pair<iterator, bool> ret = residue_map->insert(
                 std::make_pair(triple, static_cast<PdbIndexedResidue*>(NULL)));
         if (!ret.second)
@@ -171,7 +178,7 @@ int PdbFileStructure::map_residue(char chain_id, int residue_number,
     return ret;
 }
 
-PdbFileStructure::~PdbFileStructure() { }
+PdbFileStructure::~PdbFileStructure() {}
 
 PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file) {
     return build(pdb_file, *kDefaultEnvironment.pdb_mapping_info());
@@ -235,9 +242,6 @@ PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file,
 
         Residue *result = CompleteResidue()(cur_residue, mapped_name);
 
-  if (result == NULL)
-  warning("no match for " + mapped_name);
-
         // Now we apply the information in the Residue to the PdbIndexedResidue.
         // We need to set the atom indices of the original IndexedAtoms.
         if (result != NULL) {
@@ -259,7 +263,7 @@ PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file,
             }
         }
 
-        // the inter-protein N-C bonding
+        // the inter-protein N-C bonding, change to use head/tail
         if (proteins.is_standard(cur_residue->name()) && prev_residue != NULL &&
                 proteins.is_standard(prev_residue->name())) {
             int carbon = cur_residue->get_atom_index("N");
