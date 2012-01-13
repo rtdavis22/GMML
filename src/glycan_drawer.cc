@@ -93,20 +93,28 @@ void GlycanDrawer::write(const ArrayTree<ParsedResidue*> *parsed_tree,
     for (int i = 2; i < parsed_tree->size(); i++) {
         out << (*parsed_tree)[i].second << "-- " << i;
 
-        out << " [headlabel=\"";
-        if ((*parsed_tree)[i].first->configuration ==
-                ResidueClassification::kAlpha) {
-            out << "&alpha;";
-        } else {
-            out << "&beta;";
-        }
-        out << "\"";
+        out << " [";
 
-        out << "taillabel=\"" << (*parsed_tree)[i].first->oxygen_position <<
-               "\"";
+        if (show_config_labels_) {
+            out << "headlabel=\"";
+            if ((*parsed_tree)[i].first->configuration ==
+                    ResidueClassification::kAlpha) {
+                out << "&alpha;";
+            } else {
+                out << "&beta;";
+            }
+            out << "\" ";
+        }
+
+        if (show_position_labels_) {
+            out << "taillabel=\"" << (*parsed_tree)[i].first->oxygen_position <<
+                   "\" ";
+        }
+
         if (show_edge_labels_) {
             out << "label=<<B>" << (i - 1) << "</B>>";
         }
+
         out << "];" << endl; // headlabel
     }
     out << "}" << endl; // graph

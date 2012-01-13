@@ -12,7 +12,8 @@ struct ParsedResidue;
 
 class GlycanDrawer {
   public:
-    GlycanDrawer() : dpi_(72), show_edge_labels_(false) {}
+    GlycanDrawer() : dpi_(72), show_config_labels_(true),
+                     show_edge_labels_(false), show_position_labels_(true) {}
 
     ~GlycanDrawer() {}
 
@@ -23,8 +24,15 @@ class GlycanDrawer {
 
     // Mutators
     void set_dpi(int dpi) { dpi_ = dpi; }
+
+    void show_config_labels() { show_config_labels_ = true; }
+    void hide_config_labels() { show_config_labels_ = false; }
+
     void show_edge_labels() { show_edge_labels_ = true; }
     void hide_edge_labels() { show_edge_labels_ = false; }
+
+    void show_position_labels() { show_position_labels_ = true; }
+    void hide_position_labels() { show_position_labels_ = false; }
 
     // Accessors
     int dpi() const { return dpi_; }
@@ -35,7 +43,9 @@ class GlycanDrawer {
                std::ostream& out) const;
 
     int dpi_;
+    bool show_config_labels_;
     bool show_edge_labels_;
+    bool show_position_labels_;
 };
 
 }  // namespace gmml
