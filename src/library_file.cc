@@ -155,6 +155,8 @@ void LibraryFileStructure::read(std::istream& in) {
     while (getline(in, line) && line.find("unit.atoms ") == string::npos) {
         if (line.find("boundbox") != string::npos) {
             read_box(in);
+        } else if (line.find("connect array") != string::npos) {
+            read_connect_atoms(in);
         } else if (line.find("connectivity") != string::npos) {
             read_connectivity_info(in, atom_map);
         } else if (line.find("unit.name ") != string::npos) {
@@ -223,6 +225,28 @@ void LibraryFileStructure::read_box(std::istream& in) {
     ss.str(line);
     ss.clear();
     ss >> box_->height;
+}
+
+void LibraryFileStructure::read_connect_atoms(std::istream& in) {
+    string line;
+    int head = -1;
+    int tail = -1;
+    if (in.peek() != '!') {
+        getline(in, line);
+        // The file numbers are 1-based.
+        head = convert_string<int>(line) - 1;
+    }
+    if (in.peek() != '!') {
+        getline(in, line);
+        tail = convert_string<int>(line) - 1;
+    }
+
+    set_head(head);
+    set_tail(tail);
+
+    while (in.peek() != '!') {
+        getline(in, line);
+    }
 }
 
 void LibraryFileStructure::read_connectivity_info(
