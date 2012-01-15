@@ -126,7 +126,6 @@ PdbFileStructure::Impl::RelevantPdbInfo*
 PdbFileStructure::Impl::get_relevant_pdb_info(
         const PdbFile& pdb_file) {
     RelevantPdbInfo *pdb_info = new RelevantPdbInfo;
-
     PdbFile::const_iterator it = pdb_file.begin();
     while (it != pdb_file.end()) {
         switch (PdbFile::get_card_type(*it)) {
@@ -202,17 +201,14 @@ PdbFileStructure *PdbFileStructure::build(const string& file) {
 // This should probably be trimmed down.
 PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
     typedef Impl::PdbIndexedResidue PdbIndexedResidue;
-
     Impl::RelevantPdbInfo *pdb_info =
             Impl::get_relevant_pdb_info(builder.pdb_file());
-
     map<Triplet<int>*, PdbIndexedResidue*, TripletPtrLess<int> > *residues =
         Impl::get_indexed_residues(pdb_info->atom_cards);
 
     vector<pair<int, int> > bonds_to_add;
 
     StandardProteins proteins;
-    
     for (map<Triplet<int>*, PdbIndexedResidue*>::iterator it =
             residues->begin(); it != residues->end(); ++it) {
         PdbIndexedResidue *cur_residue = it->second;
@@ -225,7 +221,6 @@ PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
         std::string mapped_name =
                 builder.map_pdb_residue(it->first, cur_residue->name(),
                                         is_head, is_tail);
-
         Residue *result = CompleteResidue()(cur_residue, mapped_name);
 
         // Now we apply the information in the Residue to the PdbIndexedResidue.
@@ -298,7 +293,8 @@ PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
 }
 
 PdbStructureBuilder::PdbStructureBuilder(const string& pdb_file)
-        : pdb_file_(pdb_file) {}
+        : pdb_file_(pdb_file),
+          mapping_info_(*kDefaultEnvironment.pdb_mapping_info()) {}
 
 PdbStructureBuilder::PdbStructureBuilder(const PdbFile& pdb_file)
         : pdb_file_(pdb_file),
