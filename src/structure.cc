@@ -857,10 +857,13 @@ void Structure::clone_from(const Structure& structure) {
     residues_.clear();
     atoms_.clear();
 
+    // Append will modify the head and tail of this structure based on the
+    // heads and tails of the residues of the structure. We set the head and
+    // tail after appending to undo this.
+    append(&structure);
+
     head_ = structure.head();
     tail_ = structure.tail();
-
-    append(&structure);
 }
 
 struct StructureAttach::Impl {

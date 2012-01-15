@@ -5,7 +5,6 @@
 #include <cassert>
 #include <cctype>
 
-#include <iostream> //REMOVE
 #include <algorithm>
 #include <fstream>
 #include <map>
@@ -18,8 +17,6 @@
 #include "gmml/internal/residue.h"
 #include "utilities.h"
 
-using std::cout; // REMOVE
-using std::endl; // RMEOVE
 using std::istringstream;
 using std::map;
 using std::string;
