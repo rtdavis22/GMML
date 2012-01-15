@@ -16,7 +16,6 @@
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/pdb_file.h"
 #include "gmml/internal/pdb_file_builder.h"
-#include "gmml/internal/pdb_file_structure.h"
 #include "gmml/internal/prep_file.h"
 #include "gmml/internal/residue.h"
 #include "gmml/internal/sander_minimize.h"
@@ -59,15 +58,6 @@ Structure *Structure::clone() const {
     Structure *structure = new Structure;
     structure->clone_from(*this);
     return structure;
-}
-
-Structure *Structure::build_from_pdb(const PdbFile& pdb_file,
-                                     const PdbMappingInfo& mapping_info) {
-    return PdbFileStructure::build(pdb_file, mapping_info);
-}
-
-Structure *Structure::build_from_pdb(const PdbFile& pdb_file) {
-    return PdbFileStructure::build(pdb_file);
 }
 
 // Bonding-related operations
@@ -407,6 +397,7 @@ int Structure::append(const Structure *structure) {
     if (structure->residue_count() == 0)
         return -1;
     int first_residue = residue_count();
+    int prev_size = size();
     for (int i = 0; i < structure->residue_count(); i++) {
         // We don't want to use the bonding information in the residues.
         append(structure->residues(i), false);
@@ -420,6 +411,12 @@ int Structure::append(const Structure *structure) {
     } else {
         bonds_->append(*structure->bonds());
     }
+
+    // Appending the residues modifies the head and tail of the structures based
+    // on the heads and tails of the residues. We want to instead use the
+    // head and tail of the whole structure.
+    set_head(prev_size + structure->head());
+    set_tail(prev_size + structure->tail());
 
     return first_residue;
 }

@@ -5,7 +5,6 @@
 #include <cassert>
 
 #include <deque>
-#include <iostream> // remove
 #include <map>
 #include <string>
 #include <utility>
@@ -20,8 +19,6 @@
 #include "gmml/internal/stubs/utils.h"
 #include "utilities.h"
 
-using std::cout; // remove
-using std::endl; //remove
 using std::deque;
 using std::map;
 using std::pair;
@@ -102,10 +99,6 @@ PdbFileStructure::Impl::get_indexed_residues(
                                                 (*it)->res_seq,
                                                 (*it)->i_code);
 
-        cout << "chain_id: " << (*it)->chain_id <<
-                " res_seq: " << (*it)->res_seq <<
-                " i_code: " << (*it)->i_code << endl;
-
         std::pair<iterator, bool> ret = residue_map->insert(
                 std::make_pair(triple, static_cast<PdbIndexedResidue*>(NULL)));
         if (!ret.second)
@@ -181,7 +174,7 @@ int PdbFileStructure::map_residue(char chain_id, int residue_number,
 PdbFileStructure::~PdbFileStructure() {}
 
 PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file) {
-    return build(pdb_file, *kDefaultEnvironment.pdb_mapping_info());
+    return PdbStructureBuilder(pdb_file).build();
 }
 
 namespace {
@@ -201,17 +194,17 @@ vector<int> *get_connect_atoms(const PdbConnectCard *card) {
 
 }  // namespace
 
+
 PdbFileStructure *PdbFileStructure::build(const string& file) {
-    PdbFile pdb(file);
-    return build(pdb);
+    return build(PdbFile(file));
 }
 
 // This should probably be trimmed down.
-PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file,
-                                          const PdbMappingInfo& mapping_info) {
+PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
     typedef Impl::PdbIndexedResidue PdbIndexedResidue;
 
-    Impl::RelevantPdbInfo *pdb_info = Impl::get_relevant_pdb_info(pdb_file);
+    Impl::RelevantPdbInfo *pdb_info =
+            Impl::get_relevant_pdb_info(builder.pdb_file());
 
     map<Triplet<int>*, PdbIndexedResidue*, TripletPtrLess<int> > *residues =
         Impl::get_indexed_residues(pdb_info->atom_cards);
@@ -226,19 +219,12 @@ PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file,
         PdbIndexedResidue *prev_residue = cur_residue->prev_residue;
         PdbIndexedResidue *next_residue = cur_residue->next_residue;
 
-        pair<string, bool> mapped_value;
-        if (prev_residue == NULL) {
-            mapped_value = mapping_info.head_map.get(cur_residue->name());
-        } else if (next_residue == NULL) {
-            mapped_value = mapping_info.tail_map.get(cur_residue->name());
-        } else {
-            mapped_value = mapping_info.residue_map.get(cur_residue->name());
-        }
-        string mapped_name;
-        if (mapped_value.second)
-            mapped_name = mapped_value.first;
-        else
-            mapped_name = cur_residue->name();
+        bool is_head = prev_residue == NULL;
+        bool is_tail = next_residue == NULL;
+
+        std::string mapped_name =
+                builder.map_pdb_residue(it->first, cur_residue->name(),
+                                        is_head, is_tail);
 
         Residue *result = CompleteResidue()(cur_residue, mapped_name);
 
@@ -295,7 +281,6 @@ PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file,
         structure->add_bond(atom1, atom2);
     }
 
-
     for (vector<PdbConnectCard*>::const_iterator it =
                 pdb_info->connect_cards.begin();
             it != pdb_info->connect_cards.end(); ++it) {
@@ -310,6 +295,62 @@ PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file,
     }
 
     return structure;
+}
+
+PdbStructureBuilder::PdbStructureBuilder(const string& pdb_file)
+        : pdb_file_(pdb_file) {}
+
+PdbStructureBuilder::PdbStructureBuilder(const PdbFile& pdb_file)
+        : pdb_file_(pdb_file),
+          mapping_info_(*kDefaultEnvironment.pdb_mapping_info()) {}
+
+PdbStructureBuilder::~PdbStructureBuilder() {
+    std::map<Triplet<int>*, std::string>::iterator it;
+    for (it = pdb_residue_map_.begin(); it != pdb_residue_map_.end(); ++it) {
+        delete it->first;
+    }
+}
+
+void PdbStructureBuilder::add_mapping(char chain_id, int residue_number,
+                                      char insertion_code, const string& name) {
+    Triplet<int> *pdb_index = new Triplet<int>(chain_id, residue_number,
+                                               insertion_code);
+    typedef std::map<Triplet<int>*, string>::iterator iterator;
+    pair<iterator, bool> ret =
+            pdb_residue_map_.insert(std::make_pair(pdb_index, name));
+    // The mapping already exists.
+    if (!ret.second) {
+        ret.first->second = name;
+        delete pdb_index;
+    }
+}
+
+string PdbStructureBuilder::map_pdb_residue(Triplet<int> *pdb_index,
+                                            const string& residue_name,
+                                            bool is_head, bool is_tail) const {
+    // The pdb_residue_map has the highest priority.
+    map<Triplet<int>*, string>::const_iterator it =
+            pdb_residue_map_.find(pdb_index);
+    if (it != pdb_residue_map_.end())
+        return it->second;
+
+    // The head and tail map have the second highest priority.
+    if (is_head) {
+        pair<string, bool> name = mapping_info_.head_map.get(residue_name);
+        if (name.second)
+            return name.first;
+    }
+    if (is_tail) {
+        pair<string, bool> name = mapping_info_.tail_map.get(residue_name);
+        if (name.second)
+            return name.first;
+    }
+
+    pair<string, bool> name = mapping_info_.residue_map.get(residue_name);
+    if (name.second)
+        return name.first;
+
+    return residue_name;
 }
 
 }  // namespace gmml

@@ -40,17 +40,6 @@ class Structure {
     //
     virtual Structure *clone() const;
 
-    static Structure *build_from_pdb(const PdbFile& pdb_file,
-                                     const PdbMappingInfo& mapping_info);
-
-    // Build the Structure represented by the pdb file. This does not do
-    // anything "smart", like infer bonding.
-    static Structure *build_from_pdb(const PdbFile& pdb_file);
-
-    // 
-    static Structure *build_from_pdb(const PdbFile& pdb_file,
-                                     bool infer_protein_bonds);
-
     //
     // Iteration
     //
