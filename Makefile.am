@@ -102,7 +102,16 @@ libgmml_a_CPPFLAGS = -I$(top_srcdir)/include
 uninstall-hook:
 	rm -rf $(includedir)/gmml
 
-EXTRA_DIST = autogen.sh
+
+EXTRA_DIST = \
+  README \
+  autogen.sh \
+  examples/Makefile \
+  examples/amber_topology_file_ex.cc \
+  examples/dat/Glycam_06h.dat \
+  examples/dat/parm99.dat \
+  examples/parameter_set_ex.cc \
+  Makefile
 
 MAINTAINERCLEANFILES = \
   aclocal.m4 \
