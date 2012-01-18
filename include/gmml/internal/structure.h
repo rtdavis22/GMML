@@ -301,6 +301,13 @@ class Structure {
     void set_head(int head) { head_ = head; }
     void set_tail(int tail) { tail_ = tail; }
 
+    void set_head(int residue, const std::string& atom) {
+        head_ = get_atom_index(residue, atom);
+    }
+    void set_tail(int residue, const std::string& atom) {
+        tail_ = get_atom_index(residue, atom);
+    }
+
     //
     // File operations
     //
