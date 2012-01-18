@@ -115,6 +115,8 @@ class AmberTopBuilder {
     static const double kDefaultScee = 1.2;
     static const double kDefaultScnb = 2.0;
 
+    static const char *kDefaultTitle;
+
     // Almost all information contained in the topology file comes from
     // a set of parameter files.
     AmberTopBuilder();
@@ -125,21 +127,21 @@ class AmberTopBuilder {
     AmberTopFile *build(const Structure& structure,
                         const std::string& title) const;
     AmberTopFile *build(const Structure& structure) const {
-        return build(structure, "");
+        return build(structure, kDefaultTitle);
     }
 
     // Boxed structures include a boxed section.
     AmberTopFile *build(const BoxedStructure& boxed_structure,
                         const std::string& title) const;
     AmberTopFile *build(const BoxedStructure& boxed_structure) const {
-        return build(boxed_structure, "");
+        return build(boxed_structure, kDefaultTitle);
     }
 
     // Solvated structures include some special sections. See below.
     AmberTopFile *build(const SolvatedStructure& solvated_structure,
                         const std::string& title) const;
     AmberTopFile *build(const SolvatedStructure& solvated_structure) const {
-        return build(solvated_structure, "");
+        return build(solvated_structure, kDefaultTitle);
     }
 
   private:
