@@ -19,7 +19,8 @@ config.status
 configuredepcomp
 INSTALL
 install-sh
-Makefile
+/Makefile
+/test/Makefile
 Makefile.in
 missingstamp-h1
 config.guess
