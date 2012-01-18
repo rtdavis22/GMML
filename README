@@ -1,0 +1,11 @@
+To build:
+    ./configure
+    make
+
+To run tests:
+    make check
+
+To install:
+    make install
+
+If you don't have a configure file, run 'sh autogen.sh' first.
