@@ -1,3 +1,9 @@
+// Author: Robert Davis
+//
+// This file includes data structures that represent AMBER prep files. It
+// includes functionality to parse prep files and build them into Residue
+// objects. See http://ambermd.org/doc/prep.html for more information.
+
 #ifndef GMML_INTERNAL_PREP_FILE_H_
 #define GMML_INTERNAL_PREP_FILE_H_
 
@@ -136,7 +142,6 @@ class BuildPrepFileResidue {
     Residue *operator()(const PrepFileResidue& residue) const;
 };
 
-// shouldn't this return a const ptr?
 inline Residue *build_prep_file(const PrepFileResidue& residue) {
     return BuildPrepFileResidue()(residue);
 }
