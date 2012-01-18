@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.60])
-AC_INIT([gmml], [0.0.3], [rtdavis22@gmail.com])
+AC_INIT([gmml], [0.1.0], [rtdavis22@gmail.com])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign silent-rules])
 AC_CONFIG_SRCDIR([src/parameter_file.cc])
