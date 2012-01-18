@@ -425,7 +425,7 @@ void AmberTopBuilder::build_dihedrals(const Structure& structure,
             it != dihedral_types.end(); ++it) {
         force_constants->insert((*it)->force_constant);
         periodicities->insert(fabs((*it)->periodicity));
-        phases->insert((*it)->phase);
+        phases->insert(to_radians((*it)->phase));
         scees->insert((*it)->scee);
         scnbs->insert((*it)->scnb);
     }
