@@ -105,4 +105,8 @@ int main() {
         print_dihedral_type_info(dihedral);
     }
     cout << endl;
+
+    delete parmset;
+
+    return 0;
 }

@@ -30,5 +30,9 @@ int main() {
         double_section->insert(2*3.1416*i);
     }
 
-    file->print("geometry_fun.top");
+    file->print("circles.top");
+
+    delete file;
+
+    return 0;
 }

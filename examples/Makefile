@@ -1,6 +1,11 @@
 TARGETS = \
   amber_topology_file_ex \
-  parameter_set_ex
+  carbohydrates_ex \
+  minimization_ex \
+  parameter_set_ex \
+  pdb_ex \
+  solvation_ex
+
 
 all: $(TARGETS)
 
@@ -8,4 +13,4 @@ all: $(TARGETS)
 	g++ -I../include -L.. -o $@ $< -lgmml
 
 clean:
-	rm -rf $(TARGETS)
+	rm -f $(TARGETS) *\.top *\.rst
