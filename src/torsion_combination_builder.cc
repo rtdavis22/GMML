@@ -102,17 +102,17 @@ list<TCBStructure*> *TorsionCombinationBuilder::build() const {
         for (int i = 1; i <= num_residues; i++) {
             const vector<double>& values = linkage_angles[i - 1].at(a[i]);
             if (values[0] != kNotSet) {
-                sugars::set_phi(new_structure, i - 1, values[0]);
+                carbohydrate::set_phi(new_structure, i - 1, values[0]);
                 int index = get_index(phi_values, values[0]);
                 name += "phi-" + to_string(index + 1) + "_";
             }
             if (values[1] != kNotSet) {
-                sugars::set_psi(new_structure, i - 1, values[1]);
+                carbohydrate::set_psi(new_structure, i - 1, values[1]);
                 int index = get_index(psi_values, values[1]);
                 name += "psi-" + to_string(index + 1) + "_";
             }
             if (values[2] != kNotSet) {
-                sugars::set_omega(new_structure, i - 1, values[2]);
+                carbohydrate::set_omega(new_structure, i - 1, values[2]);
                 int index = get_index(omega_values, values[2]);
                 if (values[2] == 180.0)
                     name += "omega-gg_";

@@ -740,9 +740,9 @@ int StructureAttach::operator()(Structure& structure,
         oxygen_number = 1;
 
     if (is_set(carbon_number) && is_set(oxygen_number))
-        sugars::set_default_torsions(&structure, new_residue_index,
-                                     residue_index, carbon_number,
-                                     oxygen_number);
+        carbohydrate::set_default_torsions(&structure, new_residue_index,
+                                           residue_index, carbon_number,
+                                           oxygen_number);
 
     return new_residue_index;
 }

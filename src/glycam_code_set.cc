@@ -448,7 +448,7 @@ Structure *glycam_build_with_array_tree(const string& sequence) {
     return structure;
 }
 
-namespace sugars {
+namespace carbohydrate {
 
 bool set_phi(Structure *structure, int residue_index, double degrees) {
     const vector<Atom*>& atoms = structure->atoms();
@@ -661,5 +661,5 @@ void set_default_torsions(Structure *structure, int new_residue_index,
     }
 }
 
-}  // namespace sugars
+}  // namespace carbohydrate
 }  // namespace gmml

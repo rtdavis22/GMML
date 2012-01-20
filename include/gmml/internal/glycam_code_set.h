@@ -145,7 +145,7 @@ Structure *glycam_build(const std::string& sequence);
 // The resulting structures should be equivalent.
 Structure *glycam_build_with_array_tree(const std::string& sequence);
 
-namespace sugars {
+namespace carbohydrate {
 
 // The following three functions set the glycosidic angles between the
 // residue with the given residue index and it's parent (the residue at
@@ -171,7 +171,7 @@ void set_default_torsions(Structure *structure, int source_residue,
                           int target_residue, int source_atom,
                           int target_atom);
 
-}  // namespace sugars
+}  // namespace carbohydrate
 }  // namespace gmml
 
 #endif  // GMML_INTERNAL_GLYCAM_CODE_SET_H_
