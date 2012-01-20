@@ -14,6 +14,9 @@
 namespace gmml {
 namespace carbohydrate {
 
+// This class represents a structure built by the conformation builder. It
+// would probably be helpful to add a better data structure to it that
+// represents the torsions that were set in the structure.
 class GCBStructure : public Structure {
   public:
     GCBStructure(const Structure& structure, const std::string& name)
@@ -28,14 +31,21 @@ class GCBStructure : public Structure {
     std::string name() const { return name_; }
 
   private:
+    // A name that contains information about the glycosidic torsions that
+    // were set in this structure.
     std::string name_;
 
     DISALLOW_COPY_AND_ASSIGN(GCBStructure);
 };
 
+// This class builds all possible conformations of a structure that adhere to
+// particular user-specified glycosidic torsions. The residue names of the
+// residues involved in the specified torsions must conform to the GLYCAM
+// code set (you need to use the GLYCAM prep files or set the names of the
+// particular residues involved to the codes in the GLYCAM prep files).
 class GlycanConformationBuilder {
   public:
-    GlycanConformationBuilder(const Structure& structure);
+    explicit GlycanConformationBuilder(const Structure& structure);
 
     void add_phi_value(int residue_index, double measure) {
         add_values(residue_index, measure, kNotSet, kNotSet);
@@ -143,6 +153,7 @@ class GlycanConformationBuilder {
     void add_likely_omega_values();
 
     std::list<GCBStructure*> *build() const;
+
     std::vector<std::vector<std::vector<double> > > *get_build_info() const;
 
   private:
