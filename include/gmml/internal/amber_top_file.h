@@ -2,6 +2,9 @@
 //
 // This file contains a representation of the AMBER topology file.
 // See http://ambermd.org/formats.html#topology for the specification.
+// Note that this file only specifies the format of the file. The contents of
+// the file do not necessarily contain anything to do with AMBER or the
+// topology of anything. See amber_top_builder.h for that stuff.
 
 #ifndef GMML_INTERNAL_AMBER_TOP_FILE_H_
 #define GMML_INTERNAL_AMBER_TOP_FILE_H_
