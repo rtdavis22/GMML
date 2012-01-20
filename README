@@ -9,3 +9,6 @@ To install:
     make install
 
 If you don't have a configure file, run 'sh autogen.sh' first.
+
+Building requires:
+    boost headers (for shared_ptr)
