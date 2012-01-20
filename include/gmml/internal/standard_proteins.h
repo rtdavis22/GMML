@@ -1,3 +1,5 @@
+// There is no reason for this file anymore. It will go away soon.
+
 #ifndef GMML_INTERNAL_STANDARD_PROTEINS_H_
 #define GMML_INTERNAL_STANDARD_PROTEINS_H_
 
