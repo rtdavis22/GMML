@@ -175,6 +175,8 @@ class Structure {
     // the structure.
     int attach_from_head(const Structure *structure, int tail_atom);
 
+    int attach_from_head(const std::string& code, const std::string& tail_atom);
+
     int attach_to_tail(const Structure *structure, int head_residue,
                        const std::string& head_name);
 

@@ -370,6 +370,14 @@ int Structure::attach_from_head(const Structure *structure, int tail_atom) {
     return attach(structure, head_atom, tail_atom);
 }
 
+int Structure::attach_from_head(const string& code, const string& tail_atom) {
+    Structure *structure = build(code);
+    if (structure == NULL)
+        return -1;
+    int tail_residue = get_residue_index(tail());
+    return attach_from_head(structure, tail_residue, tail_atom);
+}
+
 int Structure::attach_to_tail(const Structure *structure, int head_residue,
                               const string& head_name) {
     int head_index = structure->get_atom_index(head_residue, head_name);
