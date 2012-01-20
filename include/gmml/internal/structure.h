@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #ifndef GMML_INTERNAL_STRUCTURE_H_
 #define GMML_INTERNAL_STRUCTURE_H_
 
@@ -110,23 +112,6 @@ class Structure {
     void set_angle_after(int residue, int atom1, int atom2, int atom3,
                          double radians);
 
-    // The following three functions set the glycosidic angles between the
-    // residue with the given residue index and it's parent (the residue at
-    // the reducing end). It should be noted that these make some basic
-    // assumptions about the names of some atoms. For example, the n'th carbon
-    // should be named Cn.
-    //
-    // Phi: H1-C1-O-CX'
-    //      C1-C2-O-CX'
-    bool set_phi(int residue_index, double degrees);
-
-    // Psi: C1-O-CX'-HX'
-    //      C1-O-C6'-C5'
-    bool set_psi(int residue_index, double degrees);
-
-    // Omega: O-C6'-C5'-O5'
-    bool set_omega(int residue_index, double degrees);
-
     //
     // Augmenting operations
     //
@@ -181,10 +166,6 @@ class Structure {
     // atom in the structure with the given tail index.
     int attach(const Structure *residue, int head, int tail);
 
-
-
-
-
     // Attach the head atom in the residue to the atom with the given tail
     // name in the specified target residue of the structure.
     int attach_from_head(const Structure *structure, int target_residue,
@@ -193,9 +174,6 @@ class Structure {
     // Attach the head atom in the residue to the given tail atom index of
     // the structure.
     int attach_from_head(const Structure *structure, int tail_atom);
-
-
-
 
     int attach_to_tail(const Structure *structure, int head_residue,
                        const std::string& head_name);
@@ -224,7 +202,7 @@ class Structure {
     // Advanced modification operations
     //
     // Minimize the structure with SANDER using the given SANDER input
-    // minimization file and representation of the results of the
+    // minimization file and return a representation of the results of the
     // minimization. NULL is returned if the minimization failed for any
     // reason.
     MinimizationResults *minimize(const std::string& input_file);
@@ -289,8 +267,10 @@ class Structure {
     int head() const { return head_; }
     int tail() const { return tail_; }
 
-    // This might be a good way to check if a solvent that's a Structure
-    // has a box.
+    // This may not be the best place for this, but right now it is here and
+    // virtual so that box information can be retrieved from structures with
+    // static type Structure and dynamic type LibraryFileStructure or
+    // SolvatedStructure.
     virtual const Box *box() const { return NULL; }
 
     //
@@ -385,11 +365,17 @@ class Structure {
 };
 
 
-// TODO: This functor should be changed to be general enough to only
-// depend on the hybridizations of the atoms.
+// This functor attaches a copy of a structure to another structure. A bond is
+// formed between the specified head atom of the attached structure and the
+// specified tail atom of the structure being attached to. The new bond's
+// length as well as the angles and dihedrals involved in the connection are
+// set appropriately using the parameter set of the default environment, if
+// possible.
+// TODO: This needs to be smarter about how it sets the angles and dihedrals,
+// especially when the parameter set doesn't have this information, but I'm
+// not sure what to do about it.
 class StructureAttach {
   public:
-    // Attach the head atom of the new structure to the structure's tail atom.
     int operator()(Structure& structure, const Structure *new_structure,
                    int head, int tail) const;
 

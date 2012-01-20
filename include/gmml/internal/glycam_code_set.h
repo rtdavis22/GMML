@@ -94,6 +94,7 @@ class GlycamCodeSet {
     std::string get_oxygen_name(const std::string& residue_name,
                                 int position) const;
 
+    // TODO: make these a Bimap
     std::map<std::string, std::string> name_to_letter_;
     std::map<std::string, std::string> letter_to_name_;
 
@@ -102,9 +103,7 @@ class GlycamCodeSet {
 
 class GlycamCodeException : public std::exception {
   public:
-    explicit GlycamCodeException(const std::string& what) {
-        what_ = what;
-    }
+    explicit GlycamCodeException(const std::string& what) : what_(what) {}
 
     virtual const char *what() const throw() { return what_.c_str(); }
 
@@ -146,6 +145,33 @@ Structure *glycam_build(const std::string& sequence);
 // The resulting structures should be equivalent.
 Structure *glycam_build_with_array_tree(const std::string& sequence);
 
+namespace sugars {
+
+// The following three functions set the glycosidic angles between the
+// residue with the given residue index and it's parent (the residue at
+// the reducing end). It should be noted that these make some basic
+// assumptions about the names of some atoms. For example, the n'th carbon
+// should be named Cn. The GLYCAM prep files are suitable for use with these
+// functions.
+//
+// Phi: H1-C1-O-CX'
+//      C1-C2-O-CX'
+bool set_phi(Structure *structure, int residue_index, double degrees);
+
+// Psi: C1-O-CX'-HX'
+//      C1-O-C6'-C5'
+bool set_psi(Structure *structure, int residue_index, double degrees);
+
+// Omega: O-C6'-C5'-O5'
+bool set_omega(Structure *structure, int residue_index, double degrees);
+
+// This function attempts to set the glycosidic torsions of the given residues
+// to appropriate values. The target residue is the residue at the reducing end.
+void set_default_torsions(Structure *structure, int source_residue,
+                          int target_residue, int source_atom,
+                          int target_atom);
+
+}  // namespace sugars
 }  // namespace gmml
 
 #endif  // GMML_INTERNAL_GLYCAM_CODE_SET_H_

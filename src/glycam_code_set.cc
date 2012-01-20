@@ -448,4 +448,218 @@ Structure *glycam_build_with_array_tree(const string& sequence) {
     return structure;
 }
 
+namespace sugars {
+
+bool set_phi(Structure *structure, int residue_index, double degrees) {
+    const vector<Atom*>& atoms = structure->atoms();
+    int carbon_index = structure->get_anomeric_index(residue_index);
+    if (carbon_index == -1) {
+        return false;
+    }
+    int atom2_index;
+    if (atoms[carbon_index]->name() == "C1") {
+        atom2_index = structure->get_atom_index(residue_index, "H1");
+    }
+    else if (atoms[carbon_index]->name()[0] == 'C') {
+        int carbon_number = structure->atoms(carbon_index)->name()[1] - '0';
+        string atom2_name = "C" + to_string(carbon_number - 1);
+        atom2_index = structure->get_atom_index(residue_index, atom2_name);
+    }
+    //residue must start with Cx
+    else {
+        return false;
+    }
+    int oxygen_index = kNotSet;
+    {
+        const Structure::AdjList& adj_list = structure->bonds(carbon_index);
+        for (int i = 0; i < adj_list.size(); i++) {
+            int atom_index = adj_list[i];
+            if (structure->get_residue_index(atom_index) != residue_index &&
+                    structure->atoms(atom_index)->name()[0] == 'O') {
+                oxygen_index = atom_index;
+                break;
+            }
+        }
+        if (oxygen_index == kNotSet ||
+                 structure->atoms(oxygen_index)->name().size() < 2 ||
+                 !is_number(structure->atoms(oxygen_index)->name()[1])) {
+            return false;
+        }
+    }
+    int oxygen_number = char_to_number(atoms[oxygen_index]->name()[1]);
+    int attaching_carbon_index = kNotSet;
+    {
+        const Structure::AdjList& adj_list = structure->bonds(oxygen_index);
+        for (int i = 0; i < adj_list.size(); i++) {
+            int atom_index = adj_list[i];
+            if (structure->get_residue_index(atom_index) ==
+                        structure->get_residue_index(oxygen_index) &&
+                    atoms[atom_index]->name() ==
+                        "C" + to_string(oxygen_number))
+            attaching_carbon_index = atom_index;
+        }
+        if (attaching_carbon_index == kNotSet) {
+            return false;
+        }
+    }
+    structure->set_dihedral(attaching_carbon_index, oxygen_index, carbon_index,
+                            atom2_index, degrees);
+    return true;
+}
+
+bool set_psi(Structure *structure, int residue_index, double degrees) {
+    const vector<Atom*>& atoms = structure->atoms();
+    int anomeric_carbon_index = structure->get_anomeric_index(residue_index);
+    if (anomeric_carbon_index == -1) {
+        return false;
+    }
+    int oxygen_index = kNotSet;
+    {
+        const Structure::AdjList& adj_list =
+                structure->bonds(anomeric_carbon_index);
+        for (int i = 0; i < adj_list.size(); i++) {
+            int atom_index = adj_list[i];
+            if (structure->get_residue_index(atom_index) != residue_index &&
+                    atoms[atom_index]->name()[0] == 'O') {
+                oxygen_index = atom_index;
+                break;
+            }
+        }
+    }
+    if (oxygen_index == kNotSet || atoms[oxygen_index]->name().size() < 2 ||
+            !is_number(atoms[oxygen_index]->name()[1])) {
+        return false;
+    }
+    int oxygen_number = char_to_number(atoms[oxygen_index]->name()[1]);
+    int carbon_index = kNotSet;
+    {
+        const Structure::AdjList& adj_list = structure->bonds(oxygen_index);
+        for (int i = 0; i < adj_list.size(); i++) {
+            int atom_index = adj_list[i];
+            if (structure->get_residue_index(atom_index) ==
+                        structure->get_residue_index(oxygen_index) &&
+                    atoms[atom_index]->name() ==
+                        "C" + to_string(oxygen_number))
+                carbon_index = atom_index;
+        }
+        if (carbon_index == kNotSet) {
+            return false;
+        }
+    }
+    string fourth_atom_name;
+    if (structure->is_cyclic(carbon_index))
+        fourth_atom_name = "H" + to_string(oxygen_number);
+    else
+        fourth_atom_name = "C" + to_string(oxygen_number - 1);
+    int fourth_atom_index = kNotSet;
+    {
+        const Structure::AdjList& adj_list = structure->bonds(carbon_index);
+        for (int i = 0; i < adj_list.size(); i++) {
+            int atom_index = adj_list[i];
+            if (atoms[atom_index]->name() == fourth_atom_name) {
+                fourth_atom_index = atom_index;
+                break;
+            }
+        }
+        if (fourth_atom_index == kNotSet) {
+            return false;
+        }
+    }
+    structure->set_dihedral(fourth_atom_index, carbon_index, oxygen_index,
+                            anomeric_carbon_index, degrees);
+    return true;
+}
+
+bool set_omega(Structure *structure, int residue_index, double degrees) {
+    const vector<Atom*>& atoms = structure->atoms();
+    int anomeric_carbon_index = structure->get_anomeric_index(residue_index);
+    if (anomeric_carbon_index == -1) {
+        return false;
+    }
+    int oxygen_index = kNotSet;
+    int adjacent_residue_index = kNotSet;
+    {
+        const Structure::AdjList& adj_list =
+                structure->bonds(anomeric_carbon_index);
+        for (int i = 0; i < adj_list.size(); i++) {
+            int atom_index = adj_list[i];
+            if (structure->get_residue_index(atom_index) != residue_index &&
+                    atoms[atom_index]->name()[0] == 'O') {
+                oxygen_index = atom_index;
+                adjacent_residue_index =
+                        structure->get_residue_index(atom_index);
+                break;
+            }
+        }
+        if (oxygen_index == kNotSet ||
+                atoms[oxygen_index]->name().size() < 2 ||
+                !is_number(atoms[oxygen_index]->name()[1])) {
+            return false;
+        }
+    }
+    int oxygen_number = char_to_number(atoms[oxygen_index]->name()[1]);
+    int carbon1_index =
+            structure->get_atom_index(adjacent_residue_index,
+                                      "C" + to_string(oxygen_number));
+    if (structure->is_cyclic(carbon1_index))
+        return false;
+    int carbon2_index =
+            structure->get_atom_index(adjacent_residue_index,
+                                      "C" + to_string(oxygen_number - 1));
+    int other_oxygen_index =
+            structure->get_atom_index(adjacent_residue_index,
+                                      "O" + to_string(oxygen_number - 1));
+    if (carbon1_index == -1 || carbon2_index == -1 || other_oxygen_index == -1)
+        return false;
+    structure->set_dihedral(other_oxygen_index, carbon2_index, carbon1_index,
+                            oxygen_index, degrees);
+    return true;
+}
+
+void set_default_torsions(Structure *structure, int new_residue_index,
+                          int target_residue_index, int carbon_number,
+                          int oxygen_number) {
+    string oxygen = to_string(oxygen_number);
+    string carbon = to_string(carbon_number);
+
+    if (oxygen_number == 5 || oxygen_number == 6) {
+        structure->set_dihedral(target_residue_index,
+                                "C" + to_string(oxygen_number - 1),
+                                target_residue_index, "C" + oxygen,
+                                target_residue_index, "O" + oxygen,
+                                new_residue_index, "C" + carbon,
+                                to_degrees(kPi));
+    }
+    else {
+        structure->set_dihedral(target_residue_index, "H" + oxygen,
+                                target_residue_index, "C" + oxygen,
+                                target_residue_index, "O" + oxygen,
+                                new_residue_index, "C" + carbon,
+                                0.0);
+    }
+
+    // Regardless of what the actual phi torsion is defined to be, setting
+    // C(x+1)-Cx-O'-C' to 180.0 indirectly sets phi to the right thing.
+    // So we set this torsion instead of calling set_phi(), which 
+    // sets the actual phi torsion.
+    structure->set_dihedral(target_residue_index, "C" + oxygen,
+                            target_residue_index, "O" + oxygen,
+                            new_residue_index, "C" + carbon,
+                            new_residue_index,
+                            "C" + to_string(carbon_number + 1),
+                            180.0);
+
+    // Should probably change this to check if the linkage is exocyclic
+    if (oxygen_number == 6) {
+        structure->set_dihedral(target_residue_index,
+                               "O" + to_string(oxygen_number - 1),
+                               target_residue_index,
+                               "C" + to_string(oxygen_number - 1),
+                               target_residue_index, "C" + oxygen,
+                               target_residue_index, "O" + oxygen,
+                               60.0);
+    }
+}
+
+}  // namespace sugars
 }  // namespace gmml

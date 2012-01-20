@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #include "gmml/internal/structure.h"
 
 #include <algorithm>
@@ -11,6 +13,7 @@
 #include "gmml/internal/coordinate_file.h"
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
+#include "gmml/internal/glycam_code_set.h"
 #include "gmml/internal/graph.h"
 #include "gmml/internal/library_file.h"
 #include "gmml/internal/parameter_file.h"
@@ -235,163 +238,6 @@ void Structure::set_angle_after(int residue, int atom1, int atom2, int atom3,
     }
 }
 
-bool Structure::set_phi(int residue_index, double degrees) {
-    int carbon_index = get_anomeric_index(residue_index);
-    if (carbon_index == -1) {
-        return false;
-    }
-    int atom2_index;
-    if (atoms_[carbon_index]->name() == "C1") {
-        atom2_index = get_atom_index(residue_index, "H1");
-    }
-    else if (atoms_[carbon_index]->name()[0] == 'C') {
-        int carbon_number = atoms_[carbon_index]->name()[1] - '0';
-        string atom2_name = "C" + to_string(carbon_number - 1);
-        atom2_index = get_atom_index(residue_index, atom2_name);
-    }
-    //residue must start with Cx
-    else {
-        return false;
-    }
-    int oxygen_index = kNotSet;
-    {
-        const AdjList& adj_list = bonds(carbon_index);
-        for (int i = 0; i < adj_list.size(); i++) {
-            int atom_index = adj_list[i];
-            if (get_residue_index(atom_index) != residue_index &&
-                    atoms_[atom_index]->name()[0] == 'O') {
-                oxygen_index = atom_index;
-                break;
-            }
-        }
-        if (oxygen_index == kNotSet ||
-                 atoms_[oxygen_index]->name().size() < 2 ||
-                 !is_number(atoms_[oxygen_index]->name()[1])) {
-            return false;
-        }
-    }
-    int oxygen_number = char_to_number(atoms_[oxygen_index]->name()[1]);
-    int attaching_carbon_index = kNotSet;
-    {
-        const AdjList& adj_list = bonds(oxygen_index);
-        for (int i = 0; i < adj_list.size(); i++) {
-            int atom_index = adj_list[i];
-            if (get_residue_index(atom_index) ==
-                        get_residue_index(oxygen_index) &&
-                    atoms_[atom_index]->name() ==
-                        "C" + to_string(oxygen_number))
-            attaching_carbon_index = atom_index;
-        }
-        if (attaching_carbon_index == kNotSet) {
-            return false;
-        }
-    }
-    set_dihedral(attaching_carbon_index, oxygen_index, carbon_index,
-                 atom2_index, degrees);
-    return true;
-}
-
-bool Structure::set_psi(int residue_index, double degrees) {
-    int anomeric_carbon_index = get_anomeric_index(residue_index);
-    if (anomeric_carbon_index == -1) {
-        return false;
-    }
-    int oxygen_index = kNotSet;
-    {
-        const AdjList& adj_list = bonds(anomeric_carbon_index);
-        for (int i = 0; i < adj_list.size(); i++) {
-            int atom_index = adj_list[i];
-            if (get_residue_index(atom_index) != residue_index &&
-                    atoms_[atom_index]->name()[0] == 'O') {
-                oxygen_index = atom_index;
-                break;
-            }
-        }
-    }
-    if (oxygen_index == kNotSet || atoms_[oxygen_index]->name().size() < 2 ||
-            !is_number(atoms_[oxygen_index]->name()[1])) {
-        return false;
-    }
-    int oxygen_number = char_to_number(atoms_[oxygen_index]->name()[1]);
-    int carbon_index = kNotSet;
-    {
-        const AdjList& adj_list = bonds(oxygen_index);
-        for (int i = 0; i < adj_list.size(); i++) {
-            int atom_index = adj_list[i];
-            if (get_residue_index(atom_index) ==
-                        get_residue_index(oxygen_index) &&
-                    atoms_[atom_index]->name() ==
-                        "C" + to_string(oxygen_number))
-                carbon_index = atom_index;
-        }
-        if (carbon_index == kNotSet) {
-            return false;
-        }
-    }
-    string fourth_atom_name;
-    if (is_cyclic(carbon_index))
-        fourth_atom_name = "H" + to_string(oxygen_number);
-    else
-        fourth_atom_name = "C" + to_string(oxygen_number - 1);
-    int fourth_atom_index = kNotSet;
-    {
-        const AdjList& adj_list = bonds(carbon_index);
-        for (int i = 0; i < adj_list.size(); i++) {
-            int atom_index = adj_list[i];
-            if (atoms_[atom_index]->name() == fourth_atom_name) {
-                fourth_atom_index = atom_index;
-                break;
-            }
-        }
-        if (fourth_atom_index == kNotSet) {
-            return false;
-        }
-    }
-    set_dihedral(fourth_atom_index, carbon_index, oxygen_index,
-                 anomeric_carbon_index, degrees);
-    return true;
-}
-
-bool Structure::set_omega(int residue_index, double degrees) {
-    int anomeric_carbon_index = get_anomeric_index(residue_index);
-    if (anomeric_carbon_index == -1) {
-        return false;
-    }
-    int oxygen_index = kNotSet;
-    int adjacent_residue_index = kNotSet;
-    {
-        const AdjList& adj_list = bonds(anomeric_carbon_index);
-        for (int i = 0; i < adj_list.size(); i++) {
-            int atom_index = adj_list[i];
-            if (get_residue_index(atom_index) != residue_index &&
-                    atoms_[atom_index]->name()[0] == 'O') {
-                oxygen_index = atom_index;
-                adjacent_residue_index = get_residue_index(atom_index);
-                break;
-            }
-        }
-        if (oxygen_index == kNotSet ||
-                atoms_[oxygen_index]->name().size() < 2 ||
-                !is_number(atoms_[oxygen_index]->name()[1])) {
-            return false;
-        }
-    }
-    int oxygen_number = char_to_number(atoms_[oxygen_index]->name()[1]);
-    int carbon1_index = get_atom_index(adjacent_residue_index,
-                                       "C" + to_string(oxygen_number));
-    if (is_cyclic(carbon1_index))
-        return false;
-    int carbon2_index = get_atom_index(adjacent_residue_index,
-                                       "C" + to_string(oxygen_number - 1));
-    int other_oxygen_index = get_atom_index(adjacent_residue_index,
-                                            "O" + to_string(oxygen_number - 1));
-    if (carbon1_index == -1 || carbon2_index == -1 || other_oxygen_index == -1)
-        return false;
-    set_dihedral(other_oxygen_index, carbon2_index, carbon1_index, oxygen_index,
-                 degrees);
-    return true;
-}
-
 // Augmenting operations
 int Structure::append(const Structure *structure) {
     if (structure->residue_count() == 0)
@@ -466,56 +312,6 @@ int Structure::append(const string& name) {
     return index;
 }
 
-
-
-
-
-
-
-
-
-/*
-int Structure::attach(const string& code, const string& head_name,
-                      int residue, const string& tail_name) {
-    int tail_index = get_atom_index(residue, tail_name);
-
-    return attach(code, head_name, tail_index);
-
-
-    //Residue *new_residue = build_prep_file(code);
-    //if (new_residue == NULL)
-    //    return -1;
-    //return attach(new_residue, head_name, residue, tail_name);
-}
-
-
-int Structure::attach(const string& code, int head_index, int tail_index) {
-    Residue *new_residue = build_prep_file(code);
-    return attach(new_residue, head_index, tail_index);
-}
-*/
-
-/*
-int Structure::attach(const string& code, int tail) {
-    Residue *new_residue = build_prep_file(code);
-    if (new_residue == NULL)
-        return -1;
-    int head = new_residue->head();
-    if (head == -1)
-        return -1
-    return attach(new_residue, head, tail);
-}
-
-int Structure::attach(const string& code) {
-    int tail_index = tail();
-
-    if (tail_index == -1)
-        return -1;
-    
-    return attach(code, tail_index);
-}
-*/
-
 int Structure::attach(const Structure *structure) {
     int tail_index = tail();
     if (tail_index == -1)
@@ -559,10 +355,6 @@ int Structure::attach(const Structure *structure, int head, int tail) {
     return StructureAttach()(*this, structure, head, tail);
 }
 
-
-
-
-
 int Structure::attach_from_head(const Structure *structure, int target_residue,
                                 const string& tail_name) {
     int tail_atom = get_atom_index(target_residue, tail_name);
@@ -577,8 +369,6 @@ int Structure::attach_from_head(const Structure *structure, int tail_atom) {
         return -1;
     return attach(structure, head_atom, tail_atom);
 }
-
-
 
 int Structure::attach_to_tail(const Structure *structure, int head_residue,
                               const string& head_name) {
@@ -600,9 +390,6 @@ int Structure::attach_to_tail(const Structure *structure, int head_index) {
         return -1;
     return attach(structure, head_index, tail_index);
 }
-
-
-
 
 // Removal operations
 void Structure::remove_residues(const std::vector<int>& indices) {
@@ -867,33 +654,7 @@ struct StructureAttach::Impl {
     static Vector<3> get_connection_direction(const Structure& structure,
                                               int source_index,
                                               int target_index);
-
-    static void set_dihedrals(Structure& structure, int new_residue_index,
-                              int target_residue_index, int carbon_number,
-                              int oxygen_number);
 };
-
-/*
-int StructureAttach::operator()(Structure& structure, const string& code,
-                                int residue) const {
-    Residue *new_residue = build_prep_file(code);
-    if (new_residue == NULL)
-        return -1;
-    int tail = structure.tail();
-    int head = new_residue->head();
-    if (tail == -1 || head == -1)
-        return -1;
-    return operator()(structure, new_residue, head, tail);
-}
-
-int StructureAttach::operator()(Structure& structure, Residue *new_residue,
-                                const string& head_atom, int residue,
-                                const string& tail_atom) const {
-    int head_index = new_residue->get_index(head_atom);
-    int tail_index = structure.get_atom_index(residue, tail_atom);
-    return operator()(structure, new_residue, head_index, tail_index);
-}
-*/
 
 int StructureAttach::operator()(Structure& structure,
                                 const Structure *new_structure,
@@ -901,7 +662,6 @@ int StructureAttach::operator()(Structure& structure,
     const Structure::AtomList& atoms = structure.atoms();
 
     int prev_size = structure.size();
-
 
     // THE FIRST RESIDUE IN THE NEW STRUCTURE MIGHT NOT BE THE ONE YOU'RE
     // ATTACHING TO. NEED TO FIX.
@@ -922,10 +682,6 @@ int StructureAttach::operator()(Structure& structure,
     string new_atom_name = structure.atoms(new_atom_index)->name();
     
     string target_atom_name = structure.atoms(tail)->name();
-
-
-
-
 
     structure.add_bond(new_atom_index, target_atom_index);
 
@@ -971,6 +727,8 @@ int StructureAttach::operator()(Structure& structure,
          }
     }
 
+    // This sets torsions appropriately if the residues are sugars. I'm not
+    // sure how to set them otherwise.
     int carbon_number = kNotSet;
     if (new_atom_name.size() > 1 && is_number(new_atom_name[1]))
         carbon_number = char_to_number(new_atom_name[1]);
@@ -982,8 +740,9 @@ int StructureAttach::operator()(Structure& structure,
         oxygen_number = 1;
 
     if (is_set(carbon_number) && is_set(oxygen_number))
-        Impl::set_dihedrals(structure, new_residue_index, residue_index,
-                            carbon_number, oxygen_number);
+        sugars::set_default_torsions(&structure, new_residue_index,
+                                     residue_index, carbon_number,
+                                     oxygen_number);
 
     return new_residue_index;
 }
@@ -1003,53 +762,6 @@ Vector<3> StructureAttach::Impl::get_connection_direction(
         }
     }
     return direction;
-}
-
-void StructureAttach::Impl::set_dihedrals(Structure& structure, 
-                                          int new_residue_index,
-                                          int target_residue_index,
-                                          int carbon_number,
-                                          int oxygen_number) {
-    string oxygen = to_string(oxygen_number);
-    string carbon = to_string(carbon_number);
-
-    if (oxygen_number == 5 || oxygen_number == 6) {
-        structure.set_dihedral(target_residue_index,
-                               "C" + to_string(oxygen_number - 1),
-                               target_residue_index, "C" + oxygen,
-                               target_residue_index, "O" + oxygen,
-                               new_residue_index, "C" + carbon,
-                               to_degrees(kPi));
-    }
-    else {
-        structure.set_dihedral(target_residue_index, "H" + oxygen,
-                               target_residue_index, "C" + oxygen,
-                               target_residue_index, "O" + oxygen,
-                               new_residue_index, "C" + carbon,
-                               0.0);
-    }
-
-    // Regardless of what the actual phi torsion is defined to be, setting
-    // C(x+1)-Cx-O'-C' to 180.0 indirectly sets phi to the right thing.
-    // So we set this torsion instead of calling set_phi(), which 
-    // sets the actual phi torsion.
-    structure.set_dihedral(target_residue_index, "C" + oxygen,
-                           target_residue_index, "O" + oxygen,
-                           new_residue_index, "C" + carbon,
-                           new_residue_index,
-                           "C" + to_string(carbon_number + 1),
-                           180.0);
-
-    // Should probably change this to check if the linkage is exocyclic
-    if (oxygen_number == 6) {
-        structure.set_dihedral(target_residue_index,
-                              "O" + to_string(oxygen_number - 1),
-                              target_residue_index,
-                              "C" + to_string(oxygen_number - 1),
-                              target_residue_index, "C" + oxygen,
-                              target_residue_index, "O" + oxygen,
-                              60.0);
-    }
 }
 
 }  // namespace gmml
