@@ -11,6 +11,7 @@
 #include "internal/geometry.h"
 #include "internal/glycam_code_set.h"
 #include "internal/glycam_parser.h"
+#include "internal/glycan_conformation_builder.h"
 #include "internal/glycan_drawer.h"
 #include "internal/graph.h"
 #include "internal/library_file.h"
@@ -26,7 +27,6 @@
 #include "internal/solvated_structure.h"
 #include "internal/standard_proteins.h"
 #include "internal/structure.h"
-#include "internal/torsion_combination_builder.h"
 #include "internal/tree_residue.h"
 
 #endif  // GMML_GMML_H_

@@ -1,5 +1,7 @@
-#ifndef GMML_INTERNAL_TORSION_COMBINATION_BUILDER_H_
-#define GMML_INTERNAL_TORSION_COMBINATION_BUILDER_H_
+// Author: Robert Davis
+
+#ifndef GMML_INTERNAL_GLYCAN_CONFORMATION_BUILDER_H_
+#define GMML_INTERNAL_GLYCAN_CONFORMATION_BUILDER_H_
 
 #include <list>
 #include <set>
@@ -10,15 +12,16 @@
 #include "gmml/internal/stubs/common.h"
 
 namespace gmml {
+namespace carbohydrate {
 
-class TCBStructure : public Structure {
+class GCBStructure : public Structure {
   public:
-    TCBStructure(const Structure& structure, const std::string& name)
+    GCBStructure(const Structure& structure, const std::string& name)
             : Structure(), name_(name) {
         clone_from(structure);
     }
 
-    virtual ~TCBStructure() {}
+    virtual ~GCBStructure() {}
 
     void set_name(const std::string& name) { name_ = name; }
 
@@ -27,12 +30,12 @@ class TCBStructure : public Structure {
   private:
     std::string name_;
 
-    DISALLOW_COPY_AND_ASSIGN(TCBStructure);
+    DISALLOW_COPY_AND_ASSIGN(GCBStructure);
 };
 
-class TorsionCombinationBuilder {
+class GlycanConformationBuilder {
   public:
-    TorsionCombinationBuilder(const Structure& structure);
+    GlycanConformationBuilder(const Structure& structure);
 
     void add_phi_value(int residue_index, double measure) {
         add_values(residue_index, measure, kNotSet, kNotSet);
@@ -139,7 +142,7 @@ class TorsionCombinationBuilder {
 
     void add_likely_omega_values();
 
-    std::list<TCBStructure*> *build() const;
+    std::list<GCBStructure*> *build() const;
     std::vector<std::vector<std::vector<double> > > *get_build_info() const;
 
   private:
@@ -182,9 +185,10 @@ class TorsionCombinationBuilder {
     Structure *structure;
     std::vector<LinkageAngles> linkage_angles;
 
-    DISALLOW_COPY_AND_ASSIGN(TorsionCombinationBuilder);
+    DISALLOW_COPY_AND_ASSIGN(GlycanConformationBuilder);
 };
 
+}  // namespace carbohydrate
 }  // namespace gmml
 
-#endif  // GMML_INTERNAL_TORSION_COMBINATION_BUILDER_H_
+#endif  // GMML_INTERNAL_GLYCAN_CONFORMATION_BUILDER_H_

@@ -1,4 +1,4 @@
-#include "gmml/internal/torsion_combination_builder.h"
+#include "gmml/internal/glycan_conformation_builder.h"
 
 #include <algorithm>
 #include <iterator>
@@ -13,15 +13,16 @@
 #include "gmml/internal/residue.h"
 #include "utilities.h"
 
-namespace gmml {
-
 using std::list;
 using std::map;
 using std::set;
 using std::string;
 using std::vector;
 
-void TorsionCombinationBuilder::LinkageAngles::insert(
+namespace gmml {
+namespace carbohydrate {
+
+void GlycanConformationBuilder::LinkageAngles::insert(
         const vector<double>& vec) {
     set<vector<double> >::iterator it = values_.begin();
     for (; it != values_.end(); ++it) {
@@ -40,19 +41,19 @@ void TorsionCombinationBuilder::LinkageAngles::insert(
     }
 }
 
-const vector<double>& TorsionCombinationBuilder::LinkageAngles::at(
+const vector<double>& GlycanConformationBuilder::LinkageAngles::at(
         int index) const {
     set<vector<double> >::iterator it = values_.begin();
     std::advance(it, index);
     return *it;
 }
 
-TorsionCombinationBuilder::TorsionCombinationBuilder(const Structure& structure)
+GlycanConformationBuilder::GlycanConformationBuilder(const Structure& structure)
             : structure(structure.clone()),
               linkage_angles(structure.residue_count()) {}
 
 vector<vector<vector<double> > > 
-*TorsionCombinationBuilder::get_build_info() const {
+*GlycanConformationBuilder::get_build_info() const {
     int num_residues = linkage_angles.size();
     vector<vector<vector<double> > > *structures =
         new vector<vector<vector<double> > >();
@@ -83,9 +84,9 @@ vector<vector<vector<double> > >
 }
 
 //should maybe convert sets to vectors for random access
-list<TCBStructure*> *TorsionCombinationBuilder::build() const {
+list<GCBStructure*> *GlycanConformationBuilder::build() const {
     int num_residues = linkage_angles.size();
-    list<TCBStructure*> *structures = new list<TCBStructure*>();
+    list<GCBStructure*> *structures = new list<GCBStructure*>();
     vector<int> a(num_residues + 1, 0);
     vector<int> m(a.size());
     m[0] = 2;
@@ -97,7 +98,7 @@ list<TCBStructure*> *TorsionCombinationBuilder::build() const {
     while (true) {
         //visit
         // We'll set the name later.
-        TCBStructure *new_structure = new TCBStructure(*structure, "");
+        GCBStructure *new_structure = new GCBStructure(*structure, "");
         string name("");
         for (int i = 1; i <= num_residues; i++) {
             const vector<double>& values = linkage_angles[i - 1].at(a[i]);
@@ -142,7 +143,7 @@ list<TCBStructure*> *TorsionCombinationBuilder::build() const {
     return structures;
 }
 
-void TorsionCombinationBuilder::add_likely_omega_values() {
+void GlycanConformationBuilder::add_likely_omega_values() {
     vector<int> *flexible_residues = structure->get_flexible_linkages();
     for (int i = 0; i < flexible_residues->size(); i++) {
         int residue_index = (*flexible_residues)[i];
@@ -163,7 +164,7 @@ void TorsionCombinationBuilder::add_likely_omega_values() {
     delete flexible_residues;
 }
 
-void TorsionCombinationBuilder::add_values(const string& residue1,
+void GlycanConformationBuilder::add_values(const string& residue1,
                                            const string& residue2,
                                            double phi, double psi, 
                                            double omega) {
@@ -173,7 +174,7 @@ void TorsionCombinationBuilder::add_values(const string& residue1,
     delete residues;
 }
 
-void TorsionCombinationBuilder::add_values(const string& residue1,
+void GlycanConformationBuilder::add_values(const string& residue1,
                                            int carbon_number,
                                            const string& residue2,
                                            int oxygen_number, double phi,
@@ -185,7 +186,7 @@ void TorsionCombinationBuilder::add_values(const string& residue1,
     delete residues;
 }
 
-int TorsionCombinationBuilder::get_index(vector<double>& vec, 
+int GlycanConformationBuilder::get_index(vector<double>& vec, 
                                          double number) const {
     vector<double>::iterator it;
     if ((it = std::find(vec.begin(), vec.end(), number)) == vec.end()) {
@@ -195,7 +196,7 @@ int TorsionCombinationBuilder::get_index(vector<double>& vec,
     return std::distance(vec.begin(), it);    
 }
 
-vector<int> *TorsionCombinationBuilder::get_linkages(
+vector<int> *GlycanConformationBuilder::get_linkages(
         const string& carbon_residue, int carbon_number,
         const string& oxygen_residue, int oxygen_number) const {
     vector<int> *all_linkages = get_linkages(carbon_residue, oxygen_residue);
@@ -223,7 +224,7 @@ vector<int> *TorsionCombinationBuilder::get_linkages(
     return linkages;
 }
 
-vector<int> *TorsionCombinationBuilder::get_linkages(
+vector<int> *GlycanConformationBuilder::get_linkages(
         const string& carbon_residue, const string& oxygen_residue) const {
     GlycamCodeSet code_set;
     vector<int> *residues = new vector<int>;
@@ -246,4 +247,5 @@ vector<int> *TorsionCombinationBuilder::get_linkages(
     return residues;
 }
 
+}  // namespace carbohydrate
 }  // namespace gmml
