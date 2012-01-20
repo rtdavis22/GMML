@@ -56,9 +56,9 @@ class ParameterFile {
     DISALLOW_COPY_AND_ASSIGN(ParameterFile);
 };
 
-class ParameterFileSet {
+class ParameterSet {
   public:
-    ParameterFileSet();
+    ParameterSet();
 
     void load(const ParameterFile& parameter_file);
 
@@ -89,7 +89,7 @@ class ParameterFileSet {
     class Impl;
     std::auto_ptr<Impl> impl_;
 
-    DISALLOW_COPY_AND_ASSIGN(ParameterFileSet);
+    DISALLOW_COPY_AND_ASSIGN(ParameterSet);
 };
 
 struct ParameterFileAtom {

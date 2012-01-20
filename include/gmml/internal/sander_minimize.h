@@ -8,7 +8,7 @@
 namespace gmml {
 
 class Environment;
-class ParameterFileSet;
+class ParameterSet;
 class Structure;
 
 // This represents the results of a minimization as found in sander's mdout
@@ -26,7 +26,7 @@ class SanderMinimize {
     // failed, the return is NULL.
     MinimizationResults *operator()(Structure& structure,
                                     const std::string& input_file,
-                                    const ParameterFileSet& parm_set) const;
+                                    const ParameterSet& parm_set) const;
     MinimizationResults *operator()(Structure& structure,
                                     const std::string& input_file,
                                     const Environment& environment) const;

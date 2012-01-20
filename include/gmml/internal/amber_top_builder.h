@@ -20,7 +20,7 @@ namespace gmml {
 class AmberTopFile;
 class AmberTopSection;
 class BoxedStructure;
-class ParameterFileSet;
+class ParameterSet;
 class SolvatedStructure;
 class Structure;
 
@@ -120,7 +120,7 @@ class AmberTopBuilder {
     // Almost all information contained in the topology file comes from
     // a set of parameter files.
     AmberTopBuilder();
-    explicit AmberTopBuilder(const ParameterFileSet& parameter_file_set);
+    explicit AmberTopBuilder(const ParameterSet& parameter_file_set);
 
     // Builds the topology file for a structure, and optionally includes a title
     // for the TITLE section.
@@ -249,7 +249,7 @@ class AmberTopBuilder {
     void type_error(const std::string& type1, const std::string& type2,
                     const std::string& type3, const std::string& type4) const;
 
-    const ParameterFileSet& parameter_file_set_;
+    const ParameterSet& parameter_file_set_;
 
     DISALLOW_COPY_AND_ASSIGN(AmberTopBuilder);
 };

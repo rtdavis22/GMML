@@ -83,7 +83,7 @@ const char *AmberTopBuilder::kDefaultTitle =
 AmberTopBuilder::AmberTopBuilder()
         : parameter_file_set_(*kDefaultEnvironment.parm_set()) {}
 
-AmberTopBuilder::AmberTopBuilder(const ParameterFileSet& parameter_file_set)
+AmberTopBuilder::AmberTopBuilder(const ParameterSet& parameter_file_set)
         : parameter_file_set_(parameter_file_set) {}
 
 AmberTopFile *AmberTopBuilder::build(const Structure& structure,

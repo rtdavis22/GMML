@@ -33,7 +33,7 @@ namespace gmml {
 
 MinimizationResults *SanderMinimize::operator()(
         Structure& structure, const string& input_file,
-        const ParameterFileSet& parm_set) const {
+        const ParameterSet& parm_set) const {
 #ifndef HAVE_SANDER
     warning("SanderMinimize - You must have sander in your path to minimize.");
     return NULL;

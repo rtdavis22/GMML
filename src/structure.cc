@@ -562,7 +562,7 @@ void Structure::print_pdb_file() const {
 }
 
 AmberTopFile *Structure::build_amber_top_file(
-        const ParameterFileSet& parm_set) const {
+        const ParameterSet& parm_set) const {
     AmberTopBuilder builder(parm_set);
     return builder.build(*this);
 }
@@ -573,7 +573,7 @@ AmberTopFile *Structure::build_amber_top_file() const {
 }
 
 void Structure::print_amber_top_file(const string& file_name,
-                                     const ParameterFileSet& parm_set) const {
+                                     const ParameterSet& parm_set) const {
     AmberTopFile *top_file = build_amber_top_file(parm_set);
     top_file->print(file_name);
     delete top_file;
@@ -693,7 +693,7 @@ int StructureAttach::operator()(Structure& structure,
 
     structure.add_bond(new_atom_index, target_atom_index);
 
-    const ParameterFileSet *parm_set = kDefaultEnvironment.parm_set();
+    const ParameterSet *parm_set = kDefaultEnvironment.parm_set();
 
     const ParameterFileBond *parameter_bond =
         parm_set->lookup(atoms[target_atom_index]->type(),

@@ -18,7 +18,7 @@ using std::string;
 using std::vector;
 
 Environment::Environment() : library_files_(new LibraryFileSet),
-                             parameter_files_(new ParameterFileSet),
+                             parameter_files_(new ParameterSet),
                              prep_files_(new PrepFileSet),
                              pdb_mapping_info_(new PdbMappingInfo) {}
 

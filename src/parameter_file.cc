@@ -500,7 +500,7 @@ const ImproperDihedralCollection& ParameterFile::improper_dihedrals() const {
 }
 
 // Private implementation
-class ParameterFileSet::Impl {
+class ParameterSet::Impl {
   public:
     Impl() {}
 
@@ -566,7 +566,7 @@ class ParameterFileSet::Impl {
     ImproperDihedralCollection improper_dihedrals_;
 };
 
-void ParameterFileSet::Impl::load(const ParameterFile& file) {
+void ParameterSet::Impl::load(const ParameterFile& file) {
     load_atom_types(file.atom_types().begin(), file.atom_types().end());
     load_bonds(file.bonds().begin(), file.bonds().end());
     load_angles(file.angles().begin(), file.angles().end());
@@ -576,7 +576,7 @@ void ParameterFileSet::Impl::load(const ParameterFile& file) {
     load_improper_dihedrals(file.improper_dihedrals());
 }
 
-const ParameterFileAtom *ParameterFileSet::Impl::lookup(
+const ParameterFileAtom *ParameterSet::Impl::lookup(
         const string& type) const {
     ParameterFile::AtomTypeMap::const_iterator it;
     if ((it = atom_types_.find(type)) != atom_types_.end())
@@ -585,7 +585,7 @@ const ParameterFileAtom *ParameterFileSet::Impl::lookup(
         return NULL;
 }
 
-const ParameterFileBond *ParameterFileSet::Impl::lookup(
+const ParameterFileBond *ParameterSet::Impl::lookup(
         const string& type1,
         const string& type2) const {
     ParameterFile::BondSet::const_iterator it;
@@ -595,7 +595,7 @@ const ParameterFileBond *ParameterFileSet::Impl::lookup(
         return NULL;
 }
 
-const ParameterFileAngle *ParameterFileSet::Impl::lookup(
+const ParameterFileAngle *ParameterSet::Impl::lookup(
         const string& type1,
         const string& type2,
         const string& type3) const {
@@ -606,7 +606,7 @@ const ParameterFileAngle *ParameterFileSet::Impl::lookup(
         return NULL;
 }
 
-const ParameterFileDihedral *ParameterFileSet::Impl::lookup(
+const ParameterFileDihedral *ParameterSet::Impl::lookup(
         const string& type1,
         const string& type2,
         const string& type3,
@@ -621,7 +621,7 @@ const ParameterFileDihedral *ParameterFileSet::Impl::lookup(
 }
 
 std::pair<ParameterFileDihedralTerm, bool>
-ParameterFileSet::Impl::lookup_improper_dihedral(
+ParameterSet::Impl::lookup_improper_dihedral(
         const string& center_type,
         const string& type1,
         const string& type2,
@@ -634,7 +634,7 @@ ParameterFileSet::Impl::lookup_improper_dihedral(
     return improper_dihedrals_.lookup(center_type, types);
 }
 
-void ParameterFileSet::Impl::load_atom_types(
+void ParameterSet::Impl::load_atom_types(
         ParameterFile::AtomTypeMap::const_iterator first,
         ParameterFile::AtomTypeMap::const_iterator last) {
     ParameterFile::AtomTypeMap::iterator it;
@@ -685,7 +685,7 @@ void ParameterFileSet::Impl::load_atom_types(
     }
 }
 
-void ParameterFileSet::Impl::load_bonds(
+void ParameterSet::Impl::load_bonds(
         ParameterFile::BondSet::const_iterator first,
         ParameterFile::BondSet::const_iterator last) {
     ParameterFile::BondSet::iterator it;
@@ -710,7 +710,7 @@ void ParameterFileSet::Impl::load_bonds(
     }
 }
 
-void ParameterFileSet::Impl::load_angles(
+void ParameterSet::Impl::load_angles(
         ParameterFile::AngleSet::const_iterator first,
         ParameterFile::AngleSet::const_iterator last) {
     ParameterFile::AngleSet::iterator it;
@@ -737,7 +737,7 @@ void ParameterFileSet::Impl::load_angles(
     }
 }
 
-void ParameterFileSet::Impl::load_dihedrals(
+void ParameterSet::Impl::load_dihedrals(
         ParameterFile::DihedralSet::const_iterator first,
         ParameterFile::DihedralSet::const_iterator last) {
     ParameterFile::DihedralSet::iterator it;
@@ -778,11 +778,11 @@ void ParameterFileSet::Impl::load_dihedrals(
     }
 }
 
-void ParameterFileSet::Impl::warning(const string& message) const {
-    gmml::warning("ParameterFileSet: " + message);
+void ParameterSet::Impl::warning(const string& message) const {
+    gmml::warning("ParameterSet: " + message);
 }
 
-ParameterFile::BondSet::const_iterator ParameterFileSet::Impl::find(
+ParameterFile::BondSet::const_iterator ParameterSet::Impl::find(
         const string& type1, const string& type2) const {
     ParameterFileBond *bond = new ParameterFileBond(type1, type2);
     ParameterFile::BondSet::iterator it;
@@ -795,7 +795,7 @@ ParameterFile::BondSet::const_iterator ParameterFileSet::Impl::find(
     return it;
 }
 
-ParameterFile::AngleSet::const_iterator ParameterFileSet::Impl::find(
+ParameterFile::AngleSet::const_iterator ParameterSet::Impl::find(
         const string& type1, const string& type2,
         const string& type3) const {
     ParameterFileAngle *angle = new ParameterFileAngle(type1, type2, type3);
@@ -809,7 +809,7 @@ ParameterFile::AngleSet::const_iterator ParameterFileSet::Impl::find(
     return it;
 }
 
-ParameterFile::DihedralSet::const_iterator ParameterFileSet::Impl::find(
+ParameterFile::DihedralSet::const_iterator ParameterSet::Impl::find(
         const string& type1, const string& type2,
         const string& type3, const string& type4) const {
     ParameterFileDihedral *dihedral =
@@ -824,7 +824,7 @@ ParameterFile::DihedralSet::const_iterator ParameterFileSet::Impl::find(
     return it;
 }
 
-ParameterFile::DihedralSet::const_iterator ParameterFileSet::Impl::find_generic(
+ParameterFile::DihedralSet::const_iterator ParameterSet::Impl::find_generic(
         const string& type1, const string& type2,
         const string& type3, const string& type4) const {
     ParameterFileDihedral *dihedral =
@@ -840,35 +840,36 @@ ParameterFile::DihedralSet::const_iterator ParameterFileSet::Impl::find_generic(
 }
 
 // Public implementation
-ParameterFileSet::ParameterFileSet() : impl_(new Impl) {}
+ParameterSet::ParameterSet() : impl_(new Impl) {}
 
-void ParameterFileSet::load(const ParameterFile& parameter_file) {
+void ParameterSet::load(const ParameterFile& parameter_file) {
     impl_->load(parameter_file);
 }
 
-const ParameterFileAtom *ParameterFileSet::lookup(const string& type) const {
+const ParameterFileAtom *ParameterSet::lookup(const string& type) const {
     return impl_->lookup(type);
 }
 
-const ParameterFileBond *ParameterFileSet::lookup(const string& type1,
-                                                  const string& type2) const {
+const ParameterFileBond *ParameterSet::lookup(const string& type1,
+                                              const string& type2) const {
     return impl_->lookup(type1, type2);
 }
 
-const ParameterFileAngle *ParameterFileSet::lookup(const string& type1,
-                                                   const string& type2,
-                                                   const string& type3) const {
+const ParameterFileAngle *ParameterSet::lookup(const string& type1,
+                                               const string& type2,
+                                               const string& type3) const {
     return impl_->lookup(type1, type2, type3);
 }
 
-const ParameterFileDihedral *ParameterFileSet::lookup(
-        const string& type1, const string& type2, const string& type3,
-        const string& type4) const {
+const ParameterFileDihedral *ParameterSet::lookup(const string& type1,
+                                                  const string& type2,
+                                                  const string& type3,
+                                                  const string& type4) const {
     return impl_->lookup(type1, type2, type3, type4);
 }
 
 std::pair<ParameterFileDihedralTerm, bool>
-ParameterFileSet::lookup_improper_dihedral(const string& center_type,
+ParameterSet::lookup_improper_dihedral(const string& center_type,
                                            const string& type1,
                                            const string& type2,
                                            const string& type3) const {

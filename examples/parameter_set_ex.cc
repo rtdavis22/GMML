@@ -16,7 +16,7 @@ using gmml::ParameterFileBond;
 using gmml::ParameterFileDihedral;
 using gmml::ParameterFileDihedralTerm;
 using gmml::ParameterFileImproperDihedral;
-using gmml::ParameterFileSet;
+using gmml::ParameterSet;
 
 void print_atom_type_info(const ParameterFileAtom *atom) {
     cout << "Printing info for atom type " << atom->type << ":" << endl;
@@ -76,7 +76,7 @@ void print_dihedral_type_info(const ParameterFileDihedral *dihedral) {
 }
 
 int main() {
-    ParameterFileSet *parmset = new ParameterFileSet;
+    ParameterSet *parmset = new ParameterSet;
 
     parmset->load("dat/parm99.dat");
     parmset->load("dat/Glycam_06h.dat");

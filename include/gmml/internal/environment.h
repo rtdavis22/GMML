@@ -14,7 +14,7 @@ class LibraryFile;
 class LibraryFileSet;
 class LibraryFileStructure;
 class ParameterFile;
-class ParameterFileSet;
+class ParameterSet;
 struct PdbMappingInfo;
 class PrepFile;
 class PrepFileSet;
@@ -51,7 +51,7 @@ class Environment {
     void add_tail_mapping(const std::string& from, const std::string& to);
 
     const LibraryFileSet *library_files() const { return library_files_; }
-    const ParameterFileSet *parm_set() const { return parameter_files_; }
+    const ParameterSet *parm_set() const { return parameter_files_; }
     const PrepFileSet *prep_files() const { return prep_files_; }
 
     const PdbMappingInfo *pdb_mapping_info() const { return pdb_mapping_info_; }
@@ -59,7 +59,7 @@ class Environment {
   private:
     std::vector<std::string> paths_;
     LibraryFileSet *library_files_;
-    ParameterFileSet *parameter_files_;
+    ParameterSet *parameter_files_;
     PrepFileSet *prep_files_;
 
     PdbMappingInfo *pdb_mapping_info_;

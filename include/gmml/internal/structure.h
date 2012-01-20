@@ -19,7 +19,7 @@ class CoordinateFile;
 class Graph;
 class IndexedResidue;
 struct MinimizationResults;
-class ParameterFileSet;
+class ParameterSet;
 class PdbFile;
 struct PdbMappingInfo;
 class Residue;
@@ -305,7 +305,7 @@ class Structure {
 
     // Return the AMBER topology file that represents this structure, using
     // the given parameter set.
-    AmberTopFile *build_amber_top_file(const ParameterFileSet& parm_set) const;
+    AmberTopFile *build_amber_top_file(const ParameterSet& parm_set) const;
 
     // Return the AMBER topology file that represents this structure, using
     // the parameter set in the default environment.
@@ -314,7 +314,7 @@ class Structure {
     // Write the AMBER topology file to a file with the given name, using
     // the given parameter set.
     void print_amber_top_file(const std::string& file_name,
-                              const ParameterFileSet& parm_set) const;
+                              const ParameterSet& parm_set) const;
 
     // Write the AMBER topology file to a file with the given name, using
     // the parameter set in the default environment.
