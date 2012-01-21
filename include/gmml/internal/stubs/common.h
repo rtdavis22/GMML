@@ -40,7 +40,7 @@ inline bool is_set(T val) {
     return !is_not_set(val);
 }
 
-const double kPi = 3.14159265359;
+const double kPi = 3.1415926535897932385;
 
 inline double to_radians(double degrees) {
     return degrees/180.0*kPi;
