@@ -278,7 +278,7 @@ inline double measure(const Coordinate& c1, const Coordinate& c2) {
     return (vec1 - vec2).norm();
 }
 
-// Measure the angle formed by the coordinates
+// Measure the angle formed by the coordinates. The return value is in radians.
 inline double measure(const Coordinate& c1, const Coordinate& c2,
                       const Coordinate& c3) {
     Vector<3> b1(c2, c1);
@@ -286,15 +286,31 @@ inline double measure(const Coordinate& c1, const Coordinate& c2,
     return acos(b1.dot(b2)/b1.norm()/b2.norm());
 }
 
-// Measure the dihedral of the coordinates
+// Measure the dihedral of the coordinates. The return value is in radians.
 inline double measure(const Coordinate& c1, const Coordinate& c2,
                       const Coordinate& c3, const Coordinate& c4) {
     Vector<3> b1(c1, c2);
     Vector<3> b2(c2, c3);
     Vector<3> b3(c3, c4);
     Vector<3> b2xb3 = cross(b2, b3);
-    return atan2((b1*b2.norm()).dot(b2xb3),
-                  cross(b1, b2).dot(b2xb3));
+    return atan2((b1*b2.norm()).dot(b2xb3), cross(b1, b2).dot(b2xb3));
+}
+
+inline void set_angle(const Coordinate *c1, const Coordinate *c2,
+                      Coordinate *c3, double radians) {
+    double cur_angle = measure(*c1, *c2, *c3);
+    RotationMatrix matrix(*c2, Vector<3>(*c1, *c2).cross(Vector<3>(*c3, *c2)),
+                          radians - cur_angle);
+    matrix.apply(*c3);
+}
+
+// Set the fourth coordinate so that the dihedral has the given measure in
+// radians. This is here mostly for testing purposes.
+inline void set_dihedral(const Coordinate *c1, const Coordinate *c2,
+                         const Coordinate *c3, Coordinate *c4, double radians) {
+    double cur_angle = measure(*c1, *c2, *c3, *c4);
+    RotationMatrix matrix(*c2, Vector<3>(*c3, *c2), cur_angle - radians);
+    matrix.apply(*c4);
 }
 
 // TODO: clean this up
