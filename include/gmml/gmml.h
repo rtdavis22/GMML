@@ -27,6 +27,7 @@
 #include "internal/solvated_structure.h"
 #include "internal/standard_proteins.h"
 #include "internal/structure.h"
+#include "internal/stubs/logging.h"
 #include "internal/tree_residue.h"
 
 #endif  // GMML_GMML_H_

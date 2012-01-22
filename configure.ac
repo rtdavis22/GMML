@@ -30,6 +30,8 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_FORK
 AC_CHECK_FUNCS([gettimeofday localtime_r])
 
+ACX_PTHREAD
+
 AC_CONFIG_FILES([Makefile
                  test/Makefile])
 

@@ -65,6 +65,7 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/structure.h \
   include/gmml/internal/structure-inl.h \
   include/gmml/internal/stubs/common.h \
+  include/gmml/internal/stubs/logging.h \
   include/gmml/internal/stubs/utils.h \
   include/gmml/internal/tree.h \
   include/gmml/internal/tree_residue.h
@@ -84,6 +85,7 @@ libgmml_a_SOURCES = \
   src/glycan_drawer.cc \
   src/graph.cc \
   src/library_file.cc \
+  src/logging.cc \
   src/parameter_file.cc \
   src/pdb_file.cc \
   src/pdb_file_builder.cc \

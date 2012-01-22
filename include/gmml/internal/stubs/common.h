@@ -72,7 +72,6 @@ void STLDeleteContainerPointers(ForwardIterator begin, ForwardIterator end) {
     }
 }
 
-// Is there a better place for these?
 extern bool kEnableWarnings;
 
 inline void enable_warnings() {
