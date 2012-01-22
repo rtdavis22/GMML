@@ -9,7 +9,8 @@ using gmml::load_parameter_file;
 using gmml::load_prep_file;
 using gmml::Structure;
 
-// This is the structure that this builds in GLYCAM condensed nomenclature:
+// This builds the structure that corresponds to the following sequence in
+// GLYCAM condensed nomenclature:
 // DGalpNAcb1-4DGlcpNAcb1-2DManpa1-6[DGlcpNAcb1-4[DGalpNAcb1-4DGlcpNAcb1-2]DManpa1-3]DManpb1-4DGlcpNAcb1-4DGlcpNAcb1-OH
 Structure *build_glycan() {
     Structure *substructure = build("4YB");

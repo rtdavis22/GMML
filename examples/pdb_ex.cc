@@ -1,6 +1,6 @@
-// This program should how to load a pdb file with residue mappings.
+// This program shows how to load a pdb file with residue mappings.
 // The global residue mappings are similar to what would be found in a LEaP
-// configuration file. See include/gmml/internal/pdb_file_structure.cc for
+// configuration file. See include/gmml/internal/pdb_file_structure.h for
 // more information.
 
 #include <iostream>
