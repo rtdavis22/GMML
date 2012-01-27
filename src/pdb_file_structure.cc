@@ -46,8 +46,7 @@ struct PdbFileStructure::Impl {
             set_bonds(NULL);
         }
 
-        // These help to determine if the residue is a c-terminus or
-        // an n-terminus.
+        // These help to determine if the residue is a head or a tail.
         PdbIndexedResidue *prev_residue;
         PdbIndexedResidue *next_residue;
     };
@@ -174,6 +173,14 @@ PdbFileStructure::~PdbFileStructure() {}
 
 PdbFileStructure *PdbFileStructure::build(const PdbFile& pdb_file) {
     return PdbStructureBuilder(pdb_file).build();
+}
+
+PdbFileStructure::pdb_iterator PdbFileStructure::pdb_begin() const {
+    return impl_->residue_map.begin();
+}
+
+PdbFileStructure::pdb_iterator PdbFileStructure::pdb_end() const {
+    return impl_->residue_map.end();
 }
 
 namespace {

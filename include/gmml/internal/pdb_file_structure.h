@@ -21,8 +21,17 @@ class PdbFile;
 class PdbMappingInfo;
 class PdbStructureBuilder;
 
+// TODO: This should be used throughout in place of Triplet<int>.
+struct PdbIndex {
+    char chain_id;
+    int res_num;
+    char i_code;
+};
+
 class PdbFileStructure : public Structure {
   public:
+    typedef std::map<Triplet<int>*, int>::const_iterator pdb_iterator;
+
     virtual ~PdbFileStructure();
 
     static PdbFileStructure *build(const PdbStructureBuilder& builder);
@@ -30,6 +39,9 @@ class PdbFileStructure : public Structure {
     static PdbFileStructure *build(const std::string& file);
 
     static PdbFileStructure *build(const PdbFile& pdb_file);
+
+    pdb_iterator pdb_begin() const;
+    pdb_iterator pdb_end() const;
 
     // Returns the index of the atom corresponding to the atom with the given
     // pdb sequence number. -1 is returned if the sequence number is not in
