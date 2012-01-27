@@ -85,7 +85,7 @@ const typename CoordinateGrid<T>::StorageType CoordinateGrid<T>::insert(
     if (!ret.second)
         delete triplet;
     else
-        ret.first->second = new std::vector<int>;
+        ret.first->second = new std::vector<T>;
 
     ret.first->second->push_back(info);
 
