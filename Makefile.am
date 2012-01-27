@@ -110,9 +110,21 @@ EXTRA_DIST = \
   autogen.sh \
   examples/Makefile \
   examples/amber_topology_file_ex.cc \
+  examples/carbohydrates_ex.cc \
+  examples/dat/1RVZ_New.pdb \
+  examples/dat/all_amino94.lib \
+  examples/dat/all_aminoct94.lib \
+  examples/dat/all_aminont94.lib \
   examples/dat/Glycam_06h.dat \
+  examples/dat/Glycam_06.prep \
+  examples/dat/HOH.prep \
+  examples/dat/min.in \
   examples/dat/parm99.dat \
+  examples/dat/tip3pbox.off \
+  examples/minimization_ex.cc \
   examples/parameter_set_ex.cc \
+  examples/pdb_ex.cc \
+  examples/solvation_ex.cc \
   Makefile
 
 MAINTAINERCLEANFILES = \
