@@ -55,9 +55,12 @@ class Structure {
     //
     // Bonding-related operations
     //
+    // Returns true if the atoms with the given indices are bonded.
+    bool is_bonded(int atom1, int atom2) const;
+
     // Add or remove the bond between the atoms with the given atom indices.
-    void add_bond(int atom1, int atom2);
-    void remove_bond(int atom1, int atom2);
+    bool add_bond(int atom1, int atom2);
+    bool remove_bond(int atom1, int atom2);
 
     // Returns true if the atom with the given index is part of a cycle.
     bool is_cyclic(int atom) const;
@@ -235,6 +238,7 @@ class Structure {
     // The number at index i of the return vertex is the residue index of
     // atom i.
     std::vector<size_t> *get_residue_index_table() const;
+
 
     //
     // Residue-related query operations

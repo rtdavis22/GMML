@@ -16,17 +16,30 @@ namespace gmml {
 class Graph {
   public:
     // AdjList is a random access list representing an adjacency list.
-    // It may be appropriate for it to be a template argument.
     typedef std::vector<size_t> AdjList;
 
+    // Create an empty graph.
     Graph() : edges_(0) {}
+
+    // Create a graph with the given number of vertices and no edges.
     explicit Graph(size_t size) : edges_(size) {}
+
+    // TODO: Get rid of this if possible. If it stays, we must check that the
+    // argument is valid.
     explicit Graph(const std::vector<std::vector<size_t> >& edges)
             : edges_(edges) {}
 
-    Graph *clone() const { return new Graph(edges_); }
+    virtual Graph *clone() const { return new Graph(edges_); }
 
+    // The number of vertices of the graph.
     size_t size() const { return edges_.size(); }
+
+    // Returns true if there is an edge between the given vertices.
+    // Invariant: is_adjacent(v1, v2) <==> is_adjacent(v2, v1).
+    bool is_adjacent(size_t v1, size_t v2) const {
+        return v1 < size() && std::binary_search(edges_[v1].begin(),
+                                                 edges_[v1].end(), v2);
+    }
 
     // The function appends the vertices of another graph, and updates their
     // adjacency lists to reflect their new vertex indices.
@@ -62,25 +75,21 @@ class Graph {
     // large recursion stack.
     std::vector<std::vector<size_t> > *get_cycles() const;
 
-    // Add an edge, and maintain sorted order
-    void add_edge(size_t start_index, size_t end_index) {
-        std::vector<size_t>::iterator it;
-        it = std::lower_bound(edges_[start_index].begin(),
-                              edges_[start_index].end(),
-                              end_index);
-        edges_[start_index].insert(it, end_index);
-        it = std::lower_bound(edges_[end_index].begin(),
-                              edges_[end_index].end(),
-                              start_index);
-        edges_[end_index].insert(it, start_index);
-    }
+    // Add an edge. If the indices are invalid or if the edge already exists,
+    // false is returned.
+    bool add_edge(size_t start_index, size_t end_index);
+
+    // Remove an edge. If it doesn't exist, false is returned.
+    bool remove_edge(size_t start_index, size_t end_index);
 
     // This function applies a map to all vertices, so that vertex v's label
     // is changed to permutation[v]. The argument must be a permutation of
     // 0...n-1. This doesn't affect the topology of the graph.
     void apply_map(const std::vector<size_t>& permutation);
 
+    // Returns the adjacency list of a particular vertex.
     const AdjList& edges(size_t v) const { return edges_[v]; }
+
     const std::vector<std::vector<size_t> >& edges() const { return edges_; }
 
     void print() const;
@@ -95,6 +104,40 @@ inline void Graph::append(const Graph& graph) {
     for (size_t i = current_size; i < edges_.size(); i++)
         for (size_t j = 0; j < edges_[i].size(); j++)
             edges_[i][j] += current_size;
+}
+
+inline bool Graph::add_edge(size_t start_index, size_t end_index) {
+    size_t size = this->size();
+    if (start_index >= size || end_index >= size)
+        return false;
+    std::vector<size_t>::iterator it;
+    it = std::lower_bound(edges_[start_index].begin(),
+                          edges_[start_index].end(),
+                          end_index);
+    if (it != edges_[start_index].end() && *it == end_index)
+        return false;
+    edges_[start_index].insert(it, end_index);
+    it = std::lower_bound(edges_[end_index].begin(),
+                          edges_[end_index].end(),
+                          start_index);
+    edges_[end_index].insert(it, start_index);
+    return true;
+}
+
+
+inline bool Graph::remove_edge(size_t start_index, size_t end_index) {
+    if (!is_adjacent(start_index, end_index))
+        return false;
+    std::vector<size_t>::iterator it;
+    it = std::lower_bound(edges_[start_index].begin(),
+                          edges_[start_index].end(),
+                          end_index);
+    edges_[start_index].erase(it);
+    it = std::lower_bound(edges_[end_index].begin(),
+                          edges_[end_index].end(),
+                          start_index);
+    edges_[end_index].erase(it);
+    return true;
 }
 
 }  // namespace gmml

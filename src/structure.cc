@@ -64,8 +64,16 @@ Structure *Structure::clone() const {
 }
 
 // Bonding-related operations
-void Structure::add_bond(int atom1, int atom2) {
-    bonds_->add_edge(atom1, atom2);
+bool Structure::is_bonded(int atom1, int atom2) const {
+    return bonds_->is_adjacent(atom1, atom2);
+}
+
+bool Structure::add_bond(int atom1, int atom2) {
+    return bonds_->add_edge(atom1, atom2);
+}
+
+bool Structure::remove_bond(int atom1, int atom2) {
+    return bonds_->remove_edge(atom1, atom2);
 }
 
 bool Structure::is_cyclic(int atom_index) const {
