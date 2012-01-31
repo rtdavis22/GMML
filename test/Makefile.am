@@ -10,7 +10,8 @@ gmml_test_SOURCES = \
   geometry_test.cc \
   glycam_parser_test.cc \
   graph_test.cc \
-  prep_file_test.cc
+  prep_file_test.cc \
+  sander_minimize_test.cc
 
 TESTS = gmml-test
 

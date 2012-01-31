@@ -31,14 +31,14 @@ using std::vector;
 
 namespace gmml {
 
-MinimizationResults *SanderMinimize::operator()(
-        Structure& structure, const string& input_file,
-        const ParameterSet& parm_set) const {
+MinimizationResults *SanderMinimize::operator()(Structure& structure,
+                                                const string& mdin_file) const {
 #ifndef HAVE_SANDER
     warning("SanderMinimize - You must have sander in your path to minimize.");
     return NULL;
 #endif
-    string absolute_file = find_file(input_file);
+    const ParameterSet& parm_set = *kDefaultEnvironment.parm_set();
+    string absolute_file = find_file(mdin_file);
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -51,28 +51,19 @@ MinimizationResults *SanderMinimize::operator()(
     } else if (child == 0) {
         structure.print_amber_top_file(uid + "_temp.top", parm_set);
         structure.print_coordinate_file(uid + "_temp.rst");
-        // TODO: Why isn't this const? Fix this.
-        char *args[] = { "sander", "-i",
-                         const_cast<char*>(absolute_file.c_str()),
-                         "-p",
-                         const_cast<char*>(string(uid + "_temp.top").c_str()),
-                         "-c",
-                         const_cast<char*>(string(uid + "_temp.rst").c_str()),
-                         "-O",
-                         "-r",
-                         const_cast<char*>(
-                             string(uid + "_out_temp.rst").c_str()
-                         ),
-                         "-x",
-                         const_cast<char*>(string(uid + "_mdcrd").c_str()),
-                         "-e",
-                         const_cast<char*>(string(uid + "_mden").c_str()),
-                         "-inf",
-                         const_cast<char*>(string(uid + "_mdinfo").c_str()),
-                         "-o",
-                         const_cast<char*>(string(uid + "_mdout").c_str()),
-                          (char *) 0 };
-        execvp("sander", args);
+        const char* const args[] = { 
+                "sander", "-i", absolute_file.c_str(),
+                "-p", string(uid + "_temp.top").c_str(),
+                "-c", string(uid + "_temp.rst").c_str(),
+                "-O",
+                "-r", string(uid + "_out_temp.rst").c_str(),
+                "-x", string(uid + "_mdcrd").c_str(),
+                "-e", string(uid + "_mden").c_str(),
+                "-inf", string(uid + "_mdinfo").c_str(),
+                "-o", string(uid + "_mdout").c_str(),
+                (char *) 0
+        };
+        execvp("sander", const_cast<char* const *>(args));
         return NULL;
         warning("SanderMinimize - Error in exec.");
     }
@@ -99,17 +90,6 @@ MinimizationResults *SanderMinimize::operator()(
     MinimizationResults *results = MinimizationResults::parse(uid + "_mdout");
     remove(string(uid + "_mdout").c_str());
     return results;
-}
-
-MinimizationResults *SanderMinimize::operator()(
-        Structure& structure, const string& input_file,
-        const Environment& environment) const {
-    return operator()(structure, input_file, *environment.parm_set());
-}
-
-MinimizationResults *SanderMinimize::operator()(
-        Structure& structure, const string& input_file) const {
-    return operator()(structure, input_file, kDefaultEnvironment);
 }
 
 MinimizationResults *MinimizationResults::parse(const string& mdout_file) {

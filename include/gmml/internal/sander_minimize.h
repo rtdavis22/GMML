@@ -18,10 +18,11 @@ class MinimizationResults;
 // file.
 class SanderMinimize {
   public:
+    // Minimize the structure with the given SANDER input (mdin) file.
     // If sander is not part of the user's PATH or if the the minimization
     // failed, the return is NULL.
     MinimizationResults *operator()(Structure& structure,
-                                    const std::string& input_file) const;
+                                    const std::string& mdin_file) const;
 };
 
 // This represents the results of a minimization as found in sander's mdout
