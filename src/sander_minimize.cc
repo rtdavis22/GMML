@@ -51,6 +51,7 @@ MinimizationResults *SanderMinimize::operator()(
     } else if (child == 0) {
         structure.print_amber_top_file(uid + "_temp.top", parm_set);
         structure.print_coordinate_file(uid + "_temp.rst");
+        // TODO: Why isn't this const? Fix this.
         char *args[] = { "sander", "-i",
                          const_cast<char*>(absolute_file.c_str()),
                          "-p",
@@ -85,17 +86,17 @@ MinimizationResults *SanderMinimize::operator()(
     else {
 	structure.load_coordinates(CoordinateFile(uid + "_out_temp.rst"));
     }
-    //Clean up after ourselves.
+    // Clean up after ourselves.
     remove(string(uid + "_temp.top").c_str());
     remove(string(uid + "_temp.rst").c_str());
 
-    //Clean up after sander.
+    // Clean up after sander.
     remove(string(uid + "_mdcrd").c_str());
     remove(string(uid + "_mden").c_str());
     remove(string(uid + "_mdinfo").c_str());
     remove(string(uid + "_out_temp.rst").c_str());
 
-    MinimizationResults *results = parse_output_file(uid + "_mdout");
+    MinimizationResults *results = MinimizationResults::parse(uid + "_mdout");
     remove(string(uid + "_mdout").c_str());
     return results;
 }
@@ -111,34 +112,53 @@ MinimizationResults *SanderMinimize::operator()(
     return operator()(structure, input_file, kDefaultEnvironment);
 }
 
-MinimizationResults *SanderMinimize::parse_output_file(
-        const string& file) const {
-    std::ifstream output_file(file.c_str());
-    if (output_file.fail()) {
+MinimizationResults *MinimizationResults::parse(const string& mdout_file) {
+    std::ifstream file(mdout_file.c_str());
+    if (file.fail()) {
         return NULL;
     }
+    MinimizationResults *results = parse(file);
+    file.close();
+    return results;
+}
+
+MinimizationResults *MinimizationResults::parse(std::istream& in) {
     string line;
     // Skip down to the results.
-    while (std::getline(output_file, line) &&
+    while (std::getline(in, line) &&
             (line.find("FINAL RESULTS") == string::npos))
         ;
     // The line after the one with "ENERGY" has our results.
-    while (std::getline(output_file, line) &&
-            (line.find("ENERGY") == string::npos))
+    while (std::getline(in, line) && (line.find("ENERGY") == string::npos))
         ;
-    std::getline(output_file, line);
+    std::getline(in, line);
+
     std::stringstream ss(line);
-    double dummy;
+    string dummy;
     double energy;
-    // Energy is the second number on the line.
     ss >> dummy >> energy;
     if (ss.fail()) {
-        output_file.close();
         return NULL;
     }
-    MinimizationResults *results = new MinimizationResults;
-    results->energy = energy;
-    return results;
+
+    std::getline(in, line);
+    std::getline(in, line);
+    ss.str(line);
+    double bond_energy;
+    ss >> dummy >> dummy >> bond_energy;
+    if (ss.fail()) {
+        return NULL;
+    }
+
+    std::getline(in, line);
+    ss.str(line);
+    double vdw_energy;
+    ss >> dummy >> dummy >> vdw_energy;
+    if (ss.fail()) {
+        return NULL;
+    }
+
+    return new MinimizationResults(energy, bond_energy, vdw_energy);
 }
 
 }  // namespace gmml
