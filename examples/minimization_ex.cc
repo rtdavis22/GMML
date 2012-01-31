@@ -60,7 +60,9 @@ int main() {
     if (results == NULL) {
         cout << "Minimization failed" << endl;
     } else {
-        cout << "Minimized energy: " << results->energy << endl;
+        cout << "Minimized energy: " << results->energy() << endl;
+        cout << "Bond energy: " << results->bond_energy() << endl;
+        cout << "VDW energy: " << results->vdw_energy() << endl;
         delete results;
     }
 
