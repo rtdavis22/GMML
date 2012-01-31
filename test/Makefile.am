@@ -16,6 +16,8 @@ gmml_test_SOURCES = \
 TESTS = gmml-test
 
 EXTRA_DIST = \
+  dat/bad_mdout \
+  dat/mdout \
   dat/test.prep
 
 MAINTAINERCLEANFILES = Makefile.in
