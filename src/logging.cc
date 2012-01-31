@@ -153,7 +153,7 @@ void NullLogHandler(LogLevel level, const char* filename, int line,
 // I may want to either keep this as the default log handler, use
 // DefaultLogHandler above, or write a log handler that writes to a file
 // depending on how logging is used in the library.
-static LogHandler* log_handler_ = &NullLogHandler;
+static LogHandler* log_handler_ = &DefaultLogHandler;
 
 /*
 static int log_silencer_count_ = 0;

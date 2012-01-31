@@ -242,6 +242,8 @@ class LogFinisher {
 
 #endif  // !NDEBUG
 
+#define LOG(LEVEL) GOOGLE_LOG(LEVEL)
+
 typedef void LogHandler(LogLevel level, const char* filename, int line,
                         const std::string& message);
 

@@ -6,6 +6,7 @@ namespace gmml {
 
 bool kEnableWarnings = false;
 
+// These should be removed in favor of logging.
 void warning(const std::string& message) {
     if (kEnableWarnings)
         std::cerr << "warning: " << message << std::endl;

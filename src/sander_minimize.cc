@@ -24,6 +24,7 @@
 #include "gmml/internal/environment.h"
 #include "gmml/internal/parameter_file.h"
 #include "gmml/internal/structure.h"
+#include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 
 using std::string;
@@ -34,7 +35,7 @@ namespace gmml {
 MinimizationResults *SanderMinimize::operator()(Structure& structure,
                                                 const string& mdin_file) const {
 #ifndef HAVE_SANDER
-    warning("SanderMinimize - You must have sander in your path to minimize.");
+    LOG(WARNING) << "You must have sander in your path to minimize.";
     return NULL;
 #endif
     const ParameterSet& parm_set = *kDefaultEnvironment.parm_set();
