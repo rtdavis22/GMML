@@ -22,7 +22,7 @@ class PdbMappingInfo;
 class PdbStructureBuilder;
 
 // TODO: This should be used throughout in place of Triplet<int>.
-struct PdbIndex {
+struct PdbResidueId {
     char chain_id;
     int res_num;
     char i_code;
@@ -34,6 +34,20 @@ class PdbFileStructure : public Structure {
 
     virtual ~PdbFileStructure();
 
+    // TODO: document how head/tail residues are inferred and how the mapping
+    // is done.
+    // build() is the only way to create a PdbFileStructure. The structure is
+    // built with the following guarantees:
+    // 1. The residues in the structure are ordered by chain_id (chain
+    //    identifier), res_num (residue index), and i_code (insertion code) in
+    //    that order. chain_id and i_code are interpreted as ASCII chars.
+    //    Thus, the residues with chain_id 'Z' will come before the residues
+    //    with chain_id 'a', and the residues with no chain_id (' ') will come
+    //    before all residues with an alphanumeric chain_id.
+    // 2. If a residue is mapped to another residue (via a global mapping or a
+    //    mapping in PdbStructureBuilder), the atoms in the residue will be
+    //    in the same order as the mapped residue. Otherwise, the atoms are in
+    //    the order that they're found in the file.
     static PdbFileStructure *build(const PdbStructureBuilder& builder);
 
     static PdbFileStructure *build(const std::string& file);
@@ -83,13 +97,16 @@ struct PdbMappingInfo {
 class PdbStructureBuilder {
   public:
     // These initialize mapping_info to the mapping info of the default
-    // environment. I think this is always the desirable behaviour, since
-    // mappings can be overridden in this class.
+    // environment, which are typically specified via the global functions
+    // add_mapping, add_head_mapping, and add_tail_mapping. Mappings defined
+    // in this class override the global mappings.
     explicit PdbStructureBuilder(const std::string& pdb_file);
     explicit PdbStructureBuilder(const PdbFile& pdb_file);
 
     virtual ~PdbStructureBuilder();
 
+    // The following 3 functions add a mapping from a particular residue in the
+    // pdb file.
     void add_mapping(char chain_id, int residue_number,
                      char insertion_code, const std::string& name);
 
@@ -102,18 +119,30 @@ class PdbStructureBuilder {
         add_mapping(' ', residue_number, name);
     }
 
+    // Adds a mapping from all residues with a specified name.
     void add_mapping(const std::string& from, const std::string& to) {
         mapping_info_.residue_map.put(from, to);
     }
 
+    // Adds a mapping from all head residues with a specified name. See above
+    // for what constitues a head residue.
     void add_head_mapping(const std::string& from, const std::string& to) {
         mapping_info_.head_map.put(from, to);
     }
 
+    // Adds a mapping from all tail residues with a specified name. See above
+    // for what constitues a tail residues.
     void add_tail_mapping(const std::string& from, const std::string& to) {
         mapping_info_.tail_map.put(from, to);
     }
 
+    // This function determines what a particular residue is mapped to.
+    // The function considers mappings in this order:
+    // 1. Individual residue mappings.
+    // 2. Head mappings (if is_head is true).
+    // 3. Tail mappings (if is_tail is true).
+    // 4. Generic mappings. 
+    // If a mapping is not found, the specified residue name is returned.
     std::string map_pdb_residue(Triplet<int> *pdb_index,
                                 const std::string& residue_name,
                                 bool is_head, bool is_tail) const;
@@ -123,6 +152,7 @@ class PdbStructureBuilder {
     const PdbFile& pdb_file() const { return pdb_file_; }
 
   private:
+    // TODO: make this a defensive copy of the PdbFile.
     const PdbFile& pdb_file_;
     PdbMappingInfo mapping_info_;
     std::map<Triplet<int>*, std::string,
