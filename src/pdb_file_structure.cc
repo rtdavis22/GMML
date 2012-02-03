@@ -29,11 +29,17 @@ namespace gmml {
 
 // Private implementation
 struct PdbFileStructure::Impl {
+    // The information in the PDB file that is needed for building the
+    // structure. A PdbAtomCard that is NULL indicates a TER card.
     struct RelevantPdbInfo {
         std::vector<PdbAtomCard*> atom_cards;
         std::vector<PdbConnectCard*> connect_cards;
     };
 
+    // These represent the residues in the PDB file. The index of the atoms is
+    // the PDB atom sequence number. These are relevant because they are used
+    // in the CONECT cards. This also includes the previous residue and next
+    // residue to determine if it's a head residue or a tail residue.
     struct PdbIndexedResidue : public IndexedResidue {
         PdbIndexedResidue(const Residue *residue, PdbIndexedResidue *prev,
                           PdbIndexedResidue *next) : IndexedResidue(residue),
@@ -46,8 +52,12 @@ struct PdbFileStructure::Impl {
             set_bonds(NULL);
         }
 
-        // These help to determine if the residue is a head or a tail.
+        // The residue immediately before this residue in the file. If a TER
+        // card precedes this residue, the value is NULL.
         PdbIndexedResidue *prev_residue;
+
+        // The residue immediately after this residue in the file. If a TER
+        // card follows this residue, the value is NULL.
         PdbIndexedResidue *next_residue;
     };
 
@@ -62,12 +72,20 @@ struct PdbFileStructure::Impl {
     static map<Triplet<int>*, PdbIndexedResidue*, TripletPtrLess<int> >*
     get_indexed_residues(const vector<PdbAtomCard*>& atom_cards);
 
+    // This is map from the PDB atom sequence numbers to the indices of the
+    // atoms in the structure.
     map<int, int> atom_map;
+
+    // This is a map from PDB residue identifiers (chain_id, res_num, i_code) to
+    // the indices of the residues in the file.
     map<Triplet<int>*, int, TripletPtrLess<int> > residue_map;
 };
 
+// This function takes a sequence of PdbAtomCards and returns a map from
+// PDB residues identfiers to the residues in the PDB. If the PdbAtomCard is
+// NULL, this indicates a TER card.
 map<Triplet<int>*, PdbFileStructure::Impl::PdbIndexedResidue*,
-    TripletPtrLess<int> >*
+        TripletPtrLess<int> >*
 PdbFileStructure::Impl::get_indexed_residues(
         const vector<PdbAtomCard*>& atom_cards) {
     // Residues are identified uniquely by their chain id, sequence number, and
@@ -78,7 +96,7 @@ PdbFileStructure::Impl::get_indexed_residues(
     typedef map<Triplet<int>*, PdbIndexedResidue*>::iterator iterator;
 
     // We keep track of the previous residue in the file, so that we can infer
-    // bonds between the proteins.
+    // head-tail bonding.
     PdbIndexedResidue *prev_residue = NULL;
 
     for (vector<PdbAtomCard*>::const_iterator it = atom_cards.begin();
@@ -100,20 +118,21 @@ PdbFileStructure::Impl::get_indexed_residues(
 
         std::pair<iterator, bool> ret = residue_map->insert(
                 std::make_pair(triple, static_cast<PdbIndexedResidue*>(NULL)));
-        if (!ret.second)
+        if (!ret.second) {
             delete triple;
-        else
+        } else {
             ret.first->second = new PdbIndexedResidue((*it)->res_name);
+        }
 
         PdbIndexedResidue *cur_residue = ret.first->second;
         cur_residue->append(new_atom, (*it)->serial);
-        //if (cur_residue->name == "")
-        //    cur_residue->name = (*it)->res_name;
 
+        // This may be problematic if the residues in the PDB are mixed up.
         if (cur_residue != prev_residue) {
             cur_residue->prev_residue = prev_residue;
-            if (prev_residue != NULL)
+            if (prev_residue != NULL) {
                 prev_residue->next_residue = cur_residue;
+            }
             prev_residue = cur_residue;
         }
     }
@@ -121,6 +140,8 @@ PdbFileStructure::Impl::get_indexed_residues(
     return residue_map;
 }
 
+// Returns the information in the PDB file that we use to build the PDB
+// structure.
 PdbFileStructure::Impl::RelevantPdbInfo*
 PdbFileStructure::Impl::get_relevant_pdb_info(
         const PdbFile& pdb_file) {
@@ -222,8 +243,8 @@ PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
         PdbIndexedResidue *prev_residue = cur_residue->prev_residue;
         PdbIndexedResidue *next_residue = cur_residue->next_residue;
 
-        bool is_head = prev_residue == NULL;
-        bool is_tail = next_residue == NULL;
+        bool is_head = (prev_residue == NULL);
+        bool is_tail = (next_residue == NULL);
 
         std::string mapped_name =
                 builder.map_pdb_residue(it->first, cur_residue->name(),
@@ -239,6 +260,8 @@ PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
                         cur_residue->get_atom_index(i);
             }
 
+            // I should do this, right?
+            //delete cur_residue;
             PdbIndexedResidue *new_residue =
                     new (cur_residue) PdbIndexedResidue(result, prev_residue,
                                                         next_residue);
@@ -278,8 +301,8 @@ PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
                 structure->impl_->atom_map.end());
         int atom1 = structure->impl_->atom_map[bonds_to_add[i].first];
         int atom2 = structure->impl_->atom_map[bonds_to_add[i].second];
-        assert(atom1 < structure->size() && atom1 >= 0);
-        assert(atom2 < structure->size() && atom2 >= 0);
+        assert(0 <= atom1 && atom1 < structure->size());
+        assert(0 <= atom2 && atom2 < structure->size());
         structure->add_bond(atom1, atom2);
     }
 
