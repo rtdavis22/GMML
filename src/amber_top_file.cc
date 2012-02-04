@@ -12,6 +12,7 @@
 #include <iostream>
 #include <map>
 #include <numeric>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -245,19 +246,19 @@ string AmberTopFile::extract_version(const string& line) {
 void AmberTopFile::read(std::istream& input) {
     string line;
     getline(input, line);
-    // Ignore the version
+    // Ignore the version.
     extract_version(line);
     while (true) {
         while (get_card_type(line) != kFlagCard && !input.eof())
             getline(input, line);
         if (input.eof()) {
-            error("Invalid topology file");
+            throw std::invalid_argument("Invalid topology file.");
             return;
         }
         string title = extract_title(line);
         trim(title);
         if (getline(input, line) && get_card_type(line) != kFormatCard) {
-            error("Bad format in section " + title);
+            throw std::invalid_argument("Bad format in section " + title);
             continue;
         }
         string format = extract_format(line);
@@ -284,7 +285,8 @@ void AmberTopFile::process_section(std::istream& input, SectionPtr section) {
     string line;
     while (input.peek() != '%' && getline(input, line)) {
         if (section->append(line) != 0) {
-            error("Error processing section " + section->name());
+            throw std::invalid_argument("Error processing section " +
+                                        section->name());
             return;
         }
     }

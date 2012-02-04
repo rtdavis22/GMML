@@ -215,7 +215,7 @@ void PdbFile::read(std::istream& in) {
             card_ptr.reset(new PdbLinkCard(line));
             break;
           default:
-            warning("Unknown card " + card_type);
+            // Ignore unknown card.
             card_ptr.reset(new PdbUnknownCard(line));
             break;
         }

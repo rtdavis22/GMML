@@ -13,6 +13,7 @@
 #include "gmml/internal/geometry.h"
 #include "gmml/internal/graph.h"
 #include "gmml/internal/residue.h"
+#include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 
 namespace gmml {
@@ -138,7 +139,7 @@ bool PrepFile::Impl::process_residue(std::istream& in) {
                 done = true;
                 break;
             case kSectionOther:
-                warning("unrecognized section in prep file");
+                LOG(WARNING) << "Unrecognized section in prep file";
                 break;
         }
     }
@@ -281,8 +282,8 @@ void PrepFileSet::Impl::load(const PrepFile& prep_file) {
             residues_.insert(*it);
         } else  {
             residues_[it->first] = it->second;
-            warning("PrepFile - Overwriting prep file " + it->first +
-                    " in prep file set.");
+            LOG(WARNING) << "Overwriting prep file " << it->first <<
+                            " in prep file set.";
         }
     }
 }
@@ -364,7 +365,7 @@ void set_parent_list(const vector<PrepFileAtom*>& atoms,
                 }
                 break;
             default:
-                warning("Unrecognized topological type ");
+                LOG(WARNING) << "Unrecognized topological type";
                 break;
         }
         st.push(i);

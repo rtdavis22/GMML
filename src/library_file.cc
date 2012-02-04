@@ -15,6 +15,7 @@
 #include "gmml/internal/atom.h"
 #include "gmml/internal/environment.h"
 #include "gmml/internal/residue.h"
+#include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 
 using std::istringstream;
@@ -56,7 +57,8 @@ void LibraryFile::read(std::istream& in) {
             structures_.insert(it, std::make_pair(names[i], structure));
         } else {
             it->second = structure;
-            warning("LibraryFile - Overwriting structure " + names[i] + ".");
+            LOG(WARNING) << "LibraryFile - Overwriting structure " <<
+                             names[i] << ".";
         }
     }
 }
@@ -76,8 +78,8 @@ void LibraryFileSet::load(const LibraryFile& library_file) {
             structures_.insert(lb, *it);
         } else {
             lb->second = it->second;
-            warning("LibraryFileSet - Overwriting structure " + it->first +
-                    ".");
+            LOG(WARNING) << "LibraryFileSet - Overwriting structure " <<
+                             it->first << ".";
         }
     }
 }

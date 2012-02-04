@@ -22,6 +22,7 @@
 #include "gmml/internal/prep_file.h"
 #include "gmml/internal/residue.h"
 #include "gmml/internal/sander_minimize.h"
+#include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 
 using std::deque;
@@ -620,8 +621,8 @@ void Structure::print_coordinate_file() const {
 
 void Structure::load_coordinates(const CoordinateFile& coordinate_file) {
     if (coordinate_file.coordinate_count() < atoms_.size()) { 
-        warning(string("Structure: Insufficient number of coordinates") +
-                " in coordinate file");
+        LOG(WARNING) << "Insufficient number of coordinates in " <<
+                        "in coordinate file, cannot load.";
         return;
     }
     for (int i = 0; i < atoms_.size(); i++)

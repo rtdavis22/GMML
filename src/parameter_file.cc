@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "gmml/internal/environment.h"
+#include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 
 using std::istringstream;
@@ -556,8 +557,6 @@ class ParameterSet::Impl {
             const string& type1, const string& type2,
             const string& type3, const string& type4) const;
 
-    void warning(const string& message) const;
-
     ParameterFile::AtomTypeMap atom_types_;
     ParameterFile::BondSet bonds_;
     ParameterFile::AngleSet angles_;
@@ -579,20 +578,20 @@ void ParameterSet::Impl::load(const ParameterFile& file) {
 const ParameterFileAtom *ParameterSet::Impl::lookup(
         const string& type) const {
     ParameterFile::AtomTypeMap::const_iterator it;
-    if ((it = atom_types_.find(type)) != atom_types_.end())
+    if ((it = atom_types_.find(type)) != atom_types_.end()) {
         return it->second;
-    else
-        return NULL;
+    }
+    return NULL;
 }
 
 const ParameterFileBond *ParameterSet::Impl::lookup(
         const string& type1,
         const string& type2) const {
     ParameterFile::BondSet::const_iterator it;
-    if ((it = find(type1, type2)) != bonds_.end())
+    if ((it = find(type1, type2)) != bonds_.end()) {
         return *it;
-    else
-        return NULL;
+    }
+    return NULL;
 }
 
 const ParameterFileAngle *ParameterSet::Impl::lookup(
@@ -600,10 +599,10 @@ const ParameterFileAngle *ParameterSet::Impl::lookup(
         const string& type2,
         const string& type3) const {
     ParameterFile::AngleSet::const_iterator it;
-    if ((it = find(type1, type2, type3)) != angles_.end())
+    if ((it = find(type1, type2, type3)) != angles_.end()) {
         return *it;
-    else
-        return NULL;
+    }
+    return NULL;
 }
 
 const ParameterFileDihedral *ParameterSet::Impl::lookup(
@@ -614,8 +613,9 @@ const ParameterFileDihedral *ParameterSet::Impl::lookup(
     ParameterFile::DihedralSet::const_iterator it;
     if ((it = find(type1, type2, type3, type4)) == dihedrals_.end()) {
         if ((it = find_generic("X", type2, type3, "X")) ==
-                 generic_dihedrals_.end())
+                 generic_dihedrals_.end()) {
              return NULL;
+        }
     }
     return *it;
 }
@@ -646,12 +646,12 @@ void ParameterSet::Impl::load_atom_types(
             continue;
         }
         if (is_set(first->second->mass)) {
-            warning("atom type " + it->second->type + " redefined");
+            LOG(WARNING) << "Atom type " + it->second->type + " redefined.";
             if (!is_set(it->second->mass)) {
                 atom_types_[type]->mass = first->second->mass;
             } else if (it->second->mass != first->second->mass) {
                 atom_types_[type]->mass = first->second->mass;
-                warning("overriding mass of atom type " + type);
+                LOG(WARNING) << "Overriding mass of atom type " << type;
             }
         }
         if (is_set(first->second->polarizability)) {
@@ -662,7 +662,7 @@ void ParameterSet::Impl::load_atom_types(
                     first->second->polarizability) {
                 atom_types_[type]->polarizability =
                     first->second->polarizability;
-                warning("overriding polarizability of atom " + type);
+                LOG(WARNING) << "Overriding polarizability of atom " << type;
             }
        }
        if (is_set(first->second->radius)) {
@@ -670,7 +670,7 @@ void ParameterSet::Impl::load_atom_types(
                 atom_types_[type]->radius = first->second->radius;
             } else if (it->second->radius != first->second->radius) {
                 atom_types_[type]->radius = first->second->radius;
-                warning("overriding radius of atom " + type);
+                LOG(WARNING) << "Overriding radius of atom " << type;
             }
         }
         if (is_set(first->second->well_depth)) {
@@ -678,7 +678,7 @@ void ParameterSet::Impl::load_atom_types(
                 atom_types_[type]->well_depth = first->second->well_depth;
             } else if (it->second->well_depth != first->second->well_depth) {
                 atom_types_[type]->well_depth = first->second->well_depth;
-                warning("overriding well depth of atom " + type);
+                LOG(WARNING) << "Overriding well depth of atom " << type;
             }
         }
         ++first;
@@ -696,12 +696,14 @@ void ParameterSet::Impl::load_bonds(
             first++;
             continue;
         }
-        if (bond->force_constant != (*it)->force_constant)
-            warning("overriding force constant of bond " + (*it)->types[0] +
-                    "-" + (*it)->types[1]);
-        if (bond->length != (*it)->length)
-            warning("overriding length of bond " + (*it)->types[0] + "-" +
-                    (*it)->types[1]);
+        if (bond->force_constant != (*it)->force_constant) {
+            LOG(WARNING) << "Overriding force constant of bond " <<
+                            (*it)->types[0] << "-" << (*it)->types[1];
+        }
+        if (bond->length != (*it)->length) {
+            LOG(WARNING) << "Overriding length of bond " << (*it)->types[0] <<
+                            "-" << (*it)->types[1];
+        }
 
         delete *it;
         bonds_.erase(it);
@@ -721,14 +723,17 @@ void ParameterSet::Impl::load_angles(
             first++;
             continue;
         }
-        warning("angle " + (*it)->types[0] + "-" + (*it)->types[1] + "-" +
-                (*it)->types[2] + " redefined");
-        if (angle->force_constant != (*it)->force_constant)
-            warning("overriding force constant of angle " + (*it)->types[0] +
-                    "-" + (*it)->types[1] + "-" + (*it)->types[2]);
-        if (angle->angle != (*it)->angle)
-            warning("overriding measure of angle " + (*it)->types[0] + "-" +
-                    (*it)->types[1] + "-" + (*it)->types[2]);
+        LOG(WARNING) << "Angle " << (*it)->types[0] << "-" << (*it)->types[1] <<
+                        "-" << (*it)->types[2] << " redefined.";
+        if (angle->force_constant != (*it)->force_constant) {
+            LOG(WARNING) << "Overriding force constant of angle " <<
+                            (*it)->types[0] << "-" << (*it)->types[1] << "-" <<
+                            (*it)->types[2];
+        }
+        if (angle->angle != (*it)->angle) {
+            LOG(WARNING) << "Overriding measure of angle " << (*it)->types[0] <<
+                            "-" << (*it)->types[1] << "-" << (*it)->types[2];
+        }
 
         delete *it;
         angles_.erase(it);
@@ -754,9 +759,11 @@ void ParameterSet::Impl::load_dihedrals(
                     generic_dihedrals_.end()) {
                 generic_dihedrals_.insert(dihedral);
             } else {
-                warning("redefinition of dihedral " + dihedral->types[0] + "-" +
-                        dihedral->types[1] + "-" + dihedral->types[2] + "-" +
-                        dihedral->types[3]);
+                LOG(WARNING) << "Redefinition of dihedral " <<
+                                dihedral->types[0] << "-" <<
+                                dihedral->types[1] << "-" <<
+                                dihedral->types[2] << "-" <<
+                                dihedral->types[3];
             }
         } else {
             it = dihedrals_.find(dihedral);
@@ -765,9 +772,9 @@ void ParameterSet::Impl::load_dihedrals(
             }
             // The dihedral doesn't exist.
             if (it != dihedrals_.end()) {
-                warning("overriding dihedral " + (*it)->types[0] + "-" +
-                        (*it)->types[1] + "-" + (*it)->types[2] + "-" +
-                        (*it)->types[3]);
+                LOG(WARNING) << "Overriding dihedral " << (*it)->types[0] <<
+                                "-" << (*it)->types[1] << "-" <<
+                               (*it)->types[2] << "-" << (*it)->types[3];
                 delete *it;
                 dihedrals_.erase(it);
             }
@@ -776,10 +783,6 @@ void ParameterSet::Impl::load_dihedrals(
         delete reverse_dihedral;
         ++first;
     }
-}
-
-void ParameterSet::Impl::warning(const string& message) const {
-    gmml::warning("ParameterSet: " + message);
 }
 
 ParameterFile::BondSet::const_iterator ParameterSet::Impl::find(

@@ -88,9 +88,9 @@ struct ExitException : public std::exception {
     std::string what_;
 };
 
-void warning(const std::string& message);
-
-void error(const std::string& message);
+inline void die() {
+    throw ExitException(-1);
+}
 
 // String utilities
 
@@ -106,12 +106,14 @@ inline std::string& trim(std::string& str) {
 // either be 'L' (left-aligned) or 'R' (right-aligned).
 inline void set_in_string(std::string& str, const std::string& val,
                           size_t index, size_t length, char alignment) {
-    if (val.size() > length || index + length - 1 >= str.size())
+    if (val.size() > length || index + length - 1 >= str.size()) {
         return;
-    if (alignment == 'R')
+    }
+    if (alignment == 'R') {
         str.replace(index + length - val.size(), val.size(), val);
-    else
+    } else {
         str.replace(index, val.size(), val);
+    }
 }
 
 // This overload is for placing an integer in the string.
@@ -149,9 +151,8 @@ inline int char_to_number(char c) {
 }
 
 // An exception that is intended not to be caught. It should be used instead
-// of something like std::abort to ensure that objects are destructed.
-inline ExitException::ExitException(int status)
-        : status_(status) {
+// of something like std::abort so that the call stack is unwound.
+inline ExitException::ExitException(int status) : status_(status) {
     what_ = "Exit status: " + to_string(status);
 }
 

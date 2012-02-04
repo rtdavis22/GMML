@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <stdexcept>
 
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
@@ -29,14 +30,14 @@ void CoordinateFile::read(std::istream& in) {
     Status status;
 
     if (!getline(in, line)) {
-        error("CoordinateFile: Error in header");
+        throw std::invalid_argument("Error in header.");
         return;
     }
     trim(line);
     title_ = line;
 
     if (!getline(in, line)) {
-        error("CoordinateFile: Error in header");
+        throw std::invalid_argument("Error in header.");
         return;
     }
     int count = convert_string<int>(line);
@@ -44,7 +45,8 @@ void CoordinateFile::read(std::istream& in) {
     int line_index = 2;
     while (line_index++, getline(in,line)) {
         if (process_crd_line(line) == kStatusError) {
-            error("CoordinateFile: Error on line " + to_string(line_index));
+            throw std::invalid_argument("Error on line " +
+                                        to_string(line_index));
             return;
         }
     }

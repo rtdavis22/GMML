@@ -96,7 +96,6 @@ libgmml_a_SOURCES = \
   src/solvated_structure.cc \
   src/standard_proteins.cc \
   src/structure.cc \
-  src/utilities.cc \
   src/utilities.h
 
 libgmml_a_CPPFLAGS = -I$(top_srcdir)/include

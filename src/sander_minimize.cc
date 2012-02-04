@@ -47,7 +47,7 @@ MinimizationResults *SanderMinimize::operator()(Structure& structure,
 
     pid_t child = fork();
     if (child < 0) {
-        warning("SanderMinimize - Fork failed.");
+        LOG(WARNING) << "Fork failed.";
         return NULL;
     } else if (child == 0) {
         structure.print_amber_top_file(uid + "_temp.top", parm_set);
@@ -66,14 +66,14 @@ MinimizationResults *SanderMinimize::operator()(Structure& structure,
         };
         execvp("sander", const_cast<char* const *>(args));
         return NULL;
-        warning("SanderMinimize - Error in exec.");
+        LOG(WARNING) << "Error in exec.";
     }
     
     int child_exit_status;
     waitpid(-1, &child_exit_status, 0);
     if (child_exit_status > 0) {
-	warning("SanderMinimize - Error in sander, exited with status " +
-		to_string(child_exit_status) + ".");
+	LOG(WARNING) << "Error in sander, exited with status " <<
+		        child_exit_status << ".";
     }
     else {
 	structure.load_coordinates(CoordinateFile(uid + "_out_temp.rst"));
