@@ -18,7 +18,7 @@
 
 namespace gmml {
 
-// 3D coordinate
+// A coordinate in 3 dimensions.
 struct Coordinate {
     Coordinate() : x(0.0), y(0.0), z(0.0) {}
     Coordinate(double x, double y, double z) : x(x), y(y), z(z) {}
@@ -31,20 +31,27 @@ struct Coordinate {
     double x, y, z;
 };
 
-// A base class for statically-sized vectors with numeric elements
+// A base class for statically-sized vectors with numeric elements.
+// TODO: There is a design flaw with VectorBase, Vector, and the specialized
+// Vector<3, T>. It was intended for Vector<3, T> to include cross-product and
+// potentially other things that don't have a useful analog in n dimensions,
+// and for VectorBase not to be part of the public interface. There probably
+// shouldn't be a VectorBase class at all. We may want to rethink this design in
+// the future or use an external library like Boost. At any rate, these classes
+// are currently used so little that it isn't worth the time.
 template<size_t size_, typename T = double>
 class VectorBase {
   public:
     VectorBase() : vector_(size_) {}
 
-    // Dot product
+    // Dot product.
     template<typename U>
     T dot(const VectorBase<size_, U>& rhs) const {
         return std::inner_product(vector_.begin(), vector_.end(),
                                   rhs.vector_.begin(), T());
     }
 
-    // Euclidean norm
+    // Euclidean norm.
     double norm() const { return sqrt(dot(*this)); }
 
     const T& operator[](size_t i) const { return vector_[i]; }
@@ -83,7 +90,7 @@ class VectorBase {
         return *this;
     }
 
-    // Make the vector a unit vector in the same direction
+    // Make the vector a unit vector in the same direction.
     VectorBase& normalize() {
         double norm_;
         if ((norm_ = norm()) != 0.0)
@@ -95,7 +102,7 @@ class VectorBase {
     friend class VectorBase;
 
   protected:
-    // The underlying vector
+    // The underlying vector.
     std::vector<T> vector_;
 };
 
@@ -151,7 +158,7 @@ template<size_t size_, typename T = double>
 class Vector : public VectorBase<size_, T> {};
 
 // This is mostly for the cross product but can also include optimizations
-// to the VectorBase operations
+// to the VectorBase operations.
 template<typename T>
 class Vector<3, T> : public VectorBase<3, T> {
   public:
@@ -172,7 +179,7 @@ class Vector<3, T> : public VectorBase<3, T> {
         this->vector_[2] = z;
     }
 
-    // Cross product
+    // Cross-product.
     template<typename U>
     Vector<3, T>& cross(const Vector<3, U>& rhs) {
         std::vector<T> t(this->vector_);
@@ -189,17 +196,17 @@ inline Vector<3, T> cross(const Vector<3, T>& vec1, const Vector<3, U>& vec2) {
     return new_vec.cross(vec2);
 }
 
-// A statically sized matrix with numeric elements
+// A statically sized matrix with numeric elements.
 template<size_t dim1, size_t dim2, typename T = double>
 class Matrix {
   public:
     Matrix() : matrix_(dim1) {}
 
-    // Extract an entry
+    // Extract an entry.
     T& operator()(size_t i, size_t j) { return matrix_[i][j]; }
     const T& operator()(size_t i, size_t j) const { return matrix_[i][j]; }
 
-    // Extract a column
+    // Extract a column.
     Vector<dim1> column(size_t index) const {
         Vector<dim1> column_;
         for (size_t i = 0; i < dim1; i++)
@@ -213,7 +220,7 @@ class Matrix {
             matrix_[i][index] = column[i];
     }
 
-    // Extract a row
+    // Extract a row.
     Vector<dim2>& operator[](size_t i) { return matrix_[i]; }
     const Vector<dim2>& operator[](size_t i) const { return matrix_[i]; }
 
@@ -240,7 +247,7 @@ inline Vector<dim1, U> operator*(const Matrix<dim1, dim2, T>& lhs,
     return vec;
 }
 
-// A rotation matrix that can be applied to Coordinates
+// A rotation matrix that can be applied to Coordinates.
 class RotationMatrix : Matrix<3, 4, double> {
   public:
     // Create a matrix for rotating @radians about a coordinate in a
@@ -261,7 +268,7 @@ class RotationMatrix : Matrix<3, 4, double> {
     }
 };
 
-// Measure the angle between two vectors
+// Measure the angle between two vectors.
 template<size_t size_, typename T, typename U>
 inline T measure(const Vector<size_, T>& vec1, const Vector<size_, U>& vec2) {
     T norm1 = vec1.norm();
@@ -271,7 +278,7 @@ inline T measure(const Vector<size_, T>& vec1, const Vector<size_, U>& vec2) {
     throw std::invalid_argument("measure(Vector&, Vector&)");
 }
 
-// Measure the distance between two coordinates
+// Measure the distance between two coordinates.
 inline double measure(const Coordinate& c1, const Coordinate& c2) {
     Vector<3, double> vec1(c1.x, c1.y, c1.z);
     Vector<3, double> vec2(c2.x, c2.y, c2.z);
@@ -296,6 +303,8 @@ inline double measure(const Coordinate& c1, const Coordinate& c2,
     return atan2((b1*b2.norm()).dot(b2xb3), cross(b1, b2).dot(b2xb3));
 }
 
+// Set the third coordinate so that the angle formed by the coordinates has
+// the given measure in radians. This is here mostly for testing purposes.
 inline void set_angle(const Coordinate *c1, const Coordinate *c2,
                       Coordinate *c3, double radians) {
     double cur_angle = measure(*c1, *c2, *c3);
@@ -313,46 +322,21 @@ inline void set_dihedral(const Coordinate *c1, const Coordinate *c2,
     matrix.apply(*c4);
 }
 
-// TODO: clean this up
-inline Coordinate calculate_point(const Coordinate& a, const Coordinate& b,
-                                  const Coordinate& c, double angle,
-                                  double dihedral, double distance) {
-    dihedral = kPi - dihedral;
-
-    Matrix<3, 4> m;
-    Vector<3> v1(b, a);
-    Vector<3> v2(c, b);
-
-    v1.normalize();
-    v2.normalize();
-
-    // if v1 is a multiple of v2, a, b, and c are collinear
-    // change to numeric utilities
-    if (std::abs(v1[0] + v2[0]) < 0.001 &&
-            std::abs(v1[1] + v2[1]) < 0.001 &&
-            std::abs(v1[2] + v2[2]) < 0.001) {
-        // use an arbitary dummy coordinate
-        Coordinate a_p(a.x+10, a.y-1, a.z+3);
-        v1 = Vector<3>(b, a_p);
-    }
-
-    m.set_column(1, cross(v1, v2).normalize());
-    m.set_column(2, v2);
-    m.set_column(0, cross(m.column(1), m.column(2)));
-    m.set_column(3, Vector<3>(c));
-    Vector<4> v;
-    v[0] = distance*sin(angle)*cos(dihedral);
-    v[1] = distance*sin(angle)*sin(dihedral);
-    v[2] = distance*cos(angle);
-    v[3] = 1;
-
-    Vector<3> ret = m*v;
-
-    return Coordinate(ret[0], ret[1], ret[2]);
-}
+// Calculate the unique coordinate d so that the following conditions are
+// satisfied:
+// 1. d is |distance| units from |c|.
+// 2. The angle d-c-b is |angle| radians.
+// 3. The dihedral d-c-b-a is |dihedral| radians.
+// Note that the dihedral angle vanishes (doesn't exist) when the input
+// coordinates are collinear. In this case, there are infinitely many
+// possibilities for the fourth coordinate (and they lie on a circle).
+// I don't see a good, deterministic way of selecting an element from this set
+// so, officially, the fourth coordinate can be any of them. Also, the third
+// condition cannot be met in this case.
+Coordinate calculate_point(const Coordinate& a, const Coordinate& b,
+                           const Coordinate& c, double angle,
+                           double dihedral, double distance);
 
 }  // namespace gmml
-
-#include "gmml/internal/geometry-inl.h"
 
 #endif  // GMML_INTERNAL_GEOMETRY_H_

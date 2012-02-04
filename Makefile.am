@@ -42,7 +42,6 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/environment.h \
   include/gmml/internal/generic_type.h \
   include/gmml/internal/geometry.h \
-  include/gmml/internal/geometry-inl.h \
   include/gmml/internal/glycam_code_set.h \
   include/gmml/internal/glycam_parser.h \
   include/gmml/internal/glycan_conformation_builder.h \
@@ -79,6 +78,7 @@ libgmml_a_SOURCES = \
   src/coordinate_file.cc \
   src/environment.cc \
   src/generic_type.cc \
+  src/geometry.cc \
   src/glycam_code_set.cc \
   src/glycam_parser.cc \
   src/glycan_conformation_builder.cc \
