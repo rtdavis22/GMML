@@ -138,6 +138,10 @@ void DefaultLogHandler(LogLevel level, const char* filename, int line,
                        const string& message) {
   static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
 
+  if (level < kDefaultLogLevel) {
+     return;
+  }
+
   // We use fprintf() instead of cerr because we want this to work at static
   // initialization time.
   fprintf(stderr, "[GMML %s %s:%d] %s\n",
@@ -309,5 +313,7 @@ void ProtobufOnceType::Init(void (*init_func)()) {
 
 #endif
 */
+
+LogLevel kDefaultLogLevel = LOGLEVEL_ERROR;
 
 }  // namespace gmml

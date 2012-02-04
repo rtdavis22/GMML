@@ -651,7 +651,7 @@ void ParameterSet::Impl::load_atom_types(
                 atom_types_[type]->mass = first->second->mass;
             } else if (it->second->mass != first->second->mass) {
                 atom_types_[type]->mass = first->second->mass;
-                LOG(WARNING) << "Overriding mass of atom type " << type;
+                LOG(WARNING) << "Overriding mass of atom type " << type << ".";
             }
         }
         if (is_set(first->second->polarizability)) {
@@ -662,7 +662,8 @@ void ParameterSet::Impl::load_atom_types(
                     first->second->polarizability) {
                 atom_types_[type]->polarizability =
                     first->second->polarizability;
-                LOG(WARNING) << "Overriding polarizability of atom " << type;
+                LOG(WARNING) << "Overriding polarizability of atom " << type <<
+                                ".";
             }
        }
        if (is_set(first->second->radius)) {
@@ -670,7 +671,7 @@ void ParameterSet::Impl::load_atom_types(
                 atom_types_[type]->radius = first->second->radius;
             } else if (it->second->radius != first->second->radius) {
                 atom_types_[type]->radius = first->second->radius;
-                LOG(WARNING) << "Overriding radius of atom " << type;
+                LOG(WARNING) << "Overriding radius of atom " << type << ".";
             }
         }
         if (is_set(first->second->well_depth)) {
@@ -678,7 +679,7 @@ void ParameterSet::Impl::load_atom_types(
                 atom_types_[type]->well_depth = first->second->well_depth;
             } else if (it->second->well_depth != first->second->well_depth) {
                 atom_types_[type]->well_depth = first->second->well_depth;
-                LOG(WARNING) << "Overriding well depth of atom " << type;
+                LOG(WARNING) << "Overriding well depth of atom " << type << ".";
             }
         }
         ++first;
@@ -698,11 +699,11 @@ void ParameterSet::Impl::load_bonds(
         }
         if (bond->force_constant != (*it)->force_constant) {
             LOG(WARNING) << "Overriding force constant of bond " <<
-                            (*it)->types[0] << "-" << (*it)->types[1];
+                            (*it)->types[0] << "-" << (*it)->types[1] << ".";
         }
         if (bond->length != (*it)->length) {
             LOG(WARNING) << "Overriding length of bond " << (*it)->types[0] <<
-                            "-" << (*it)->types[1];
+                            "-" << (*it)->types[1] << ".";
         }
 
         delete *it;
@@ -728,11 +729,12 @@ void ParameterSet::Impl::load_angles(
         if (angle->force_constant != (*it)->force_constant) {
             LOG(WARNING) << "Overriding force constant of angle " <<
                             (*it)->types[0] << "-" << (*it)->types[1] << "-" <<
-                            (*it)->types[2];
+                            (*it)->types[2] << ".";
         }
         if (angle->angle != (*it)->angle) {
             LOG(WARNING) << "Overriding measure of angle " << (*it)->types[0] <<
-                            "-" << (*it)->types[1] << "-" << (*it)->types[2];
+                            "-" << (*it)->types[1] << "-" << (*it)->types[2] <<
+                            ".";
         }
 
         delete *it;
@@ -763,7 +765,7 @@ void ParameterSet::Impl::load_dihedrals(
                                 dihedral->types[0] << "-" <<
                                 dihedral->types[1] << "-" <<
                                 dihedral->types[2] << "-" <<
-                                dihedral->types[3];
+                                dihedral->types[3] << ".";
             }
         } else {
             it = dihedrals_.find(dihedral);
@@ -774,7 +776,7 @@ void ParameterSet::Impl::load_dihedrals(
             if (it != dihedrals_.end()) {
                 LOG(WARNING) << "Overriding dihedral " << (*it)->types[0] <<
                                 "-" << (*it)->types[1] << "-" <<
-                               (*it)->types[2] << "-" << (*it)->types[3];
+                               (*it)->types[2] << "-" << (*it)->types[3] << ".";
                 delete *it;
                 dihedrals_.erase(it);
             }
