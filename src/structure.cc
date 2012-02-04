@@ -672,6 +672,7 @@ struct StructureAttach::Impl {
                                               int target_index);
 };
 
+// TODO: Fix this up and figure out precisely how this should be done.
 int StructureAttach::operator()(Structure& structure,
                                 const Structure *new_structure,
                                 int head, int tail) const {
@@ -731,16 +732,17 @@ int StructureAttach::operator()(Structure& structure,
         if (adj_atoms[i] != new_atom_index) {
             int third_atom = adj_atoms[i];
             const ParameterFileAngle *parameter_angle = parm_set->lookup(
-                atoms[third_atom]->type(),
-                atoms[target_atom_index]->type(),
-                atoms[new_atom_index]->type());
+                    atoms[third_atom]->type(),
+                    atoms[target_atom_index]->type(),
+                    atoms[new_atom_index]->type());
 
-            if (parameter_angle != NULL)
+            if (parameter_angle != NULL) {
                 structure.set_angle_after(new_residue_index,
                                           third_atom, target_atom_index,
                                           new_atom_index,
                                           to_radians(parameter_angle->angle));
-         }
+            }
+        }
     }
 
     // This sets torsions appropriately if the residues are sugars. I'm not

@@ -24,78 +24,14 @@ class ParameterSet;
 class SolvatedStructure;
 class Structure;
 
-// These structs are namespaced because of their general names. They are used
-// to build sections of the topology file. An equality relation is defined on
-// them to determine the correct "type" of bonds, angles, etc.
 namespace amber_top_builder {
 
-// These represent information for atom types and are used to to calculate
-// Lennard-Jones coefficients.
-struct TypeInfoType {
-    TypeInfoType(double radius, double well_depth) : radius(radius),
-                                                     well_depth(well_depth) {}
+struct TypeInfoType;
+struct BondType;
+struct AngleType;
+struct DihedralType;
 
-    double radius;
-    double well_depth;
-};
-
-inline bool operator==(const TypeInfoType& lhs, const TypeInfoType& rhs) {
-    return lhs.radius == rhs.radius &&
-           lhs.well_depth == rhs.well_depth;
 }
-
-// These correspond to values in BOND_FORCE_CONSTANT and BOND_EQUIL_VALUE.
-struct BondType {
-    BondType(double force_constant, double equil_value)
-            : force_constant(force_constant), equil_value(equil_value) {}
-
-    double force_constant;
-    double equil_value;
-};
-
-inline bool operator==(const BondType& lhs, const BondType& rhs) {
-    return lhs.force_constant == rhs.force_constant &&
-           lhs.equil_value == rhs.equil_value;
-}
-
-// These correspond to values in ANGLE_FORCE_CONSTANT and ANGLE_EQUIL_VALUE.
-struct AngleType {
-    AngleType(double force_constant, double equil_value)
-            : force_constant(force_constant), equil_value(equil_value) {}
-
-    double force_constant;
-    double equil_value;
-};
-
-inline bool operator==(const AngleType& lhs, const AngleType& rhs) {
-    return lhs.force_constant == rhs.force_constant &&
-           lhs.equil_value == rhs.equil_value;
-}
-
-// These correspond to values in DIHEDRAL_FORCE_CONSTANT, DIHEDRAL_PERIODICITY,
-// DIHEDRAL_PHASE, SCEE_SCALE_FACTOR, AND SCNB_SCALE_FACTOR.
-struct DihedralType {
-    DihedralType(double force_constant, double periodicity, double phase,
-                 double scee, double scnb)
-            : force_constant(force_constant), periodicity(periodicity),
-              phase(phase), scee(scee), scnb(scnb) {}
-
-    double force_constant;
-    double periodicity;
-    double phase;
-    double scee;
-    double scnb;
-};
-
-inline bool operator==(const DihedralType& lhs, const DihedralType& rhs) {
-    return lhs.force_constant == rhs.force_constant &&
-           lhs.periodicity == rhs.periodicity &&
-           lhs.phase == rhs.phase &&
-           lhs.scee == rhs.scee &&
-           lhs.scnb == rhs.scnb;
-}
-
-}  // namespace amber_top_builder
 
 // This class creates the sections of an AMBER topology file. The file
 // specification can be found here: http://ambermd.org/formats.html#topology.
@@ -188,7 +124,9 @@ class AmberTopBuilder {
     void build_dihedrals(const Structure&, AmberTopFile *file) const;
 
     // Builds RADIUS_SET, RADII, and SCREEN, where the RADIUS_SET is
-    // "modified Bondi radii (mbondi)"
+    // "modified Bondi radii (mbondi)". The values used come from LEaP. This
+    // is the only radius set we've needed, so it's not configurable. Let
+    // us know if you would like to use a different set.
     void build_radii_and_screen(const Structure&, AmberTopFile *file) const;
 
     // Builds sections with dummy values to appease programs that expect to
@@ -196,7 +134,7 @@ class AmberTopBuilder {
     // TREE_CHAIN_CLASSIFICATION, JOIN_ARRAY, and IROTAT.
     void build_garbage_sections(int atom_count, AmberTopFile *file) const;
 
-    // This builds BOX_DIMENSIONS and set pointer 28.
+    // This builds BOX_DIMENSIONS and sets pointer 28.
     void build_box_section(const BoxedStructure& structure,
                            AmberTopFile *file) const;
 
@@ -219,7 +157,7 @@ class AmberTopBuilder {
                           SectionPtr dihedrals_with_hydrogen,
                           SectionPtr dihedrals_without_hydrogen) const;
 
-    // A help to insert all improper dihedrals, where atom_index is the
+    // A helper to insert all improper dihedrals, where atom_index is the
     // center atom.
     void insert_improper_dihedrals(const Structure&, int atom_index,
                                    std::vector<DihedralType*>& dihedral_types,
@@ -253,6 +191,81 @@ class AmberTopBuilder {
 
     DISALLOW_COPY_AND_ASSIGN(AmberTopBuilder);
 };
+
+
+// These structs are namespaced because of their general names. They are used
+// to build sections of the topology file. An equality relation is defined on
+// them to determine the correct "type" of bonds, angles, etc.
+namespace amber_top_builder {
+
+// These represent information for atom types and are used to to calculate
+// Lennard-Jones coefficients.
+struct TypeInfoType {
+    TypeInfoType(double radius, double well_depth) : radius(radius),
+                                                     well_depth(well_depth) {}
+
+    double radius;
+    double well_depth;
+};
+
+inline bool operator==(const TypeInfoType& lhs, const TypeInfoType& rhs) {
+    return lhs.radius == rhs.radius &&
+           lhs.well_depth == rhs.well_depth;
+}
+
+// These correspond to values in BOND_FORCE_CONSTANT and BOND_EQUIL_VALUE.
+struct BondType {
+    BondType(double force_constant, double equil_value)
+            : force_constant(force_constant), equil_value(equil_value) {}
+
+    double force_constant;
+    double equil_value;
+};
+
+inline bool operator==(const BondType& lhs, const BondType& rhs) {
+    return lhs.force_constant == rhs.force_constant &&
+           lhs.equil_value == rhs.equil_value;
+}
+
+// These correspond to values in ANGLE_FORCE_CONSTANT and ANGLE_EQUIL_VALUE.
+struct AngleType {
+    AngleType(double force_constant, double equil_value)
+            : force_constant(force_constant), equil_value(equil_value) {}
+
+    double force_constant;
+    double equil_value;
+};
+
+inline bool operator==(const AngleType& lhs, const AngleType& rhs) {
+    return lhs.force_constant == rhs.force_constant &&
+           lhs.equil_value == rhs.equil_value;
+}
+
+// These correspond to values in DIHEDRAL_FORCE_CONSTANT, DIHEDRAL_PERIODICITY,
+// DIHEDRAL_PHASE, SCEE_SCALE_FACTOR, AND SCNB_SCALE_FACTOR.
+struct DihedralType {
+    DihedralType(double force_constant, double periodicity, double phase,
+                 double scee, double scnb)
+            : force_constant(force_constant), periodicity(periodicity),
+              phase(phase), scee(scee), scnb(scnb) {}
+
+    double force_constant;
+    double periodicity;
+    double phase;
+    double scee;
+    double scnb;
+};
+
+inline bool operator==(const DihedralType& lhs, const DihedralType& rhs) {
+    return lhs.force_constant == rhs.force_constant &&
+           lhs.periodicity == rhs.periodicity &&
+           lhs.phase == rhs.phase &&
+           lhs.scee == rhs.scee &&
+           lhs.scnb == rhs.scnb;
+}
+
+}  // namespace amber_top_builder
+
 
 class InsufficientParameterException : public std::exception {
   public:

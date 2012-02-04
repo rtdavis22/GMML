@@ -23,6 +23,7 @@ class ArrayTree {
     typedef typename std::vector<std::pair<T, int> >::const_iterator
             const_iterator;
 
+    // Creates an empty tree.
     ArrayTree() {}
 
     const_iterator begin() const { return tree_.begin(); }
@@ -41,10 +42,11 @@ class ArrayTree {
 
 template<typename T>
 inline int ArrayTree<T>::insert(T data, int parent_id) {
-    if (parent_id != -1 && parent_id >= tree_.size())
+    if (parent_id != -1 && parent_id >= tree_.size()) {
         throw std::invalid_argument(
                 "ArrayTree::insert - invalid parent index(" +
                 to_string(parent_id) + ")");
+    }
     tree_.push_back(std::make_pair(data, parent_id));
     return tree_.size() - 1;
 }
