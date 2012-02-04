@@ -17,10 +17,11 @@ class Structure;
 // the input residue is not modified. If the operation is successful, the order
 // of the atoms in the input residue will change to match the order of the atoms
 // in the corresponding residue.
+// TODO: I think it should be made so that atoms from the input residue don't
+// need to be a subset of the atoms of the other residues. The "bad atoms" would
+// just be ignored.
 struct CompleteResidue {
   public:
-    // TODO: make these take a const residue and return a new residue, NULL
-    // if there was a problem.
     Residue *operator()(const Residue *residue,
                         const std::string& residue_name) const;
 
