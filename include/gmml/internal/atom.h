@@ -3,6 +3,8 @@
 #ifndef GMML_INTERNAL_ATOM_H_
 #define GMML_INTERNAL_ATOM_H_
 
+#include <string.h>
+
 #include <string>
 
 #include "gmml/internal/geometry.h"
@@ -13,39 +15,78 @@ namespace gmml {
 // kElementX is the atomic number of the element with symbol X.
 enum Element {
     kElementUnknown = 0,
+    kElementFirst = 1,
     kElementH = 1,
+    kElementHe = 2,
+    kElementLi = 3,
+    kElementBe = 4,
+    kElementB = 5,
     kElementC = 6,
     kElementN = 7,
     kElementO = 8,
     kElementF = 9,
+    kElementNe = 10,
+    kElementNa = 11,
+    kElementMg = 12,
+    kElementAl = 13,
     kElementSi = 14,
     kElementP = 15,
     kElementS = 16,
-    kElementCl = 17
+    kElementCl = 17,
+    kElementAr = 18,
+    kElementK = 19,
+    kElementCa = 20,
+    kElementLast = 20
 };
 
-// implement this and use it in place of get_element_by_char
-inline Element get_element(const std::string& symbol) {
+const char * const kElementSymbols[] = {
+    "XX",
+    "H",
+    "He",
+    "Li",
+    "Be",
+    "B",
+    "C",
+    "N",
+    "O",
+    "F",
+    "Ne",  // 10
+    "Na",
+    "Mg",
+    "Al",
+    "Si",
+    "P",
+    "S",
+    "Cl",
+    "Ar",
+    "K",
+    "Ca"  // 20
+};
+
+inline Element get_element_by_atomic_number(int number) {
+    if (number < 0 || number > static_cast<int>(kElementLast)) {
+        return kElementUnknown;
+    }
+    return static_cast<Element>(number);
+}
+
+inline Element get_element_by_symbol(const char *symbol) {
+    int size = GOOGLE_ARRAYSIZE(kElementSymbols);
+    for (int i = 1; i < size; i++) {
+        if (strcmp(kElementSymbols[i], symbol) == 0) {
+            return get_element_by_atomic_number(i);
+        }
+    }
     return kElementUnknown;
 }
 
 inline std::string get_element_symbol(Element element) {
-    if (element == kElementC)
-        return "C";
-    else if (element == kElementH)
-        return "H";
-    else if (element == kElementN)
-        return "N";
-    else if (element == kElementO)
-        return "O";
-    else if (element == kElementP)
-        return "P";
-    else if (element == kElementS)
-        return "S";
-    return "";
+    Element e = get_element_by_atomic_number(static_cast<int>(element));
+    return std::string(kElementSymbols[static_cast<int>(e)]);
 }
 
-//may want to use a static map instead
+// This function attempts to guess the element from a letter. This may be used
+// in trying to infer an element from an atom name.
 inline Element get_element_by_char(char letter) {
     switch (letter) {
         case 'C':
