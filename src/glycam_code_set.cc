@@ -323,20 +323,6 @@ string GlycamCodeSet::get_third_letter(
 
 TreeResidue *GlycamCodeSet::build_tree_residue(
         tree<ParsedResidue*>::iterator it) const {
-/*
-    vector<int> open_valences;
-    tree<ParsedResidue*>::sibling_iterator child_it = it.begin();
-    while (child_it != it.end()) {
-        open_valences.push_back((*child_it)->oxygen_position);
-        ++child_it;
-    }
-    string anomeric_carbon = "C" + to_string((*it)->anomeric_carbon);
-    tree<ParsedResidue*>::iterator parent = tree<ParsedResidue*>::parent(it);
-    string oxygen_position = get_oxygen_name((*parent)->name,
-                                             ((*it)->oxygen_position));
-    return new TreeResidue(get_code(**it, open_valences), anomeric_carbon,
-                           oxygen_position);
-*/
     vector<int> open_valences;
     tree<ParsedResidue*>::sibling_iterator child_it = it.begin();
     while (child_it != it.end()) {
@@ -392,12 +378,7 @@ int GlycamAttach::operator()(Structure& structure, Residue *residue,
         atom->set_charge(atom->charge() + 0.031);
     }
 
-    //StructureAttach structure_attach;
-
     return structure.attach(residue, new_atom_name, residue_index, atom_name);
-
-    //return structure_attach(structure, residue, new_atom_name, residue_index,
-    //                        atom_name);
 }
 
 Structure *glycam_build(ArrayTree<TreeResidue*> *residue_tree) {
@@ -464,9 +445,7 @@ bool set_phi(Structure *structure, int residue_index, double degrees) {
         int carbon_number = structure->atoms(carbon_index)->name()[1] - '0';
         string atom2_name = "C" + to_string(carbon_number - 1);
         atom2_index = structure->get_atom_index(residue_index, atom2_name);
-    }
-    //residue must start with Cx
-    else {
+    } else {
         return false;
     }
     int oxygen_index = kNotSet;
