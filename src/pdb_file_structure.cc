@@ -260,8 +260,6 @@ PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
                         cur_residue->get_atom_index(i);
             }
 
-            // I should do this, right?
-            //delete cur_residue;
             PdbIndexedResidue *new_residue =
                     new (cur_residue) PdbIndexedResidue(result, prev_residue,
                                                         next_residue);

@@ -15,9 +15,9 @@ namespace gmml {
 
 // This macro returns the number of elements in a static array. If you
 // (wrongfully) pass it a pointer, the last line attempts to generate a
-// compiler warning. I found this in the source code of Protocol Buffers.
-#undef GOOGLE_ARRAYSIZE
-#define GOOGLE_ARRAYSIZE(a) \
+// compiler warning. This was found in the source code of Protocol Buffers.
+#undef ARRAY_SIZE
+#define ARRAY_SIZE(a) \
     ((sizeof(a) / sizeof(*(a))) / \
      static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
 

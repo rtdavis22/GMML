@@ -60,7 +60,7 @@ const char *kNameMap[] = {
 };
 
 GlycamCodeSet::GlycamCodeSet() {
-    vector<string> map(kNameMap, kNameMap + GOOGLE_ARRAYSIZE(kNameMap));
+    vector<string> map(kNameMap, kNameMap + ARRAY_SIZE(kNameMap));
     for (int i = 0; i < map.size(); i += 2) {
         name_to_letter_.insert(std::make_pair(map[i], map[i + 1]));
         letter_to_name_.insert(std::make_pair(map[i + 1], map[i]));

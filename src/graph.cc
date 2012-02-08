@@ -104,8 +104,9 @@ vector<vector<size_t> > *Graph::get_cycles() const {
     deque<bool> is_visited(edges_.size(), false);
     vector<deque<bool> > is_threaded;
     is_threaded.reserve(edges_.size());
-    for (size_t i = 0; i < edges_.size(); i++)
+    for (size_t i = 0; i < edges_.size(); i++) {
         is_threaded.push_back(deque<bool>(edges_[i].size(), false));
+    }
     parents[0] = -1;
 
     int cur_vertex = 0;
@@ -120,8 +121,7 @@ vector<vector<size_t> > *Graph::get_cycles() const {
                            cur_vertex);
             // The index of cur_vertex in edges_[cur_vertex][i]
             size_t index = std::distance(
-                edges_[edges_[cur_vertex][i]].begin(), it
-            );
+                    edges_[edges_[cur_vertex][i]].begin(), it);
             if (!is_threaded[cur_vertex][i] &&
                     !is_threaded[edges_[cur_vertex][i]][index]) {
                 is_threaded[cur_vertex][i] = true;
@@ -141,8 +141,9 @@ vector<vector<size_t> > *Graph::get_cycles() const {
                 break;
             }
         }
-        if (done)
+        if (done) {
             continue;
+        }
         // Look for nodes with an incoming but no outgoing thread
         for (size_t i = 0; i < edges_[cur_vertex].size(); i++) {
             if (!is_threaded[cur_vertex][i]) {
@@ -154,8 +155,9 @@ vector<vector<size_t> > *Graph::get_cycles() const {
             }
         }
         // Everything is already double-threaded
-        if (!done)
+        if (!done) {
             break;
+        }
     }
     return cycles;
 }

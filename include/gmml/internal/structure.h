@@ -239,7 +239,6 @@ class Structure {
     // atom i.
     std::vector<size_t> *get_residue_index_table() const;
 
-
     //
     // Residue-related query operations
     //
@@ -255,6 +254,14 @@ class Structure {
     // Returns the residue index of the oxygen atom in get_parent_atom().
     // -1 is returned if there is no such atom.
     int get_parent_residue(int residue_index) const;
+
+    // If the specified atom is bonded to another residues, these functions
+    // return the index of the residue. Otherwise, they return -1;
+    std::vector<int> *get_adjacent_residues_by_atom(int atom_index) const;
+    std::vector<int> *get_adjacent_residues_by_atom(
+            int residue_index,
+            const std::string& atom_name) const;
+
 
     //
     // Accessors

@@ -71,7 +71,7 @@ inline Element get_element_by_atomic_number(int number) {
 }
 
 inline Element get_element_by_symbol(const char *symbol) {
-    int size = GOOGLE_ARRAYSIZE(kElementSymbols);
+    int size = ARRAY_SIZE(kElementSymbols);
     for (int i = 1; i < size; i++) {
         if (strcmp(kElementSymbols[i], symbol) == 0) {
             return get_element_by_atomic_number(i);

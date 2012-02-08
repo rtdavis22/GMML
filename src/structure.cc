@@ -541,6 +541,22 @@ int Structure::get_parent_residue(int residue_index) const {
     return -1;
 }
 
+vector<int> *Structure::get_adjacent_residues_by_atom(int atom_index) const {
+    if (atom_index < 0 || atom_index >= size()) {
+        return NULL;
+    }
+    int this_residue = get_residue_index(atom_index);
+    vector<int> *residues = new vector<int>;
+    const AdjList& adj_list = bonds(atom_index);
+    for (int i = 0; i < adj_list.size(); i++) {
+        int residue_index = get_residue_index(adj_list[i]);
+        if (residue_index != this_residue) {
+            residues->push_back(residue_index);
+        }
+    }
+    return residues;
+}
+
 // Accessors
 const Structure::AdjList& Structure::bonds(size_t index) const {
     return bonds_->edges(index);

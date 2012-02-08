@@ -20,6 +20,7 @@
 #include "internal/pdb_file.h"
 #include "internal/pdb_file_builder.h"
 #include "internal/pdb_file_structure.h"
+#include "internal/proteins.h"
 #include "internal/prep_file.h"
 #include "internal/residue.h"
 #include "internal/residue_classification.h"

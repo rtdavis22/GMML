@@ -54,6 +54,7 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/pdb_file_builder.h \
   include/gmml/internal/pdb_file_structure.h \
   include/gmml/internal/prep_file.h \
+  include/gmml/internal/proteins.h \
   include/gmml/internal/residue_classification.h \
   include/gmml/internal/residue.h \
   include/gmml/internal/sander_minimize.h \
@@ -91,6 +92,7 @@ libgmml_a_SOURCES = \
   src/pdb_file_builder.cc \
   src/pdb_file_structure.cc \
   src/prep_file.cc \
+  src/proteins.cc \
   src/residue.cc \
   src/sander_minimize.cc \
   src/solvated_structure.cc \

@@ -785,7 +785,7 @@ std::pair<double, double> AmberTopBuilder::get_radius_and_screen(
 
 SectionComparer::SectionComparer()
         : section_list_(new vector<string>(
-            kSectionList, kSectionList + GOOGLE_ARRAYSIZE(kSectionList))) {}
+            kSectionList, kSectionList + ARRAY_SIZE(kSectionList))) {}
 
 bool SectionComparer::operator()(const string& s1, const string& s2) const {
     return std::find(section_list_->begin(), section_list_->end(), s1) <

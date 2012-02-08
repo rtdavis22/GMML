@@ -21,7 +21,7 @@ const char *kProteinNames[] = { "ALA", "ARG", "ASN", "ASP", "CYS", "GLU", "GLN",
 
 StandardProteins::StandardProteins() {
     vector<string> names(kProteinNames,
-                         kProteinNames + GOOGLE_ARRAYSIZE(kProteinNames));
+                         kProteinNames + ARRAY_SIZE(kProteinNames));
     for (int i = 0; i < names.size(); i++) {
         Structure *structure = build_library_file_structure(names[i]);
         protein_map_.insert(std::make_pair(names[i], structure));
