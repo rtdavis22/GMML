@@ -23,6 +23,9 @@ class PdbStructureBuilder;
 
 // TODO: This should be used throughout in place of Triplet<int>.
 struct PdbResidueId {
+    PdbResidueId(char chain_id, int res_num, char i_code)
+            : chain_id(chain_id), res_num(res_num), i_code(i_code) {}
+
     char chain_id;
     int res_num;
     char i_code;
@@ -157,6 +160,26 @@ class PdbStructureBuilder {
     PdbMappingInfo mapping_info_;
     std::map<Triplet<int>*, std::string,
              TripletPtrLess<int> > pdb_residue_map_;
+};
+
+struct PdbResidueIdLess {
+    bool operator()(const PdbResidueId& lhs, const PdbResidueId& rhs) const {
+        if (lhs.chain_id == rhs.chain_id) {
+            if (lhs.res_num == rhs.res_num) {
+                return lhs.i_code < rhs.i_code;
+            } else {
+                return lhs.res_num < rhs.res_num;
+            }
+        } else {
+            return lhs.chain_id < rhs.chain_id;
+        }
+    }
+};
+
+struct PdbResidueIdPtrLess {
+    bool operator()(const PdbResidueId *lhs, const PdbResidueId *rhs) const {
+        return PdbResidueIdLess()(*lhs, *rhs);
+    }
 };
 
 }  // namespace gmml

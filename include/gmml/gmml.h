@@ -16,6 +16,7 @@
 #include "internal/glycan_drawer.h"
 #include "internal/graph.h"
 #include "internal/library_file.h"
+#include "internal/naccess.h"
 #include "internal/parameter_file.h"
 #include "internal/pdb_file.h"
 #include "internal/pdb_file_builder.h"

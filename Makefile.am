@@ -48,6 +48,7 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/glycan_drawer.h \
   include/gmml/internal/graph.h \
   include/gmml/internal/library_file.h \
+  include/gmml/internal/naccess.h \
   include/gmml/internal/parameter_file.h \
   include/gmml/internal/parameter_file-inl.h \
   include/gmml/internal/pdb_file.h \
@@ -87,6 +88,7 @@ libgmml_a_SOURCES = \
   src/graph.cc \
   src/library_file.cc \
   src/logging.cc \
+  src/naccess.cc \
   src/parameter_file.cc \
   src/pdb_file.cc \
   src/pdb_file_builder.cc \
