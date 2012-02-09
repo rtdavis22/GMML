@@ -418,6 +418,13 @@ Structure *glycam_build(const string& sequence) {
     return structure;
 }
 
+// TODO: Add some error checking here.
+Structure *glycam_build_without_aglycon(const string& sequence) {
+    Structure *structure = glycam_build(sequence);
+    structure->remove_residue(0);
+    structure->set_head(structure->residues(0)->head());
+}
+
 Structure *glycam_build_with_array_tree(const string& sequence) {
     GlycamParser *parser = new GlycamParser;
     ArrayTree<ParsedResidue*> *parsed_tree = parser->get_array_tree(sequence);

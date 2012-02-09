@@ -140,6 +140,8 @@ Structure *glycam_build(tree<ParsedResidue*> *parsed_tree);
 // prep file before calling this function.
 Structure *glycam_build(const std::string& sequence);
 
+Structure *glycam_build_without_aglycon(const std::string& sequence);
+
 // This builds the sequence using an ArrayTree rather than a tree, as in the
 // previous function. The performance difference is probably negligable.
 // The resulting structures should be equivalent.

@@ -408,6 +408,14 @@ int Structure::attach_to_tail(const Structure *structure, int head_index) {
     return attach(structure, head_index, tail_index);
 }
 
+void Structure::remove_residue(int index) {
+    vector<int> indices(1);
+    indices[0] = index;
+    remove_residues(indices);
+    // Do this?
+    //remove_residues(vector<int>(1, index));
+}
+
 // Removal operations
 void Structure::remove_residues(const std::vector<int>& indices) {
     vector<size_t> atoms;
