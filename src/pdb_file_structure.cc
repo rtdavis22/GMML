@@ -301,7 +301,13 @@ PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
         int atom2 = structure->impl_->atom_map[bonds_to_add[i].second];
         assert(0 <= atom1 && atom1 < structure->size());
         assert(0 <= atom2 && atom2 < structure->size());
-        structure->add_bond(atom1, atom2);
+        // Only add head/tail bonds if the atoms are close. This protects
+        // against missing TER cards.
+        // NOTE: figure out better constant.
+        if (measure(structure->atoms(atom1)->coordinate(),
+                    structure->atoms(atom2)->coordinate()) < 3.5) {
+            structure->add_bond(atom1, atom2);
+        }
     }
 
     for (vector<PdbConnectCard*>::const_iterator it =
