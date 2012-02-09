@@ -423,6 +423,7 @@ Structure *glycam_build_without_aglycon(const string& sequence) {
     Structure *structure = glycam_build(sequence);
     structure->remove_residue(0);
     structure->set_head(structure->residues(0)->head());
+    return structure;
 }
 
 Structure *glycam_build_with_array_tree(const string& sequence) {
