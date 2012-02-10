@@ -53,21 +53,21 @@ struct ParameterFileDihedralPtrLess
 };
 
 bool ParameterFileImproperDihedral::matches(const vector<string>& rhs) const {
-    vector<string> rhs_types(types);
+    vector<string> rhs_types(rhs);
     std::sort(rhs_types.begin(), rhs_types.end());
     // No Xs
     if (types.size() == 3) {
-        return rhs[0] == types[0] && rhs[1] == types[1] &&
-               rhs[2] == types[2];
+        return rhs_types[0] == types[0] && rhs_types[1] == types[1] &&
+               rhs_types[2] == types[2];
     } else if (types.size() == 2) {
         // One X
-        return (rhs[0] == types[0] && rhs[1] == types[1]) ||
-               (rhs[1] == types[0] && rhs[2] == types[1]) ||
-               (rhs[0] == types[0] && rhs[2] == types[1]);
+        return (rhs_types[0] == types[0] && rhs_types[1] == types[1]) ||
+               (rhs_types[1] == types[0] && rhs_types[2] == types[1]) ||
+               (rhs_types[0] == types[0] && rhs_types[2] == types[1]);
     } else if (types.size() == 1) {
         // Two Xs
-        return rhs[0] == types[0] || rhs[1] == types[0] ||
-               rhs[2] == types[0];
+        return rhs_types[0] == types[0] || rhs_types[1] == types[0] ||
+               rhs_types[2] == types[0];
     } else {
         // All Xs
         return true;

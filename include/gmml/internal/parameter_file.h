@@ -180,7 +180,7 @@ struct ParameterFileDihedral {
 };
 
 struct ParameterFileImproperDihedral {
-    ParameterFileImproperDihedral() {}
+    //ParameterFileImproperDihedral() {}
     ParameterFileImproperDihedral(const std::string& center_type,
                                   const std::vector<std::string>& types,
                                   const ParameterFileDihedralTerm& term)
