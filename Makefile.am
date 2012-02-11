@@ -49,6 +49,7 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/graph.h \
   include/gmml/internal/library_file.h \
   include/gmml/internal/naccess.h \
+  include/gmml/internal/netoglyc.h \
   include/gmml/internal/parameter_file.h \
   include/gmml/internal/parameter_file-inl.h \
   include/gmml/internal/pdb_file.h \
@@ -89,6 +90,7 @@ libgmml_a_SOURCES = \
   src/library_file.cc \
   src/logging.cc \
   src/naccess.cc \
+  src/netoglyc.cc \
   src/parameter_file.cc \
   src/pdb_file.cc \
   src/pdb_file_builder.cc \

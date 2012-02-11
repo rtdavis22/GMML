@@ -10,6 +10,7 @@ gmml_test_SOURCES = \
   geometry_test.cc \
   glycam_parser_test.cc \
   graph_test.cc \
+  netoglyc_test.cc \
   pdb_test.cc \
   prep_file_test.cc \
   sander_minimize_test.cc
@@ -19,6 +20,7 @@ TESTS = gmml-test
 EXTRA_DIST = \
   dat/1RVZ_New.pdb \
   dat/bad_mdout \
+  dat/netoglyc.out \
   dat/mdout \
   dat/test.prep
 
