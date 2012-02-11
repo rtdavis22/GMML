@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #include "gmml/internal/proteins.h"
 
 #include "gmml/internal/residue.h"
@@ -15,7 +17,7 @@ using std::vector;
 namespace gmml {
 namespace {
 
-const char *kAminoAcids[] = {
+const char *kAminoAcidCodes[] = {
   "ALA", "A",
   "ARG", "R",
   "ASN", "N",
@@ -40,37 +42,40 @@ const char *kAminoAcids[] = {
 
 }  // namespace gmml
 
-struct AminoAcidCodes::Impl {
+struct AminoAcidCodeSet::Impl {
     Impl();
 
     // Note: a sorted vector could be used here instead.
-    map<string, string> amino_acids;
+    map<string, char> amino_acids;
 };
 
-AminoAcidCodes::Impl::Impl() {
-    for (int i = 0; i < ARRAY_SIZE(kAminoAcids); i += 2) {
-        add_or_update_map(amino_acids, kAminoAcids[i], kAminoAcids[i + 1]);
+AminoAcidCodeSet::Impl::Impl() {
+    for (int i = 0; i < ARRAY_SIZE(kAminoAcidCodes); i += 2) {
+        add_or_update_map(amino_acids, kAminoAcidCodes[i],
+                          kAminoAcidCodes[i + 1][0]);
     }
 }
 
-AminoAcidCodes::AminoAcidCodes() : impl_(new Impl) {}
+AminoAcidCodeSet::AminoAcidCodeSet() : impl_(new Impl) {
+}
 
-AminoAcidCodes::~AminoAcidCodes() {}
+AminoAcidCodeSet::~AminoAcidCodeSet() {
+}
 
-bool AminoAcidCodes::is_amino_acid(const string& code) {
+bool AminoAcidCodeSet::lookup(const string& code) const {
     return impl_->amino_acids.find(code) != impl_->amino_acids.end();
 }
 
-string AminoAcidCodes::get_fasta_code(const std::string& code) {
-    map<string, string>::const_iterator it = impl_->amino_acids.find(code);
-    return (it != impl_->amino_acids.end())?it->second:"";
+char AminoAcidCodeSet::get_fasta_letter(const std::string& code) const {
+    map<string, char>::const_iterator it = impl_->amino_acids.find(code);
+    return (it != impl_->amino_acids.end())?it->second:'X';
 }
 
 vector<vector<int>*> *find_proteins(const Structure& structure) {
-    AminoAcidCodes codes;
+    AminoAcidCodeSet codes;
     vector<vector<int>*> *chains = new vector<vector<int>*>;
     for (int i = 0; i < structure.residue_count(); i++) {
-        if (!codes.is_amino_acid(structure.residues(i)->name())) {
+        if (!codes.lookup(structure.residues(i)->name())) {
             continue;
         }
 

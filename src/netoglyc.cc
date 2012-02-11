@@ -13,7 +13,8 @@
 #include <sstream>
 
 #include "gmml/internal/environment.h"
-#include "gmml/internal/stubs/common.h"
+#include "gmml/internal/fasta_sequence.h"
+#include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 
 using std::endl;
@@ -25,54 +26,98 @@ using std::vector;
 
 namespace gmml {
 
-string NetOGlycRunner::startup_script_("");
+struct NetOGlycRunner::Impl {
+    static const char *kInputFileName;
+    static const char *kOutputFileName;
 
-void NetOGlycRunner::set_startup_script(const string& file) {
-    startup_script_ = find_file(file);
-}
+    explicit Impl(const string& startup_script)
+            : startup_script(startup_script) {}
 
-NetOGlycResults *NetOGlycRunner::operator()(const vector<string>& sequences) {
-    ofstream out(".netoglyc_input");
-    for (int i = 0; i < sequences.size(); i++) {
+    ~Impl() {
+        STLDeleteContainerPointers(fasta_sequences.begin(),
+                                   fasta_sequences.end());
+    }
+
+    void write_fasta_file();
+    void exec_netoglyc();
+    void cleanup_files();
+
+    string startup_script;
+    vector<FastaSequence*> fasta_sequences;
+};
+
+const char *NetOGlycRunner::Impl::kInputFileName = ".netoglyc_input";
+const char *NetOGlycRunner::Impl::kOutputFileName = ".netoglyc_output";
+
+void NetOGlycRunner::Impl::write_fasta_file() {
+    ofstream out(kInputFileName);
+    for (int i = 0; i < fasta_sequences.size(); i++) {
         out << ">" << endl;
-        out << sequences[i] << endl;
+        out << fasta_sequences[i]->sequence() << endl;
     }
     out.close();
+}
 
+void NetOGlycRunner::Impl::exec_netoglyc() {
+    int fd = open(kOutputFileName, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    dup2(fd, 1);
+    close(fd);
+    const char* const args[] = { startup_script.c_str(), kInputFileName,
+                                 (char *) NULL };
+    execvp(startup_script.c_str(), const_cast<char* const *>(args));
+}
+
+void NetOGlycRunner::Impl::cleanup_files() {
+    remove(kInputFileName);
+    remove(kOutputFileName);
+}
+
+NetOGlycRunner::NetOGlycRunner(const string& startup_script)
+        : impl_(new Impl(find_file(startup_script))) {
+}
+
+NetOGlycRunner::~NetOGlycRunner() {
+}
+
+void NetOGlycRunner::add_sequence(const FastaSequence& fasta_sequence) {
+    impl_->fasta_sequences.push_back(fasta_sequence.clone());
+}
+
+NetOGlycResults *NetOGlycRunner::run() {
+    impl_->write_fasta_file();
     pid_t child = fork();
     if (child < 0) {
-        // ERROR
+        LOG(ERROR) << "fork() failed.";
+        impl_->cleanup_files();
+        return NULL;
     } else if (child == 0) {
-        int fd = open(".netoglyc_output", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-        dup2(fd, 1);
-        close(fd);
-        const char* const args[] = { startup_script_.c_str(), ".netoglyc_input",
-                                     (char *) NULL };
-        execvp(startup_script_.c_str(), const_cast<char* const *>(args));
+        impl_->exec_netoglyc();
     }
 
     int exit_status;
     waitpid(-1, &exit_status, 0);
+
+    NetOGlycResults *results = NULL;
     if (exit_status > 0) {
-        // ERROR
+        LOG(ERROR) << "Error running NetOGlyc.";
+    } else {
+        results = new NetOGlycResults(impl_->kOutputFileName);
     }
 
-    remove(".netoglyc_input");
-
-    NetOGlycResults *results = new NetOGlycResults(".netoglyc_output");
-    remove(".netoglyc_output");
+    impl_->cleanup_files();
     return results;
 }
 
 
-// Private Implementation
 struct NetOGlycResults::Impl {
     ~Impl() {
         STLDeleteContainerPointers(predicted_locations.begin(),
                                    predicted_locations.end());
     }
 
-    void init(const std::string& netoglyc_file);
+    static const int kOutputWidth = 80;
+
+    void init(const std::string& netoglyc_output_file);
     void init_from_stream(std::istream& in);
     bool advance_to_next_sequence_results(std::istream& in);
     string read_result_sequence(std::istream& in);
@@ -80,11 +125,11 @@ struct NetOGlycResults::Impl {
     vector<OGlycosylationLocations*> predicted_locations;
 };
 
-void NetOGlycResults::Impl::init(const string& netoglyc_file) {
-    ifstream in(netoglyc_file.c_str());
+void NetOGlycResults::Impl::init(const string& netoglyc_output_file) {
+    ifstream in(netoglyc_output_file.c_str());
     if (in.fail()) {
         in.close();
-        throw FileNotFoundException(netoglyc_file);
+        throw FileNotFoundException(netoglyc_output_file);
     }
 
     init_from_stream(in);
@@ -116,9 +161,11 @@ bool NetOGlycResults::Impl::advance_to_next_sequence_results(std::istream& in) {
     if (sequence_length == -1) {
         return false;
     }
-    int lines_to_skip = ceil(sequence_length/80.0);
-    for (int i = 0; i < lines_to_skip; i++)
+
+    int lines_to_skip = ceil(static_cast<double>(sequence_length)/kOutputWidth);
+    for (int i = 0; i < lines_to_skip; i++) {
         getline(in, line);
+    }
 
     return in.good();
 }
@@ -137,15 +184,15 @@ string NetOGlycResults::Impl::read_result_sequence(std::istream& in) {
     return result_sequence;
 }
 
-NetOGlycResults::NetOGlycResults(const string& netoglyc_file)
+NetOGlycResults::NetOGlycResults(const string& netoglyc_output_file)
         : impl_(new Impl) {
-    impl_->init(netoglyc_file);
+    impl_->init(netoglyc_output_file);
 }
 
 NetOGlycResults::~NetOGlycResults() {
 }
 
-const OGlycosylationLocations *NetOGlycResults::get_sequence_locations(
+const OGlycosylationLocations *NetOGlycResults::get_predicted_locations(
         int index) const {
     return impl_->predicted_locations[index];
 }
@@ -165,6 +212,5 @@ void OGlycosylationLocations::init(const string& location_output) {
         }
     }
 }
-
 
 }  // namespace gmml

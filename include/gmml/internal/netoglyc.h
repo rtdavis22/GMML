@@ -7,39 +7,57 @@
 #include <string>
 #include <vector>
 
+#include "gmml/internal/stubs/common.h"
+
 namespace gmml {
+
+class FastaSequence;
 
 class NetOGlycResults;
 class OGlycosylationLocations;
 
+// This is an interface with NetOGlyc, a program for predicting
+// O-glycosylation locations.
 class NetOGlycRunner {
   public:
-    static void set_startup_script(const std::string& file);
+    explicit NetOGlycRunner(const std::string& startup_script);
 
-    NetOGlycResults *operator()(const std::vector<std::string>& sequences);
+    ~NetOGlycRunner();
+
+    void add_sequence(const FastaSequence& fasta_sequence);
+
+    NetOGlycResults *run();
 
   private:
-    static std::string startup_script_;
+    struct Impl;
+    std::auto_ptr<Impl> impl_;
+
+    DISALLOW_COPY_AND_ASSIGN(NetOGlycRunner);
 };
 
 class NetOGlycResults {
   public:
-    NetOGlycResults(const std::string& netoglyc_file);
+    explicit NetOGlycResults(const std::string& netoglyc_output_file);
 
     virtual ~NetOGlycResults();
 
-    const OGlycosylationLocations *get_sequence_locations(int index) const;
+    // Returns the predicted locations for the fasta sequence at the given index
+    // in the file.
+    const OGlycosylationLocations *get_predicted_locations(int index) const;
 
+    // Returns the number of distinct sequences in the input file.
     int sequence_count() const;
 
   private:
     struct Impl;
     std::auto_ptr<Impl> impl_;
+
+    DISALLOW_COPY_AND_ASSIGN(NetOGlycResults);
 };
 
 class OGlycosylationLocations {
   public:
-    OGlycosylationLocations(const std::string& location_output) { 
+    explicit OGlycosylationLocations(const std::string& location_output) { 
         init(location_output);
     }
 
@@ -56,6 +74,8 @@ class OGlycosylationLocations {
 
     std::vector<int> serine_locations_;
     std::vector<int> threonine_locations_;
+
+    DISALLOW_COPY_AND_ASSIGN(OGlycosylationLocations);
 };
 
 }  // namespace gmml

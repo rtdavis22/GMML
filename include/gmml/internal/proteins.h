@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #ifndef GMML_INTERNAL_PROTEINS_H_
 #define GMML_INTERNAL_PROTEINS_H_
 
@@ -5,21 +7,25 @@
 #include <string>
 #include <vector>
 
+#include "gmml/internal/stubs/common.h"
+
 namespace gmml {
 
 class Structure;
 
-class AminoAcidCodes {
+class AminoAcidCodeSet {
   public:
-    AminoAcidCodes();
-    ~AminoAcidCodes();
+    AminoAcidCodeSet();
+    ~AminoAcidCodeSet();
 
-    bool is_amino_acid(const std::string& code);
-    std::string get_fasta_code(const std::string& code);
+    bool lookup(const std::string& code) const;
+    char get_fasta_letter(const std::string& code) const;
 
   private:
     struct Impl;
     std::auto_ptr<Impl> impl_;
+
+    DISALLOW_COPY_AND_ASSIGN(AminoAcidCodeSet);
 };
 
 std::vector<std::vector<int>*> *find_proteins(const Structure& structure);

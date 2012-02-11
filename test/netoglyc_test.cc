@@ -10,7 +10,7 @@ using gmml::NetOGlycRunner;
 using gmml::OGlycosylationLocations;
 
 TEST(NetOGlycTest, SetInvalidStartupScript) {
-    EXPECT_THROW(NetOGlycRunner::set_startup_script("dat/bad.sh"),
+    EXPECT_THROW(NetOGlycRunner("dat/bad.sh"),
                  gmml::FileNotFoundException);
 }
 
@@ -42,19 +42,19 @@ TEST_F(NetOGlycResultsTest, CorrectSequenceCount) {
 
 TEST_F(NetOGlycResultsTest, CorrectPredictedSerineCount) {
     const OGlycosylationLocations *locations =
-            results->get_sequence_locations(0);
+            results->get_predicted_locations(0);
     EXPECT_EQ(15, locations->get_serine_locations().size());
 }
 
 TEST_F(NetOGlycResultsTest, CorrectPredictedThreonineCount) {
     const OGlycosylationLocations *locations =
-            results->get_sequence_locations(0);
+            results->get_predicted_locations(0);
     EXPECT_EQ(12, locations->get_threonine_locations().size());
 }
 
 TEST_F(NetOGlycResultsTest, CorrectPredictedSerineLocations) {
     const OGlycosylationLocations *locations =
-            results->get_sequence_locations(0);
+            results->get_predicted_locations(0);
     const int expected_locations[] = { 0, 1, 10, 11, 12, 13, 21, 22, 24, 30, 32,
                                       38, 47, 117, 118 };
     const vector<int>& found_locations = locations->get_serine_locations();

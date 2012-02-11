@@ -9,6 +9,7 @@
 #include "internal/coordinate_file.h"
 #include "internal/coordinate_grid.h"
 #include "internal/environment.h"
+#include "internal/fasta_sequence.h"
 #include "internal/geometry.h"
 #include "internal/glycam_code_set.h"
 #include "internal/glycam_parser.h"

@@ -52,7 +52,7 @@ MinimizationResults *SanderMinimize::operator()(Structure& structure,
     } else if (child == 0) {
         structure.print_amber_top_file(uid + "_temp.top", parm_set);
         structure.print_coordinate_file(uid + "_temp.rst");
-        const char* const args[] = { 
+        const char* args[] = { 
                 "sander", "-i", absolute_file.c_str(),
                 "-p", string(uid + "_temp.top").c_str(),
                 "-c", string(uid + "_temp.rst").c_str(),
@@ -62,7 +62,7 @@ MinimizationResults *SanderMinimize::operator()(Structure& structure,
                 "-e", string(uid + "_mden").c_str(),
                 "-inf", string(uid + "_mdinfo").c_str(),
                 "-o", string(uid + "_mdout").c_str(),
-                (char *) 0
+                (char *) NULL
         };
         execvp("sander", const_cast<char* const *>(args));
         return NULL;
