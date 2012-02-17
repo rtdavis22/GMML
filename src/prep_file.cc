@@ -65,10 +65,9 @@ void PrepFile::Impl::read(const string& file_name) {
 }
 
 void PrepFile::Impl::read(std::istream& in) {
-    string line;
-    getline(in, line);
-    getline(in, line);
-    while (process_residue(in)) {}
+    in >> ignore_line >> ignore_line;
+    while (process_residue(in))
+        ;
 }
 
 bool PrepFile::Impl::process_residue(std::istream& in) {
