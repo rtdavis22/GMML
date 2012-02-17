@@ -60,6 +60,14 @@ void Residue::set_bonds(const Graph *bonds) {
         bonds_ = NULL;
 }
 
+Atom *Residue::atoms(const std::string& atom_name) const {
+    for (int i = 0; i < atoms_.size(); i++) {
+        if (atoms_[i]->name() == atom_name)
+            return atoms_[i];
+    }
+    return NULL;
+}
+
 void Residue::clone_from(const Residue *residue) {
     name_ = residue->name();
     set_atoms(&residue->atoms_);

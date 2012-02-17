@@ -60,6 +60,11 @@ class Residue {
     Atom *atoms(int i) { return atoms_[i]; }
     const Atom *atoms(int i) const { return atoms_[i]; }
 
+    Atom *atoms(const std::string& name);
+    const Atom *atoms(const std::string& name) const {
+        return const_cast<Residue*>(this)->atoms(name);
+    }
+
     iterator begin() { return atoms_.begin(); }
     const_iterator begin() const { return atoms_.begin(); }
 
