@@ -38,15 +38,18 @@ FastaSequence *FastaSequence::create(const string& sequence) {
 
 FastaSequence *FastaSequence::create(const Structure& structure,
                                      const vector<int>& residue_indices) {
-    FastaSequence *sequence = create_empty_sequence();
-    int residue_count = structure.residue_count();
-    for (int i = 0; i < residue_indices.size(); i++) {
+    vector<string> codes;
+    for (int i = 0; i < structure.residue_count(); i++) {
         int index = residue_indices[i];
-        if (index < 0 || index >= residue_count) {
-            delete sequence;
-            throw std::invalid_argument("Invalid index " + to_string(index));
-        }
-        sequence->add_amino_acid_code(structure.residues(index)->name());
+        codes.push_back(structure.residues(index)->name());
+    }
+    return create(codes);
+}
+
+FastaSequence *FastaSequence::create(const vector<string>& codes) {
+    FastaSequence *sequence = create_empty_sequence();
+    for (int i = 0; i < codes.size(); i++) {
+        sequence->add_amino_acid_code(codes[i]);
     }
     return sequence;
 }

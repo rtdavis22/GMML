@@ -22,6 +22,7 @@ class FastaSequence {
     static FastaSequence *create(const std::string& sequence);
     static FastaSequence *create(const Structure& structure,
                                  const std::vector<int>& residue_indices);
+    static FastaSequence *create(const std::vector<std::string>& codes);
     static FastaSequence *create_empty_sequence();
 
     void add_amino_acid_code(const std::string& code);

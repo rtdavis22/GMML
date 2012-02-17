@@ -14,6 +14,8 @@
 
 #include "gmml/internal/environment.h"
 #include "gmml/internal/fasta_sequence.h"
+#include "gmml/internal/proteins.h"
+#include "gmml/internal/structure.h"
 #include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 

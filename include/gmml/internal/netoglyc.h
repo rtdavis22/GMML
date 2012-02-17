@@ -12,6 +12,7 @@
 namespace gmml {
 
 class FastaSequence;
+class Structure;
 
 class NetOGlycResults;
 class OGlycosylationLocations;
@@ -41,7 +42,7 @@ class NetOGlycResults {
 
     virtual ~NetOGlycResults();
 
-    // Returns the predicted locations for the fasta sequence at the given index
+    // Returns the predicted locations for the FASTA sequence at the given index
     // in the file.
     const OGlycosylationLocations *get_predicted_locations(int index) const;
 
