@@ -70,7 +70,7 @@ GlycamCodeSet::GlycamCodeSet() {
 string GlycamCodeSet::get_code(const ParsedResidue& parsed_residue,
                                const vector<int>& open_valences) const {
     vector<int> new_valence_list = open_valences;
-    map<int, char>::const_iterator it = parsed_residue.derivatives.begin();
+    map<int, string>::const_iterator it = parsed_residue.derivatives.begin();
     while (it != parsed_residue.derivatives.end()) {
         new_valence_list.push_back(it->first);
         ++it;
@@ -145,7 +145,7 @@ tree<TreeResidue*> *GlycamCodeSet::build_residue_tree(
         ParsedResidue *parsed_residue = *src_it;
         TreeResidue *tree_residue = build_tree_residue(src_it);
         dest_it = residue_tree->append_child(st.top(), tree_residue);
-        map<int, char>::const_iterator map_it;
+        map<int, string>::const_iterator map_it;
         for (map_it = parsed_residue->derivatives.begin();
                 map_it != parsed_residue->derivatives.end(); ++map_it) {
             residue_tree->append_child(
@@ -198,7 +198,7 @@ ArrayTree<TreeResidue*> *GlycamCodeSet::build_array_tree(
         int residue_index = tree->insert(tree_residue, 
                                          parent + derivatives_before[parent]);
 
-        map<int, char>::const_iterator map_it;
+        map<int, string>::const_iterator map_it;
         for (map_it = parsed_residue->derivatives.begin();
                 map_it != parsed_residue->derivatives.end(); ++map_it) {
             tree->insert(get_derivative_tree_residue(map_it->second,
@@ -346,19 +346,19 @@ TreeResidue *GlycamCodeSet::build_tree_residue(
 
 }
 
-TreeResidue *GlycamCodeSet::get_derivative_tree_residue(char derivative,
-                                                        int pos) const {
+TreeResidue *GlycamCodeSet::get_derivative_tree_residue(
+        const string& derivative, int pos) const {
     string oxygen = "O" + to_string(pos);
-    if (derivative == 'S')
+    if (derivative == "S")
         return new TreeResidue("SUL", "S1", oxygen);
-    else if (derivative == 'M')
+    else if (derivative == "Me")
         return new TreeResidue("MEX", "CH3", oxygen);
-    else if (derivative == 'A')
+    else if (derivative == "A")
         return new TreeResidue("ACE", "C1A", oxygen);
 
     stringstream ss;
     ss << "There is no derivative in the GLYCAM code set represented by the " <<
-          "letter " << string(1, derivative);
+          "letter " << derivative;
     throw GlycamCodeException(ss.str());
 }
 

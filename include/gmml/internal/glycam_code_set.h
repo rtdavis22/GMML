@@ -89,7 +89,8 @@ class GlycamCodeSet {
                                     const std::vector<int>& valences,
                                     const std::string& parent_name) const;
 
-    TreeResidue *get_derivative_tree_residue(char derivative, int pos) const;
+    TreeResidue *get_derivative_tree_residue(const std::string& derivative,
+                                             int pos) const;
 
     std::string get_oxygen_name(const std::string& residue_name,
                                 int position) const;

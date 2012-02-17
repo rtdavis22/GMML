@@ -259,7 +259,8 @@ ParsedResidue *GlycamParser::parse_residue(const string& residue_string) const {
                     throw ParseException(
                             "Invalid derivative position in sequence");
                 }
-                residue->derivatives[char_to_number(it->at(0))] = it->at(1);
+                residue->derivatives[char_to_number(it->at(0))] =
+                        it->substr(1);
             }
         }
     }

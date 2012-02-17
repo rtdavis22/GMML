@@ -36,7 +36,7 @@ struct ParsedResidue {
     std::string name;
     int anomeric_carbon;
     int oxygen_position;
-    std::map<int, char> derivatives;
+    std::map<int, std::string> derivatives;
     bool is_terminal;
 };
 
