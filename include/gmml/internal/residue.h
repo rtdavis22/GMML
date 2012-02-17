@@ -20,9 +20,9 @@ class Residue {
 
     Residue();
 
-    Residue(const Residue *residue) { clone_from(residue); }
+    explicit Residue(const Residue *residue) { clone_from(residue); }
 
-    Residue(const std::string& name);
+    explicit Residue(const std::string& name);
 
     Residue(const std::string& name, const std::vector<Atom*> *atoms,
             const Graph *bonds);
@@ -90,10 +90,10 @@ class IndexedResidue : public Residue {
                    const Graph *bonds) : Residue(name, atoms, bonds),
                                          indices_(atoms->size(), -1) {}
 
-    IndexedResidue(const Residue *residue) : Residue(residue),
-                                             indices_(residue->size(), -1) {}
+    explicit IndexedResidue(const Residue *residue)
+            : Residue(residue), indices_(residue->size(), -1) {}
 
-    IndexedResidue(const std::string& name) : Residue(name) {}
+    explicit IndexedResidue(const std::string& name) : Residue(name) {}
 
     virtual ~IndexedResidue() {}
 

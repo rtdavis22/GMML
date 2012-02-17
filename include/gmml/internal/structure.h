@@ -24,6 +24,8 @@ class PdbFile;
 struct PdbMappingInfo;
 class Residue;
 
+class DihedralAtoms;
+
 class Structure {
   public:
     typedef std::vector<Atom*> AtomList;
@@ -101,6 +103,12 @@ class Structure {
                       int residue3_index, const std::string& atom3_name,
                       int residue4_index, const std::string& atom4_name,
                       double degrees);
+
+
+    // This syntax experimental. It should be the function that does the work.
+    void set_dihedral(const DihedralAtoms& atoms, double value) {
+        
+    }
 
     // Set the angle in the structure, but only modify the atoms of the
     // given residue.
@@ -394,6 +402,50 @@ class StructureAttach {
 
   private:
     struct Impl;
+};
+
+
+
+// This design is questionable..
+// structure.set_dihedral(DihedralAtoms(structure).atom1(..)..., value);
+class DihedralAtoms {
+  public:
+    explicit DihedralAtoms(const Structure& structure)
+            : structure_(structure), atom1_(-1), atom2_(-1), atom3_(-1),
+              atom4_(-1) {}
+
+    DihedralAtoms& atom1(int residue_index, const std::string& atom_name) {
+        atom1_ = helper(residue_index, atom_name);
+        return *this;
+    }
+    DihedralAtoms& atom2(int residue_index, const std::string& atom_name) {
+        atom2_ = helper(residue_index, atom_name);
+        return *this;
+    }
+    DihedralAtoms& atom3(int residue_index, const std::string& atom_name) {
+        atom3_ = helper(residue_index, atom_name);
+        return *this;
+    }
+    DihedralAtoms& atom4(int residue_index, const std::string& atom_name) {
+        atom4_ = helper(residue_index, atom_name);
+        return *this;
+    }
+
+    int atom1() const { return atom1_; }
+    int atom2() const { return atom2_; }
+    int atom3() const { return atom3_; }
+    int atom4() const { return atom4_; }
+
+ private:
+    int helper(int residue_index, const std::string& atom_name) {
+        return structure_.get_atom_index(residue_index, atom_name);
+    }
+
+    const Structure& structure_;
+    int atom1_;
+    int atom2_;
+    int atom3_;
+    int atom4_;
 };
 
 }  // namespace gmml

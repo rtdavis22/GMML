@@ -21,9 +21,9 @@ class PrepFileSet;
 class Residue;
 class Structure;
 
-// This class represents a workspace to consolidate parameter files, prep files,
-// and library files. Clients only needing a single environment can use the
-// default environment and associated global functions below.
+// This class represents a workspace to consolidate files and global settings.
+// Clients only needing a single environment can use the default environment
+// and associated global functions below.
 class Environment {
   public:
     Environment();
@@ -68,10 +68,11 @@ class Environment {
 };
 
 inline void Environment::add_path(const std::string& path) {
-    if (path[path.size() - 1] != '/')
+    if (path[path.size() - 1] != '/') {
         paths_.push_back(path + '/');
-    else
+    } else {
         paths_.push_back(path);
+    }
 }
 
 // This is a default environment, which makes certain things much more
@@ -130,21 +131,11 @@ inline void add_tail_mapping(const std::string& from, const std::string& to) {
     kDefaultEnvironment.add_tail_mapping(from, to);
 }
 
-// Build the prep file with the prep file code from the prep file set in the
-// given environment. NULL is returned if the residue doesn't exist.
-// I'm pretty sure these should return a const ptr. The client can clone()
-// to get a regular ptr. Also, I should get rid of the Environment arg.
-Residue *build_prep_file(const std::string& prep_code,
-                         const Environment& environment);
-
 Residue *build_prep_file(const std::string& prep_code);
-
-LibraryFileStructure *build_library_file_structure(
-        const std::string& name, const Environment& environment);
 
 LibraryFileStructure *build_library_file_structure(const std::string& name);
 
-// This function checks library files and prep files.
+// This function checks both library files and prep files.
 Structure *build(const std::string& name);
 
 }  // namespace gmml

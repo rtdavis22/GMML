@@ -12,6 +12,7 @@ namespace gmml {
 
 class RsaInfo;
 
+// TODO: Make this like NetOGlycRunner.
 class NAccess {
   public:
     static const char *get_naccess_path() { return naccess_path; }

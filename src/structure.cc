@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -527,10 +528,13 @@ vector<size_t> *Structure::get_residue_index_table() const {
 
 // Residue-related query operations
 const Residue *Structure::residues(int index) const {
-    return residues_[index];
+    return const_cast<Structure*>(this)->residues(index);
 }
 
 Residue *Structure::residues(int index) {
+    if (index < 0 || index >= residue_count()) {
+        throw std::range_error("Invalid residue index: " + to_string(index));
+    }
     return residues_[index];
 }
 

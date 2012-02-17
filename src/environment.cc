@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #include "gmml/internal/environment.h"
 
 #include <fstream>
@@ -87,26 +89,31 @@ string Environment::find_file(const std::string& file_name) const {
 
 Environment kDefaultEnvironment;
 
+namespace {
+
 Residue *build_prep_file(const string& prep_code,
                          const Environment& environment) {
     const PrepFileSet *prep_files = environment.prep_files();
-    if (!prep_files->exists(prep_code))
-        return NULL;
-    return build_prep_file((*prep_files)[prep_code]);
-}
-
-Residue *build_prep_file(const string& prep_code) {
-    return build_prep_file(prep_code, kDefaultEnvironment);
+    if (prep_files->exists(prep_code)) {
+        build_prep_file((*prep_files)[prep_code]);
+    }
+    return NULL;
 }
 
 LibraryFileStructure *build_library_file_structure(
         const string& name, const Environment& environment) {
     const LibraryFileSet *library_files = environment.library_files();
     const LibraryFile::StructurePtr structure = (*library_files)[name];
-    if (structure != LibraryFile::StructurePtr())
+    if (structure != LibraryFile::StructurePtr()) {
         return build_library_file_structure(*structure);
-    else
-        return NULL;
+    }
+    return NULL;
+}
+
+}  // namespace
+
+Residue *build_prep_file(const string& prep_code) {
+    return build_prep_file(prep_code, kDefaultEnvironment);
 }
 
 LibraryFileStructure *build_library_file_structure(const string& name) {
