@@ -5,6 +5,9 @@
 
 #include <exception>
 #include <iomanip>
+#include <iostream>
+#include <istream>
+#include <limits>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -140,6 +143,29 @@ inline int char_to_number(char c) {
 inline ExitException::ExitException(int status) : status_(status) {
     what_ = "Exit status: " + to_string(status);
 }
+
+
+template<class charT, class traits>
+inline std::basic_istream<charT, traits>&
+ignore_line(std::basic_istream<charT, traits>& strm) {
+    strm.ignore(std::numeric_limits<int>::max(), strm.widen('\n'));
+    return strm;
+}
+
+class make_string {
+  public:
+    template <typename T>
+    make_string& operator<<(T const& datum) {
+        buffer_ << datum;
+        return *this;
+    }
+    operator std::string () const {
+        return buffer_.str();
+    }
+
+  private:
+    std::ostringstream buffer_;
+};
 
 }  // namespace gmml
 
