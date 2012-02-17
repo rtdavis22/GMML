@@ -252,9 +252,6 @@ ParsedResidue *GlycamParser::parse_residue(const string& residue_string) const {
             split(derivatives, ',', derivatives_tokens);
             for (vector<string>::iterator it = derivatives_tokens.begin();
                     it != derivatives_tokens.end(); ++it) {
-                if (it->size() != 2) {
-                    throw ParseException("Invalid derivative in sequence");
-                }
                 if (!is_number(it->at(0))) {
                     throw ParseException(
                             "Invalid derivative position in sequence");
