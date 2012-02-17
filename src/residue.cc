@@ -60,7 +60,7 @@ void Residue::set_bonds(const Graph *bonds) {
         bonds_ = NULL;
 }
 
-Atom *Residue::atoms(const std::string& atom_name) const {
+Atom *Residue::atoms(const std::string& atom_name) {
     for (int i = 0; i < atoms_.size(); i++) {
         if (atoms_[i]->name() == atom_name)
             return atoms_[i];
