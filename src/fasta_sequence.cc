@@ -39,7 +39,7 @@ FastaSequence *FastaSequence::create(const string& sequence) {
 FastaSequence *FastaSequence::create(const Structure& structure,
                                      const vector<int>& residue_indices) {
     vector<string> codes;
-    for (int i = 0; i < structure.residue_count(); i++) {
+    for (int i = 0; i < residue_indices.size(); i++) {
         int index = residue_indices[i];
         codes.push_back(structure.residues(index)->name());
     }
