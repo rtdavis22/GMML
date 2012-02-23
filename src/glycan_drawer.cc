@@ -60,6 +60,7 @@ void GlycanDrawer::write(const ArrayTree<ParsedResidue*> *parsed_tree,
     out << "  edge [labelfontsize=10 labeldistance=1];" << endl;
     out << "  rankdir=RL" << endl;
 
+    out << "0 [style=invisible]" << endl;
     for (int i = 1; i < parsed_tree->size(); i++) {
         out << i << " ";
         NameAndRingType info((*parsed_tree)[i].first->name);
@@ -90,6 +91,21 @@ void GlycanDrawer::write(const ArrayTree<ParsedResidue*> *parsed_tree,
         out << endl;
     }
 
+    if (parsed_tree->size() > 1) {
+        out << "0 -- 1";
+        out << " [";
+        if (show_config_labels_) {
+            out << "headlabel=\"";
+            if ((*parsed_tree)[1].first->configuration ==
+                    ResidueClassification::kAlpha) {
+                out << "&alpha;";
+            } else {
+                out << "&beta;";
+            }
+            out << "\"";
+            out << "]" << endl;
+        }
+    }
     for (int i = 2; i < parsed_tree->size(); i++) {
         out << (*parsed_tree)[i].second << "-- " << i;
 
