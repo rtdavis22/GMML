@@ -103,8 +103,8 @@ void GlycanDrawer::write(const ArrayTree<ParsedResidue*> *parsed_tree,
                 out << "&beta;";
             }
             out << "\"";
-            out << "]" << endl;
         }
+        out << "]" << endl;
     }
     for (int i = 2; i < parsed_tree->size(); i++) {
         out << (*parsed_tree)[i].second << "-- " << i;
