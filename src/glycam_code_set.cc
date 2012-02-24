@@ -376,12 +376,16 @@ int GlycamAttach::operator()(Structure& structure, Residue *residue,
         int oxygen = structure.get_atom_index(residue_index, atom_name);
         Atom *atom = structure.atoms(oxygen);
         atom->set_charge(atom->charge() + 0.031);
-    } else if (residue->name() == "MEX") {
+    } else if (residue->name() == "MEX" || residue->name() == "ACE") {
         int oxygen_number = atom_name[1] - '0';
         string carbon_name = "C" + to_string(oxygen_number);
         int carbon = structure.get_atom_index(residue_index, carbon_name);
         Atom *atom = structure.atoms(carbon);
-        atom->set_charge(atom->charge() - 0.039);
+        if (residue->name() == "MEX") {
+            atom->set_charge(atom->charge() - 0.039);
+        } else if (residue->name() == "ACE") {
+            atom->set_charge(atom->charge() + 0.008);
+        }
     }
 
     return structure.attach(residue, new_atom_name, residue_index, atom_name);
