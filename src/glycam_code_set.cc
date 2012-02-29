@@ -30,6 +30,7 @@ const char *kNameMap[] = {
     "All", "N",
     "Alt", "E",
     "Ara", "A",
+    "Bac", "BC",
     "Fru", "C",
     "Fuc", "F",
     "Gal", "L",
@@ -56,6 +57,7 @@ const char *kNameMap[] = {
     "Sor", "B",
     "Tag", "J",
     "Tal", "T",
+    "Tyv", "TV",
     "Xyl", "X"
 };
 
