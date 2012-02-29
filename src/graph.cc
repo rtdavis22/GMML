@@ -42,10 +42,16 @@ void Graph::remove_vertex_list(const vector<size_t>& vertices) {
     edges_ = new_edges;
 }
 
-vector<size_t> *Graph::bfs(size_t start_index, size_t distance) const {
+// This could probable made to be more efficient.
+void Graph::remove_vertex(size_t vertex) {
+    vector<size_t> vertices(1, vertex);
+    remove_vertex_list(vertices);
+}
+
+Graph::BFSResults *Graph::bfs(size_t start_index, size_t distance) const {
     deque<bool> marked(edges_.size());
     vector<int> distances(edges_.size(), edges_.size());
-    vector<int> previous(edges_.size(), -1);
+    vector<int> *previous = new vector<int>(edges_.size(), -1);
     marked[start_index] = true;
     distances[start_index] = 0;
     queue<size_t> q;
@@ -58,6 +64,7 @@ vector<size_t> *Graph::bfs(size_t start_index, size_t distance) const {
         for (size_t i = 0; i < edges_[current_vertex].size(); i++) {
             if (!marked[edges_[current_vertex][i]]) {
                 marked[edges_[current_vertex][i]] = true;
+                (*previous)[edges_[current_vertex][i]] = current_vertex;
                 size_t current_distance = distances[current_vertex] + 1;
                 distances[edges_[current_vertex][i]] = current_distance;
                 if (current_distance <= distance)
@@ -66,7 +73,11 @@ vector<size_t> *Graph::bfs(size_t start_index, size_t distance) const {
             }
         }
     }
-    return vertices_found;
+
+    BFSResults *results = new BFSResults;
+    results->found = vertices_found;
+    results->previous = previous;
+    return results;
 }
 
 vector<size_t> *Graph::edge_bfs(size_t start_index, size_t end_index) const {

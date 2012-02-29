@@ -256,7 +256,8 @@ void AmberTopBuilder::build_excluded_atoms(const Structure& structure,
 
     int num_atoms = structure.size();
     for (int i = 0; i < num_atoms; i++) {
-        vector<size_t> *atoms = structure.bonds()->bfs(i, 3);
+        Graph::BFSResults *bfs_results = structure.bonds()->bfs(i, 3);
+        vector<size_t> *atoms = bfs_results->found;
         atoms->erase(std::remove_if(atoms->begin(), atoms->end(),
                                     std::bind2nd(std::less_equal<int>(), i)),
                      atoms->end());
@@ -502,7 +503,8 @@ void AmberTopBuilder::build_solvation_sections(
     for (int i = 0; i < marked.size(); i++) {
         if (!marked[i]) {
             num_molecules++;
-            vector<size_t> *component = structure.bonds()->bfs(i);
+            Graph::BFSResults *results = structure.bonds()->bfs(i);
+            vector<size_t> *component = results->found;
             atoms_per_molecule->insert(static_cast<int>(component->size()));
             for (int j = 0; j < component->size(); j++) {
                 int atom = (*component)[j];
