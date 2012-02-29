@@ -23,25 +23,25 @@ TEST(PrepFileTest, PrepFileResidue) {
     PrepFile file("dat/test.prep");
     PrepFile::const_iterator it = file.begin();
     PrepFile::ResiduePtr residue = it->second;
-    EXPECT_EQ(residue->name, "PeA");
-    EXPECT_EQ(residue->coordinate_type, PrepFileResidue::kINT);
-    EXPECT_EQ(residue->output_format, PrepFileResidue::kFormatted);
-    EXPECT_EQ(residue->geometry_type, PrepFileResidue::kGeometryCorrect);
-    EXPECT_EQ(residue->dummy_atom_omission, PrepFileResidue::kOmit);
-    EXPECT_EQ(residue->dummy_atom_type, "DU");
-    EXPECT_EQ(residue->dummy_atom_position, PrepFileResidue::kPositionBeg);
-    EXPECT_EQ(residue->cutoff, -0.5820);
-    EXPECT_EQ(residue->atoms.size(), 21);
-    EXPECT_EQ(residue->loops.size(), 1);
-    EXPECT_EQ(residue->loops[0].from, 17);
-    EXPECT_EQ(residue->loops[0].to, 3);
+    EXPECT_EQ(residue->name(), "PeA");
+    EXPECT_EQ(residue->coordinate_type(), PrepFileResidue::kINT);
+    EXPECT_EQ(residue->output_format(), PrepFileResidue::kFormatted);
+    EXPECT_EQ(residue->geometry_type(), PrepFileResidue::kGeometryCorrect);
+    EXPECT_EQ(residue->dummy_atom_omission(), PrepFileResidue::kOmit);
+    EXPECT_EQ(residue->dummy_atom_type(), "DU");
+    EXPECT_EQ(residue->dummy_atom_position(), PrepFileResidue::kPositionBeg);
+    EXPECT_EQ(residue->cutoff(), -0.5820);
+    EXPECT_EQ(residue->atom_count(), 21);
+    EXPECT_EQ(residue->loop_count(), 1);
+    EXPECT_EQ(residue->loops(0)->from(), 17);
+    EXPECT_EQ(residue->loops(0)->to(), 3);
 }
 
 TEST(PrepFileTest, FirstNonDummyAtom) {
     PrepFile file("dat/test.prep");
     PrepFile::const_iterator it = file.begin();
     PrepFile::ResiduePtr residue = it->second;
-    PrepFileAtom *atom = residue->atoms[3];
+    const PrepFileAtom *atom = residue->atoms(3);
     EXPECT_EQ(atom->index, 4);
     EXPECT_EQ(atom->name, "C1");
     EXPECT_EQ(atom->type, "CG");
@@ -59,8 +59,7 @@ TEST(PrepFileTest, LastAtom) {
     PrepFile file("dat/test.prep");
     PrepFile::const_iterator it = file.begin();
     PrepFile::ResiduePtr residue = it->second;
-    PrepFileAtom *atom = residue->atoms[3];
-    atom = residue->atoms[20];
+    const PrepFileAtom *atom = residue->atoms(20);
     EXPECT_EQ(atom->index, 21);
     EXPECT_EQ(atom->name, "O6");
     EXPECT_EQ(atom->type, "OS");
@@ -92,7 +91,7 @@ TEST(PrepFileSet, Brackets) {
     PrepFileSet set;
     set.load("dat/test.prep");
     const PrepFileResidue& residue = set["PeA"];
-    EXPECT_EQ(residue.name, "PeA");
+    EXPECT_EQ(residue.name(), "PeA");
 }
 
 TEST(PrepFileSet, Lookup) {
@@ -100,7 +99,7 @@ TEST(PrepFileSet, Lookup) {
     set.load("dat/test.prep");
     PrepFile::ResiduePtr residue = set.lookup("PeA");
     EXPECT_NE(residue, PrepFile::ResiduePtr());
-    EXPECT_EQ(residue->name, "PeA");
+    EXPECT_EQ(residue->name(), "PeA");
     EXPECT_EQ(set.lookup("OME"), PrepFile::ResiduePtr());
 }
 

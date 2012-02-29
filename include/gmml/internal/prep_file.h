@@ -31,95 +31,163 @@ class PrepFile {
     typedef std::map<std::string, ResiduePtr>::const_iterator
             const_iterator;
 
-    explicit PrepFile(const std::string& file_name);
+    PrepFile() {}
 
-    virtual ~PrepFile();
+    explicit PrepFile(const std::string& file_name) { read(file_name); }
 
-    iterator begin();
-    const_iterator begin() const;
-    iterator end();
-    const_iterator end() const;
+    virtual ~PrepFile() {}
+
+    void write(std::ostream&) const;
+
+    void print(const std::string& file_name) const;
+
+    void add_residue(ResiduePtr residue);
+
+    iterator begin() { return residues_.begin(); }
+    const_iterator begin() const { return residues_.begin(); }
+
+    iterator end() { return residues_.end(); }
+    const_iterator end() const { return residues_.end(); }
+
+    void set_header1(const std::string& header) { header1_ = header; }
+    void set_header2(const std::string& header) { header2_ = header; }
+
+    std::string header1() { return header1_; }
+    std::string header2() { return header2_; }
 
   private:
-    class Impl;
-    std::auto_ptr<Impl> impl_;
+    void read(const std::string& file_name);
+    void read(std::istream&);
+
+    std::map<std::string, ResiduePtr> residues_;
+    std::string header1_;
+    std::string header2_;
 
     DISALLOW_COPY_AND_ASSIGN(PrepFile);
 };
 
 class PrepFileSet {
   public:
-    PrepFileSet();
+    PrepFileSet() {}
 
-    virtual ~PrepFileSet();
+    virtual ~PrepFileSet() {}
 
     PrepFile::ResiduePtr lookup(const std::string& name) const;
-    bool exists(const std::string& name) const;
+
+    bool exists(const std::string& name) const {
+        return lookup(name) != PrepFile::ResiduePtr();
+    }
 
     void load(const PrepFile&);
     void load(const std::string& file) { load(PrepFile(file)); }
 
-    PrepFileResidue& operator[](const std::string& name);
-    const PrepFileResidue& operator[](const std::string& name) const;
+    // Why are these here? There lookup().
+    PrepFileResidue& operator[](const std::string& name) {
+        return *residues_[name];
+    }
+    const PrepFileResidue& operator[](const std::string& name) const {
+        return *(residues_.find(name)->second);
+    }
 
-    PrepFile::iterator begin();
-    PrepFile::const_iterator begin() const;
-    PrepFile::iterator end();
-    PrepFile::const_iterator end() const;
+    PrepFile::iterator begin() { return residues_.begin(); }
+    PrepFile::const_iterator begin() const { return residues_.begin(); }
+
+    PrepFile::iterator end() { return residues_.end(); }
+    PrepFile::const_iterator end() const { return residues_.end(); }
 
   private:
-    class Impl;
-    std::auto_ptr<Impl> impl_;
+    std::map<std::string, PrepFile::ResiduePtr> residues_;
 
     DISALLOW_COPY_AND_ASSIGN(PrepFileSet);
 };
 
-struct PrepFileResidue {
-    struct ImproperDihedral {
-        std::string atom_names[4];
-    };
-
-    struct Loop {
-        Loop(int from, int to) : from(from), to(to) {}
-        int from;
-        int to;
-    };
-
+class PrepFileResidue {
+  public:
     enum CoordinateType { kINT, kXYZ };
     enum GeometryType { kGeometryCorrect, kGeometryChange };
     enum DummyAtomOmission { kOmit, kNomit };
     enum DummyAtomPosition { kPositionAll, kPositionBeg };
     enum OutputFormat { kFormatted, kBinary };
+    
+    struct ImproperDihedral {
+        std::string atom_names[4];
+    };
 
-    PrepFileResidue() {}
+    class Loop;
+
+    explicit PrepFileResidue(const Residue& residue);
 
     ~PrepFileResidue();
 
+    static PrepFileResidue *read_from_stream(std::istream& in);
+
+    void write(std::ostream&) const;
+
+    // change name, what uses this?, maybe should be moved/removed
     int find(const std::string& name) const;
 
-    std::string header;
-    std::string file;
-    std::string name;
-    CoordinateType coordinate_type;
-    OutputFormat output_format;
-    GeometryType geometry_type;
-    DummyAtomOmission dummy_atom_omission;
-    std::string dummy_atom_type;
-    DummyAtomPosition dummy_atom_position;
-    double cutoff;
-    std::vector<PrepFileAtom*> atoms;
-    std::vector<ImproperDihedral> improper_dihedrals;
-    std::vector<Loop> loops;
+    // Accessors
+    int atom_count() const;
+    const PrepFileAtom *atoms(int index) const;
+
+    int loop_count() const;
+    const Loop *loops(int index) const;
+
+    void set_header(const std::string& header);
+
+    std::string header() const;
+    std::string file() const;
+    std::string name() const;
+    CoordinateType coordinate_type() const;
+    OutputFormat output_format() const;
+    GeometryType geometry_type() const;
+    DummyAtomOmission dummy_atom_omission() const;
+    std::string dummy_atom_type() const;
+    DummyAtomPosition dummy_atom_position() const;
+    double cutoff() const;
 
   private:
+    struct Impl;
+    std::auto_ptr<Impl> impl_;
+
+    class CreatePrepFile;
+    // This next line is not necessary in C++0x.
+    friend class CreatePrepFile;
+
+    PrepFileResidue();
+
     DISALLOW_COPY_AND_ASSIGN(PrepFileResidue);
 };
 
-struct PrepFileAtom {
-    enum TopologicalType { kTopTypeM, kTopTypeS, kTopTypeB, kTopTypeE,
-                           kTopType3 };
+class PrepFileResidue::Loop {
+  public:
+    int from() const { return from_; }
+    int to() const { return to_; }
 
-    PrepFileAtom() {}
+  public:
+    // Make PrepFileResidue a friend?
+    Loop(int from, int to) : from_(from), to_(to) {}
+
+    int from_;
+    int to_;
+
+    //just make constructor a friend
+    friend class PrepFileResidue;
+};
+
+class PrepFileAtom {
+  public:
+    enum TopologicalType { kTopTypeE, kTopTypeS, kTopTypeB, kTopType3,
+                           kTopType4, kTopTypeM };
+
+    explicit PrepFileAtom(const std::string& line);
+
+    ~PrepFileAtom();
+
+    static TopologicalType get_topological_type(int count);
+    static std::string get_top_type_string(TopologicalType type);
+
+    void write(std::ostream&) const;
 
     int index;
     std::string name;
@@ -132,6 +200,12 @@ struct PrepFileAtom {
     double angle;
     double dihedral;
     double charge;
+
+  public:
+    struct Impl;
+    std::auto_ptr<Impl> impl_;
+
+    PrepFileAtom() {}
 
   private:
     DISALLOW_COPY_AND_ASSIGN(PrepFileAtom);
