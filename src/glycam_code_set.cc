@@ -650,12 +650,23 @@ void set_default_torsions(Structure *structure, int new_residue_index,
     // C(x+1)-Cx-O'-C' to 180.0 indirectly sets phi to the right thing.
     // So we set this torsion instead of calling set_phi(), which 
     // sets the actual phi torsion.
-    structure->set_dihedral(target_residue_index, "C" + oxygen,
-                            target_residue_index, "O" + oxygen,
-                            new_residue_index, "C" + carbon,
-                            new_residue_index,
-                            "C" + to_string(carbon_number + 1),
-                            180.0);
+    if (structure->residues(target_residue_index)->name() == "ROH") {
+        structure->set_dihedral(target_residue_index, "HO1",
+                                target_residue_index, "O1",
+                                new_residue_index, "C" + carbon,
+                                new_residue_index,
+                                "C" + to_string(carbon_number + 1),
+                                180.0);
+    } else {
+        structure->set_dihedral(target_residue_index, "C" + oxygen,
+                                target_residue_index, "O" + oxygen,
+                                new_residue_index, "C" + carbon,
+                                new_residue_index,
+                                "C" + to_string(carbon_number + 1),
+                                180.0);
+    }
+
+    
 
     // Should probably change this to check if the linkage is exocyclic
     if (oxygen_number == 6) {
