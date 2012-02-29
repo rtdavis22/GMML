@@ -12,6 +12,7 @@ namespace gmml {
 
 class Atom;
 class Graph;
+class Structure;
 
 class Residue {
   public:
@@ -24,8 +25,11 @@ class Residue {
 
     explicit Residue(const std::string& name);
 
+    Residue(const Structure& structure, const std::string& name);
+
     Residue(const std::string& name, const std::vector<Atom*> *atoms,
             const Graph *bonds);
+
 
     virtual ~Residue();
 
@@ -36,6 +40,12 @@ class Residue {
     void append(const Atom *atom);
 
     int get_index(const std::string& atom_name) const;
+
+    const std::vector<size_t>& bonds(int index) const;
+
+    void remove_atom(int index);
+
+    void remove_atom(const std::string& name);
 
     //
     // Mutators

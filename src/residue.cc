@@ -1,7 +1,11 @@
 #include "gmml/internal/residue.h"
 
+#include <stdexcept>
+
 #include "gmml/internal/atom.h"
 #include "gmml/internal/graph.h"
+#include "gmml/internal/structure.h"
+#include "gmml/internal/stubs/utils.h"
 
 using std::string;
 using std::vector;
@@ -12,6 +16,16 @@ Residue::Residue() : name_(""), bonds_(new Graph), head_(-1), tail_(-1) {}
 
 Residue::Residue(const string& name) : name_(name), bonds_(new Graph),
                                        head_(-1), tail_(-1) {}
+
+Residue::Residue(const Structure& structure, const string& name) : name_(name) {
+    for (Structure::const_iterator it = structure.begin();
+            it != structure.end(); ++it) {
+        atoms_.push_back((*it)->clone());
+    }
+    bonds_ = structure.bonds()->clone();
+    head_ = structure.head();
+    tail_ = structure.tail();
+}
 
 Residue::Residue(const string& name, const vector<Atom*> *atoms,
                  const Graph *bonds) : name_(name), head_(-1), tail_(-1) {
@@ -39,6 +53,39 @@ int Residue::get_index(const string& atom_name) const {
         }
     }
     return -1;
+}
+
+const vector<size_t>& Residue::bonds(int index) const {
+    return bonds_->edges(index);
+}
+
+void Residue::remove_atom(int index) {
+    if (index < 0 || index >= size()) {
+        throw std::invalid_argument("Invalid residue index " +
+                                    to_string(index) + ".");
+    }
+    bonds_->remove_vertex(index);
+    delete atoms_[index];
+    atoms_.erase(atoms_.begin() + index);
+    if (head_ == index) {
+        head_ = -1;
+    } else if (head_ != -1 && head_ > index) {
+        head_--;
+    }
+
+    if (tail_ == index) {
+        tail_ = -1;
+    } else if (tail_ != -1 && tail_ > index) {
+        tail_--;
+    }
+}
+
+void Residue::remove_atom(const std::string& name) {
+    int index = get_index(name);
+    if (index == -1) {
+        throw std::invalid_argument("Invalid atom name " + name + ".");
+    }
+    remove_atom(index);
 }
 
 void Residue::set_atoms(const vector<Atom*> *atoms) {
