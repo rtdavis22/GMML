@@ -214,7 +214,7 @@ ArrayTree<TreeResidue*> *GlycamCodeSet::build_array_tree(
 std::string GlycamCodeSet::get_name_from_code(const string& code) const {
     string uppercase_code(code);
     std::transform(uppercase_code.begin(), uppercase_code.end(),
-                   uppercase_code.begin(), ::tolower);
+                   uppercase_code.begin(), ::toupper);
     if (uppercase_code.substr(1) == "GL")
         return "Neu5Gc";
     // I should probably make a table for these.
@@ -226,11 +226,22 @@ std::string GlycamCodeSet::get_name_from_code(const string& code) const {
         return "OH";
     else if (uppercase_code == "TBT")
         return "OtBu";
-    string letter(1, code[1]);
+    string letter(1, uppercase_code[1]);
     map<string, string>::const_iterator it;
     if ((it = letter_to_name_.find(letter)) != letter_to_name_.end())
         return it->second;
     return "";
+}
+
+char GlycamCodeSet::get_first_letter(const vector<int>& positions) const {
+    bitset<10> bs;
+    for (int i = 0; i < positions.size(); i++) {
+        if (positions[i] < 0 || positions[i] > 9) {
+            throw std::invalid_argument("Invalid position.");
+        }
+        bs.set(positions[i]);
+    }
+    return get_first_letter(bs)[0];
 }
 
 string GlycamCodeSet::get_first_letter(const bitset<10>& open_valences) const {
@@ -238,18 +249,18 @@ string GlycamCodeSet::get_first_letter(const bitset<10>& open_valences) const {
     const bitset<10>& bs = open_valences;
     if (bs.count() == 4) {
         if (bs[4] && bs[7] && bs[8] && bs[9])
-            return "K";
+            return "A";
         if (bs[2] && bs[3] && bs[4] && bs[6])
             return "P";
     } else if (bs.count() == 3) {
         if (bs[4] && bs[7] && bs[8])
-            return "G";
+            return "E";
         if (bs[4] && bs[7] && bs[9])
-            return "H";
+            return "D";
         if (bs[4] && bs[8] && bs[9])
-            return "I";
+            return "C";
         if (bs[7] && bs[8] && bs[9])
-            return "J";
+            return "B";
         if (bs[3] && bs[4] && bs[6])
             return "Q";
         if (bs[2] && bs[4] && bs[6])
@@ -260,15 +271,15 @@ string GlycamCodeSet::get_first_letter(const bitset<10>& open_valences) const {
             return "T";
     } else if (bs.count() == 2) {
         if (bs[4] && bs[7])
-            return "A";
+            return "K";
         if (bs[4] && bs[8])
-            return "B";
+            return "J";
         if (bs[4] && bs[9])
-            return "C";
+            return "I";
         if (bs[7] && bs[8])
-            return "D";
+            return "H";
         if (bs[7] && bs[9])
-            return "E";
+            return "G";
         if (bs[8] && bs[9])
             return "F";
         if (bs[4] && bs[6])

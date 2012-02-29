@@ -56,6 +56,8 @@ class GlycamCodeSet {
 
     std::string get_name_from_code(const std::string& code) const;
 
+    char get_first_letter(const std::vector<int>& positions) const;
+
     tree<TreeResidue*> *build_residue_tree(
             tree<ParsedResidue*> *parsed_tree) const;
 
