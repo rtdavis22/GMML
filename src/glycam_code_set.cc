@@ -219,6 +219,10 @@ std::string GlycamCodeSet::get_name_from_code(const string& code) const {
                    uppercase_code.begin(), ::toupper);
     if (uppercase_code.substr(1) == "GL")
         return "Neu5Gc";
+    else if (uppercase_code.substr(1) == "BC")
+        return "Bac";
+    else if (uppercase_code.substr(1) == "TV")
+        return "Tyv";
     // I should probably make a table for these.
     else if (uppercase_code == "SUL")
         return "sulfate";
