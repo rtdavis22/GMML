@@ -657,8 +657,18 @@ void set_default_torsions(Structure *structure, int new_residue_index,
     // So we set this torsion instead of calling set_phi(), which 
     // sets the actual phi torsion.
     if (structure->residues(target_residue_index)->name() == "ROH") {
-        structure->set_dihedral(target_residue_index, "HO1",
-                                target_residue_index, "O1",
+        Residue *target = structure->residues(target_residue_index);
+        string h_name;
+        string o_name;
+        if (target->atoms(0)->name()[0] == 'H') {
+            h_name = target->atoms(0)->name();
+            o_name = target->atoms(1)->name();
+        } else {
+            h_name = target->atoms(1)->name();
+            o_name = target->atoms(0)->name();
+        }
+        structure->set_dihedral(target_residue_index, h_name,
+                                target_residue_index, o_name,
                                 new_residue_index, "C" + carbon,
                                 new_residue_index,
                                 "C" + to_string(carbon_number + 1),
