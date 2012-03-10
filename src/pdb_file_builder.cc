@@ -187,7 +187,7 @@ struct BuildPdbFile::Impl {
         for (int i = 0; i < structure_.size(); i++) {
             const Structure::AdjList& adj_atoms = structure_.bonds(i);
             for (int j = 0; j < adj_atoms.size(); j++) {
-                if (i > adj_atoms[i])
+                if (i > adj_atoms[j])
                     continue;
                 int residue1_index = (*residue_index_table)[i];
                 int residue2_index = (*residue_index_table)[adj_atoms[j]];
