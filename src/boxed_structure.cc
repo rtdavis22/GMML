@@ -1,5 +1,7 @@
 // Author: Robert Davis
 
+#include <algorithm>
+
 #include "gmml/internal/amber_top_builder.h"
 #include "gmml/internal/atom.h"
 #include "gmml/internal/coordinate_file.h"
@@ -21,6 +23,14 @@ BoxedRegion::BoxedRegion(const Coordinate& coordinate) {
     min_x = max_x = coordinate.x;
     min_y = max_y = coordinate.y;
     min_z = max_z = coordinate.z;
+}
+
+void BoxedRegion::expand_to_cube() {
+    double max_dimension = std::max(max_x - min_x,
+                                    std::max(max_y - min_y, max_z - min_z));
+    expand(max_dimension - (max_x - min_x),
+           max_dimension - (max_y - min_y),
+           max_dimension - (max_z - min_z));
 }
 
 BoxedRegion *get_boxed_region(const Structure& structure) {

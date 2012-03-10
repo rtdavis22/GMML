@@ -29,7 +29,7 @@ SolvatedStructure::SolvatedStructure(const Structure& structure,
     Structure::clone_from(structure);
     BoxedRegion *solvent_region = get_boxed_region(solvent);
     const Box *box = solvent.box();
-    // If we have box dimensions, we contract the solvent region so that it's
+    // If we have box dimensions, we contract the solvent region so that its
     // dimensions are the same as the box's dimensions. If the dimensions of the
     // box are larger than the solvent, the contraction is actually an
     // expansion. Currently, the angle of the box is not used and presumed
@@ -52,6 +52,7 @@ void SolvatedStructure::solvate(const Structure& solvent,
                                 double distance, double closeness) {
     BoxedRegion *solute_region = get_boxed_region(*this);
     solute_region->expand(distance, distance, distance);
+    solute_region->expand_to_cube();
 
     // The dimensions of the solvent region. These don't necessarily
     // correspond to the atoms in the solvent.

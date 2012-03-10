@@ -71,6 +71,8 @@ struct BoxedRegion {
     // The upper and lower bounds are taken from this coordinate.
     explicit BoxedRegion(const Coordinate& coordinate);
 
+    void expand_to_cube();
+
     // Contract each side of the region by the given amounts.
     void contract(double x, double y, double z);
 
