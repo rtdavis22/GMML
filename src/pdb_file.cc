@@ -21,7 +21,11 @@ using std::vector;
 
 void PdbAtomCard::write(std::ostream& out) const {
     string str(80, ' ');
-    set_in_string(str, "ATOM", 0, 6, 'L');
+    if (!is_hetatm_) {
+        set_in_string(str, "ATOM", 0, 6, 'L');
+    } else {
+        set_in_string(str, "HETATM", 0, 6, 'L');
+    }
     set_in_string(str, serial, 6, 5, 'R');
     if (name.size() < 4)
         set_in_string(str, name, 13, 3, 'L');

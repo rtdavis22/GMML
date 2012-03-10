@@ -18,6 +18,7 @@ namespace gmml {
 class PdbCard;
 class PdbAtomCard;
 class PdbConnectCard;
+class PdbLinkCard;
 
 // This class should undergo some significant changes soon. See below.
 class PdbFile {
@@ -46,8 +47,10 @@ class PdbFile {
     void print() const;
 
     void insert_card(CardPtr card_ptr) { cards_.push_back(card_ptr); }
+    void insert_at_front(CardPtr card_ptr) { cards_.push_front(card_ptr); }
     void insert_atom_card(AtomCardPtr card_ptr);
     void insert_connect_card(ConnectCardPtr card_ptr);
+    void insert_link_card(boost::shared_ptr<PdbLinkCard> card_ptr);
 
     const std::list<boost::shared_ptr<PdbAtomCard> >& atom_cards() const {
         return atom_cards_;
@@ -97,7 +100,9 @@ class PdbAtomCard : public PdbCard {
             : serial(serial), name(name), alt_loc(' '), res_name(res_name), 
               chain_id(' '), res_seq(res_seq), i_code(' '),
               x(x), y(y), z(z), occupancy(1.0), temp_factor(0.0),
-              element(element), charge(kNotSet) {}
+              element(element), charge(kNotSet), is_hetatm_(false) {}
+
+    bool set_hetatm() { is_hetatm_ = true; }
 
     int serial;
     std::string name;
@@ -113,6 +118,8 @@ class PdbAtomCard : public PdbCard {
     double temp_factor;
     std::string element;
     double charge;
+
+    bool is_hetatm_;
 
     PdbFile::CardType get_type() const { return PdbFile::ATOM; }
 
@@ -156,6 +163,7 @@ class PdbConnectCard : public PdbCard {
 class PdbEndCard : public PdbCard {
   public:
     PdbEndCard(const std::string& line) { read(line); }
+    PdbEndCard() {}
 
     PdbFile::CardType get_type() const { return PdbFile::END; }
 
@@ -211,6 +219,11 @@ inline void PdbFile::insert_connect_card(ConnectCardPtr card_ptr) {
     insert_card(card_ptr);
     connect_cards_.push_back(card_ptr);
 }
+
+inline void PdbFile::insert_link_card(boost::shared_ptr<PdbLinkCard> card_ptr) {
+    insert_card(card_ptr);
+}
+
 
 }  // namespace gmml
 
