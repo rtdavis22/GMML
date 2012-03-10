@@ -583,7 +583,7 @@ void Structure::set_bonds(const Graph *bonds) {
 
 // File operations
 PdbFile *Structure::build_pdb_file() const {
-    return PdbFileBuilder().build(*this);
+    return PdbFileBuilderBuilder().build(*this);
 }
 
 void Structure::print_pdb_file(const string& file_name) const {
