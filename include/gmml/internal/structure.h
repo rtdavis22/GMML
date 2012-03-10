@@ -104,6 +104,13 @@ class Structure {
                       int residue4_index, const std::string& atom4_name,
                       double degrees);
 
+    void set_outside_dihedral(size_t atom1, size_t atom2, size_t atom3,
+                              size_t atom4, double degrees);
+    void set_outside_dihedral(int residue1, const std::string& atom1,
+                              int residue2, const std::string& atom2,
+                              int residue3, const std::string& atom3,
+                              int residue4, const std::string& atom4,
+                              double degrees);
 
     // This syntax experimental. It should be the function that does the work.
     void set_dihedral(const DihedralAtoms& atoms, double value) {

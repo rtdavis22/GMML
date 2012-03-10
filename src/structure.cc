@@ -212,6 +212,49 @@ void Structure::set_dihedral(int residue1_index, const string& atom1_name,
     set_dihedral(atom1_index, atom2_index, atom3_index, atom4_index, degrees);
 }
 
+
+
+void Structure::set_outside_dihedral(size_t atom1, size_t atom2, size_t atom3,
+                                     size_t atom4, double degrees) {
+    vector<size_t> *atoms = bonds_->edge_bfs(atom3, atom4);
+
+    double current_dihedral = measure(atoms_[atom1]->coordinate(),
+                                      atoms_[atom2]->coordinate(),
+                                      atoms_[atom3]->coordinate(),
+                                      atoms_[atom4]->coordinate());
+
+    RotationMatrix matrix(atoms_[atom2]->coordinate(),
+                          Vector<3>(atoms_[atom3]->coordinate(),
+                                    atoms_[atom2]->coordinate()),
+                          current_dihedral - to_radians(degrees));
+
+    for (vector<size_t>::iterator it = atoms->begin();
+            it != atoms->end(); ++it)
+        matrix.apply(atoms_[*it]->mutable_coordinate());
+
+    delete atoms;
+}
+
+void Structure::set_outside_dihedral(int residue1, const string& atom1,
+                                     int residue2, const string& atom2,
+                                     int residue3, const string& atom3,
+                                     int residue4, const string& atom4,
+                                     double degrees) {
+    int atom1_index = get_atom_index(residue1, atom1);
+    int atom2_index = get_atom_index(residue2, atom2);
+    int atom3_index = get_atom_index(residue3, atom3);
+    int atom4_index = get_atom_index(residue4, atom4);
+
+    if (atom1_index == -1 || atom2_index == -1 || atom3_index == -1 ||
+            atom4_index == -1) {
+        return;
+    }
+
+    set_outside_dihedral(atom1_index, atom2_index, atom3_index, atom4_index, 
+                         degrees);
+
+}
+
 void Structure::set_residue_angle(int atom1, int atom2, int atom3,
                                   int residue_index, double radians) {
     int start_atom = residues_[residue_index]->start_index;

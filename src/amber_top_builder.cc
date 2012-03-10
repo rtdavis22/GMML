@@ -353,6 +353,9 @@ void AmberTopBuilder::build_angles(const Structure& structure,
                 const Atom *atom1 = structure.atoms(adj_atom1);
                 const Atom *atom2 = structure.atoms(i);
                 const Atom *atom3 = structure.atoms(adj_atom2);
+                if (atom1->type() == "EP" || atom2->type() == "EP" ||
+                        atom3->type() == "EP")
+                    continue;
                 int type_index = get_angle_type_index(angle_types,
                                                       atom1->type(),
                                                       atom2->type(),
@@ -601,6 +604,10 @@ void AmberTopBuilder::insert_dihedrals(const Structure& structure,
             const Atom *atom2 = structure.atoms(atom1_index);
             const Atom *atom3 = structure.atoms(atom2_index);
             const Atom *atom4 = structure.atoms(adj_atoms2[j]);
+
+            if (atom1->type() == "EP" || atom2->type() == "EP" ||
+                    atom3->type() == "EP" || atom4->type() == "EP")
+                continue;
 
             const ParameterFileDihedral *parameter_dihedral =
                 parameter_file_set_.lookup(atom1->type(), atom2->type(),

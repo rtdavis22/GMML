@@ -9,8 +9,10 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <queue>
 #include <sstream>
 #include <stack>
+#include <utility>
 
 #include "gmml/internal/atom.h"
 #include "gmml/internal/environment.h"
@@ -26,6 +28,8 @@ using std::cout; //remove
 using std::endl; //remove
 using std::deque;
 using std::map;
+using std::pair;
+using std::queue;
 using std::stack;
 using std::string;
 using std::vector;
@@ -46,7 +50,7 @@ void PrepFile::print(const std::string& file_name) const {
 }
 
 void PrepFile::add_residue(ResiduePtr residue) {
-    residues_[residue->name()] = residue;
+    add_or_update_map(residues_, residue->name(), residue);
 }
 
 void PrepFile::read(const string& file_name) {
@@ -134,9 +138,9 @@ class PrepFileResidue::CreatePrepFile {
   public:
     CreatePrepFile(PrepFileResidue *prep_residue, const Residue& residue)
             : prep_residue_(prep_residue), residue_(residue),
-              visited_(residue.size(), false),
+//              visited_(residue.size(), false),
               index_in_file_(residue.size() + 3, -1),
-              parent_list_(residue.size() + 3, -1) {
+              parents_(residue.size(), -1) {
         Coordinate dummy1(-5.0, -5.0, -5.0);
         Coordinate dummy2(-4.5, -5.0, -5.0);
         Coordinate dummy3(-4.7, -4.2, -4.0);
@@ -156,31 +160,63 @@ class PrepFileResidue::CreatePrepFile {
     int get_index_in_file(int index) const;
     void add_dummy_atom(int index);
     void set_main_chain();
+    int get_parent_index(int index) const;
 
     struct SubatomCompare {
         SubatomCompare(const Residue *residue) : residue_(residue) {}
         bool operator()(int atom1, int atom2) const {
             string name = residue_->name();
-            if (residue_->name().size() < 2) {
+            if (residue_->name().size() < 3) {
                 return atom1 < atom2;
             }
-            bool is_l = 'a' < name[1] && name[1] < 'z';
+            bool is_l = name[1] >= 'a' && name[1] <= 'z';
+            bool is_beta = name[2] == 'U' || name[2] == 'B' || name[2] == 'v';
+            cout << "is_l" << is_l << endl;
+            cout << "is_beta" << is_beta << endl;
+            string name1 = residue_->atoms(atom1)->name();
+            string name2 = residue_->atoms(atom2)->name();
+
+            if (name1[0] == 'H')
+                return true;
+            else if (name2[0] == 'H')
+                return false;
+
+            if (!is_l && !is_beta)
+                return name1 < name2;
+            else if (!is_l && is_beta)
+                return name1 > name2;
+            else if (is_l && !is_beta) {
+               
+                return name1 > name2;
+            }
+            else
+                return name1 < name2;
+/*
             Element element1 = residue_->atoms(atom1)->element();
             Element element2 = residue_->atoms(atom2)->element();
-            if (is_l)
-                return element1 == kElementO;
-            else
-                return element2 == kElementO;
+            if (is_l) {
+                bool result = element1 == kElementO;
+                //if (is_beta)
+                //    return !result;
+                return result;
+            } else {
+                bool result = element2 == kElementO;
+                //if (is_beta)
+                //    return !result;
+                return result;
+            }
+*/
         };
 
         const Residue *residue_;
     };
 
-    vector<int> parent_list_;
+    vector<pair<int, int> > loops_to_add;
+    vector<int> parents_;
     vector<Coordinate> coordinate_list_;
     PrepFileResidue *prep_residue_;
     const Residue& residue_;
-    deque<bool> visited_;
+//    deque<bool> visited_;
     vector<int> index_in_file_;
 };
 
@@ -486,27 +522,146 @@ void PrepFileResidue::CreatePrepFile::create() {
     int start_index = 0;
     if (residue_.head() != -1)
         start_index = residue_.head();
-    visit_atom(start_index, -1, -2, -3);
 
-    set_main_chain();
-}
 
-void PrepFileResidue::CreatePrepFile::set_main_chain() {
-    if (residue_.head() != -1 && residue_.tail() != -1) {
-        int tail = residue_.tail();
-        while (true) {
-            int index_in_file = index_in_file_[tail];
-            prep_residue_->impl_->atoms[index_in_file]->topological_type =
-                    PrepFileAtom::kTopTypeM;
-            if (tail == residue_.head()) {
+    //vector<int> parents(residue_.size(), -1);
+    deque<bool> processed(residue_.size(), false);
+    deque<bool> discovered(residue_.size(), false);
+    vector<vector<int> > tree(residue_.size());
+    stack<pair<int, int> > st1;
+    st1.push(std::make_pair(start_index, -1));
+    discovered[start_index] = true;
+    cout << "NAME: " << residue_.name() << endl;
+    while (!st1.empty()) {
+        pair<int, int> cur = st1.top();
+        st1.pop();
+        if (processed[cur.first]) continue;
+        parents_[cur.first] = cur.second;
+        if (cur.second >= 0)
+            tree[cur.second].push_back(cur.first);
+        vector<size_t> bonds = residue_.bonds(cur.first);
+      
+
+/*
+        for (int i = 0; i < bonds.size(); i++) {
+            if (residue_.atoms(bonds[i])->name()[0] == 'O') {
+                std::swap(bonds[i], bonds[bonds.size() - 1]);
                 break;
             }
-            tail = parent_list_[tail];
         }
-    } else if (residue_.head() != -1) {
-        prep_residue_->impl_->atoms[index_in_file_[residue_.head()]]->
-                       topological_type = PrepFileAtom::kTopTypeM;
+*/
+        std::sort(bonds.begin(), bonds.end(), SubatomCompare(&residue_));
+
+        cout << "bonds for atom " << residue_.atoms(cur.first)->name() << "; ";
+        for (int i = 0; i < bonds.size(); i++) {
+            cout << residue_.atoms(bonds[i])->name() << " ";
+        }
+        cout << endl;
+
+/*
+        if (residue_.name().size() > 2) {
+            char letter = residue_.name()[1];
+            bool is_l = 'a' <= letter && letter <= 'z';
+            if (!is_l)
+                std::reverse(bonds.begin(), bonds.end());
+
+        }
+*/
+
+        std::reverse(bonds.begin(), bonds.end());
+        for (int i = 0; i < bonds.size(); i++) {
+            if (processed[bonds[i]] && bonds[i] != parents_[cur.first]) {
+                loops_to_add.push_back(std::make_pair(cur.first, bonds[i]));
+            } else if (!discovered[bonds[i]]) {
+                //parents_[bonds[i]] = cur;
+                //tree[cur].push_back(bonds[i]);
+                //discovered[bonds[i]] = true;
+                st1.push(std::make_pair(bonds[i], cur.first));
+            }
+        }
+        processed[cur.first] = true;
     }
+
+    cout << residue_.name() << endl;
+    for (int i = 0; i < tree.size(); i++) {
+        cout << residue_.atoms(i)->name() << ": ";
+        for (int j = 0; j < tree[i].size(); j++) {
+            cout << residue_.atoms(tree[i][j])->name() << " ";
+        }
+        cout << endl;
+    }
+    //cout << endl;
+
+    if (residue_.tail() != -1) {
+        cout << "tail: " << residue_.atoms(residue_.tail())->name() << endl;
+    }
+    vector<int> main_chain;
+    if (residue_.head() != -1) {
+        main_chain.push_back(residue_.head());
+        if (residue_.tail() != -1) {
+            int cur = residue_.tail();
+            while (cur != residue_.head()) {
+                main_chain.push_back(cur);
+                cur = parents_[cur];
+            }
+        }
+    }
+
+    cout << "main chain: ";
+    for (int i = 0; i < main_chain.size(); i++)
+        cout << residue_.atoms(main_chain[i])->name() << " ";
+    cout << endl << endl;
+
+    stack<int> st;
+    st.push(start_index);
+    //vector<int> index_in_file(residue_.size(), -1);
+    while (!st.empty()) {
+        int cur = st.top();
+        st.pop();
+        //int index_in_file = prep_residue_->atom_count();
+        //index_in_file_[cur] = index_in_file;
+        add_atom(cur, get_parent_index(cur),
+                      get_parent_index(get_parent_index(cur)),
+                      get_parent_index(get_parent_index(get_parent_index(cur))),
+                      tree[cur].size());
+
+        vector<int> subatoms(tree[cur]);
+
+        for (int i = 0; i < static_cast<int>(subatoms.size()) - 1; i++) {
+            for (int j = 0; j < main_chain.size(); j++) {
+                if (subatoms[i] == main_chain[j]) {
+                    std::swap(subatoms[i], subatoms[subatoms.size() - 1]);
+                    break;
+                }
+            }
+        }
+
+        std::reverse(subatoms.begin(), subatoms.end());
+
+        for (int i = 0; i < subatoms.size(); i++) {
+            st.push(subatoms[i]);
+        }
+
+    }
+
+    for (int i = 0; i < main_chain.size(); i++) {
+        int index_in_file = get_index_in_file(main_chain[i]);
+        prep_residue_->impl_->atoms[index_in_file]->topological_type =
+                PrepFileAtom::kTopTypeM;
+    }
+
+    for (int i = 0; i < loops_to_add.size(); i++)
+        add_loop(get_index_in_file(loops_to_add[i].first),
+                 get_index_in_file(loops_to_add[i].second));
+    //visit_atom(start_index, -1, -2, -3);
+
+    //set_main_chain();
+}
+
+int PrepFileResidue::CreatePrepFile::get_parent_index(int index) const {
+    if (index < 0)
+        return index - 1;
+    return parents_[index];
 }
 
 void PrepFileResidue::CreatePrepFile::add_dummy_atom(int index) {
@@ -535,11 +690,13 @@ void PrepFileResidue::CreatePrepFile::add_dummy_atom(int index) {
     prep_residue_->impl_->atoms.push_back(prep_atom);
 }
 
+
 int PrepFileResidue::CreatePrepFile::get_index_in_file(int index) const {
     if (index < 0)
         return index + 3;
     return index_in_file_[index];
 }
+
 
 void PrepFileResidue::CreatePrepFile::add_atom(int index, int parent1,
                                                int parent2, int parent3,
@@ -570,10 +727,12 @@ void PrepFileResidue::CreatePrepFile::add_atom(int index, int parent1,
     prep_residue_->impl_->atoms.push_back(prep_atom);
 }
 
+
 void PrepFileResidue::CreatePrepFile::add_loop(int index1, int index2) {
     prep_residue_->impl_->loops.push_back(new Loop(index1, index2));
 }
 
+/*
 void PrepFileResidue::CreatePrepFile::visit_atom(int index, int parent1,
                                                  int parent2, int parent3) {
     if (visited_[index])
@@ -621,6 +780,10 @@ void PrepFileResidue::CreatePrepFile::visit_atom(int index, int parent1,
                  index_in_file_[loops_to_add[i]]);
     }
 }
+
+*/
+
+
 
 struct PrepFileAtom::Impl {
     TopologicalType extract_topological_type(std::istream& in) const;

@@ -43,6 +43,8 @@ class PrepFile {
 
     void add_residue(ResiduePtr residue);
 
+    void remove_residue(const std::string& code) { residues_.erase(code); }
+
     iterator begin() { return residues_.begin(); }
     const_iterator begin() const { return residues_.begin(); }
 
