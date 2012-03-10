@@ -154,13 +154,13 @@ void PdbLinkCard::write(std::ostream& out) const {
     else
         set_in_string(str, name1, 12, 4, 'L');
     set_in_string(str, res_name1, 17, 3, 'L');
-    set_in_string(str, res_seq1, 22, 4, 'L');
+    set_in_string(str, res_seq1, 22, 4, 'R');
     if (name2.size() < 4)
         set_in_string(str, name2, 43, 3, 'L');
     else
         set_in_string(str, name2, 42, 4, 'L');
     set_in_string(str, res_name2, 47, 3, 'L');
-    set_in_string(str, res_seq2, 52, 4, 'L');
+    set_in_string(str, res_seq2, 52, 4, 'R');
     trim(str);
     out << str;
 }
