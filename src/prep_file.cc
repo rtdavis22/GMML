@@ -157,6 +157,25 @@ class PrepFileResidue::CreatePrepFile {
     void add_dummy_atom(int index);
     void set_main_chain();
 
+    struct SubatomCompare {
+        SubatomCompare(const Residue *residue) : residue_(residue) {}
+        bool operator()(int atom1, int atom2) const {
+            string name = residue_->name();
+            if (residue_->name().size() < 2) {
+                return atom1 < atom2;
+            }
+            bool is_l = 'a' < name[1] && name[1] < 'z';
+            Element element1 = residue_->atoms(atom1)->element();
+            Element element2 = residue_->atoms(atom2)->element();
+            if (is_l)
+                return element1 == kElementO;
+            else
+                return element2 == kElementO;
+        };
+
+        const Residue *residue_;
+    };
+
     vector<int> parent_list_;
     vector<Coordinate> coordinate_list_;
     PrepFileResidue *prep_residue_;
@@ -578,6 +597,16 @@ void PrepFileResidue::CreatePrepFile::visit_atom(int index, int parent1,
             sub_atoms.push_back(bonds[i]);
         }
     }
+
+    std::sort(sub_atoms.begin(), sub_atoms.end(), SubatomCompare(&residue_));
+    for (int i = 0; i < sub_atoms.size(); i++) {
+        if (residue_.tail() == sub_atoms[i]) {
+            std::swap(sub_atoms[i], sub_atoms[sub_atoms.size() - 1]);
+            break;
+        }
+    }
+
+  
     parent_list_[index] = parent1;
     add_atom(index, parent1, parent2, parent3, count);
 
@@ -592,7 +621,6 @@ void PrepFileResidue::CreatePrepFile::visit_atom(int index, int parent1,
                  index_in_file_[loops_to_add[i]]);
     }
 }
-
 
 struct PrepFileAtom::Impl {
     TopologicalType extract_topological_type(std::istream& in) const;
