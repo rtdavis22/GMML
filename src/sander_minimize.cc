@@ -39,7 +39,8 @@ MinimizationResults *SanderMinimize::operator()(Structure& structure,
     return NULL;
 #endif
     const ParameterSet& parm_set = *kDefaultEnvironment.parm_set();
-    string absolute_file = find_file(mdin_file);
+    File absolute_file(mdin_file);
+    set_full_pathname(&absolute_file);
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -53,7 +54,7 @@ MinimizationResults *SanderMinimize::operator()(Structure& structure,
         structure.print_amber_top_file(uid + "_temp.top", parm_set);
         structure.print_coordinate_file(uid + "_temp.rst");
         const char* args[] = { 
-                "sander", "-i", absolute_file.c_str(),
+                "sander", "-i", absolute_file.pathname().c_str(),
                 "-p", string(uid + "_temp.top").c_str(),
                 "-c", string(uid + "_temp.rst").c_str(),
                 "-O",

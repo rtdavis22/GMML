@@ -12,6 +12,7 @@
 namespace gmml {
 
 class FastaSequence;
+class File;
 class Structure;
 
 class NetOGlycResults;
@@ -21,7 +22,7 @@ class OGlycosylationLocations;
 // O-glycosylation locations.
 class NetOGlycRunner {
   public:
-    explicit NetOGlycRunner(const std::string& startup_script);
+    explicit NetOGlycRunner(const File& startup_script);
 
     ~NetOGlycRunner();
 

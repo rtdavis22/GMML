@@ -13,21 +13,6 @@
 
 namespace gmml {
 
-class FileNotFoundException : public std::invalid_argument {
-  public:
-    explicit FileNotFoundException(const std::string& file_name)
-            : std::invalid_argument("File not found: " + file_name),
-              file_name_(file_name) {}
-
-    ~FileNotFoundException() throw() {}
-
-    std::string file_name() const { return file_name_; }
-
-  private:
-    std::string file_name_;
-};
-
-
 //
 // String utilities
 //

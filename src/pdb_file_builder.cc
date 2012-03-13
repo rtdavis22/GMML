@@ -24,8 +24,6 @@ using std::stack;
 using std::string;
 using std::vector;
 
-using boost::shared_ptr;
-
 struct BuildPdbFile::Impl {
     Impl(const Structure& structure, const PdbFileBuilderBuilder& builder)
             : structure_(structure), builder_(builder),
@@ -42,7 +40,7 @@ struct BuildPdbFile::Impl {
         for (int i = 0; i < proteins->size(); i++) {
             visit_amino_acid_chain(*(*proteins)[i]);
             delete (*proteins)[i];
-            file_->insert_card(PdbFile::CardPtr(new PdbTerCard));
+            file_->insert_card(new PdbTerCard);
         }
         delete proteins;
     }
@@ -73,16 +71,15 @@ struct BuildPdbFile::Impl {
         atom_map_[index] = file_index;
         const Atom *atom = structure_.atoms(index);
         const Residue *residue = structure_.residues(residue_index);
-        PdbFile::AtomCardPtr card_ptr(new PdbAtomCard(
-                file_index, atom->name(), residue->name(),
-                residue_sequence_.size(),
-                atom->coordinate().x, atom->coordinate().y,
-                atom->coordinate().z,
-                get_element_symbol(atom->element())));
+        PdbAtomCardBuilder builder;
+        builder.initialize_from_atom(*atom);
+        builder.set_serial(file_index);
+        builder.set_res_name(residue->name());
+        builder.set_res_seq(residue_sequence_.size());
         if (!is_amino_acid_code(residue->name())) {
-            card_ptr->set_hetatm();
+            builder.set_hetatm(true);
         }
-        file_->insert_atom_card(card_ptr);
+        file_->insert_card(builder.build());
     }
 
     bool is_amino_acid_code(const string& name) const {
@@ -133,33 +130,14 @@ struct BuildPdbFile::Impl {
                     bond_list.push_back(mapped_atom);
             }
             std::sort(bond_list.begin(), bond_list.end());
-            int complete_rows = bond_list.size()/4;
-            for (int j = 0; j < complete_rows; j++) {
-                file_->insert_connect_card(PdbFile::ConnectCardPtr(
-                        new PdbConnectCard(i + 1,
-                                           bond_list[j*4],
-                                           bond_list[j*4 + 1], 
-                                           bond_list[j*4 + 2],
-                                           bond_list[j*4 + 3])
-                ));
-            }
-           
-            PdbConnectCard card;
-            card.connect1 = i + 1;
-            // The fall-through is intentional.
-            switch (bond_list.size()%4) {
-                case 0:
-                    break;
-                case 3:
-                    card.connect4 = bond_list[complete_rows*4 + 2];
-                case 2:
-                    card.connect3 = bond_list[complete_rows*4 + 1];
-                case 1:
-                    card.connect2 = bond_list[complete_rows*4];
-                    file_->insert_connect_card(PdbFile::ConnectCardPtr(
-                            new PdbConnectCard(card)));
-                    break;
-            }
+
+            vector<PdbConnectCard*> *cards =
+                    PdbConnectCard::create_cards(i + 1, bond_list);
+
+            for (int j = 0; j < cards->size(); j++)
+                file_->insert_card((*cards)[j]);
+
+            delete cards;
         }
     }
 
@@ -183,7 +161,7 @@ struct BuildPdbFile::Impl {
         AminoAcidCodeSet amino_acids;
         vector<size_t> *residue_index_table =
                 structure_.get_residue_index_table();
-        vector<shared_ptr<PdbLinkCard> > cards;
+        vector<PdbLinkCard*> cards;
         for (int i = 0; i < structure_.size(); i++) {
             const Structure::AdjList& adj_atoms = structure_.bonds(i);
             for (int j = 0; j < adj_atoms.size(); j++) {
@@ -198,13 +176,12 @@ struct BuildPdbFile::Impl {
                 if (amino_acids.lookup(name1) && amino_acids.lookup(name2)) {
                     continue;
                 }
-                cards.push_back(shared_ptr<PdbLinkCard>(
-                        new PdbLinkCard(structure_.atoms(i)->name(),
-                                        name1,
-                                        residue_map_[residue1_index],
-                                        structure_.atoms(adj_atoms[j])->name(),
-                                        name2,
-                                        residue_map_[residue2_index])));
+                cards.push_back(new PdbLinkCard(structure_.atoms(i)->name(),
+                                name1,
+                                residue_map_[residue1_index],
+                                structure_.atoms(adj_atoms[j])->name(),
+                                name2,
+                                residue_map_[residue2_index]));
             }
         }
         delete residue_index_table;
@@ -238,138 +215,9 @@ PdbFile *BuildPdbFile::operator()() {
     impl_->build_atom_section();
     impl_->build_connect_section();
     impl_->build_link_section();
-    impl_->file_->insert_card(PdbFile::CardPtr(new PdbEndCard));
+    impl_->file_->insert_card(new PdbEndCard);
 
     return impl_->file_;
 }
-
-
-
-
-
-
-
-
-/*
-
-PdbFile *PdbFileBuilder::build(const Structure& structure) {
-    PdbFile *file = new PdbFile;
-
-    //build_link_section(structure);
-    pair<vector<int>*, vector<int>*> atom_ret =
-        build_atom_section(file, structure);
-    build_connect_section(file, structure, *atom_ret.first, *atom_ret.second);
-
-    delete atom_ret.first;
-    delete atom_ret.second;
-
-    return file;
-}
-
-
-void PdbFileBuilder::build_link_section(PdbFile *file,
-                                        const Structure& structure) {
-}
-
-pair<vector<int>*, vector<int>*> PdbFileBuilder::build_atom_section(
-        PdbFile *file, const Structure& structure) {
-    vector<int> *sequence = new vector<int>;
-    sequence->reserve(structure.size());
-    vector<int> *atom_map = new vector<int>(structure.size(), -1);
-
-    Graph *link_graph = structure.get_link_graph();
-    
-    int residue_count = structure.residue_count();
-    deque<bool> marked(residue_count, false);
-    marked[0] = true;
-    stack<int> st;
-    st.push(0);
-    int cur_atom = 1;
-    int cur_residue = 1;
-    // This is the index of the first residue in the current molecule.
-    int molecule_start = 0;
-    while (true) {
-        // If the stack is empty, that means we're done with the current
-        // molecule, so we'll look for the next one.
-        if (st.empty()) {
-            while (molecule_start < residue_count && marked[molecule_start])
-                molecule_start++;
-            if (molecule_start == residue_count)
-                break;
-            st.push(molecule_start);
-            marked[molecule_start] = true;
-        }
-        int top = st.top();
-        const Residue *residue = structure.residues(top);
-        for (Residue::const_iterator it = residue->begin();
-                it != residue->end(); ++it) {
-            //int atom_index = std::distance(structure.begin(), it);
-            int atom_index = structure.get_atom_index(
-                    top, std::distance(residue->begin(), it));
-            (*atom_map)[atom_index] = cur_atom;
-            sequence->push_back(atom_index);
-            file->insert_atom_card(PdbFile::AtomCardPtr(new PdbAtomCard(
-                cur_atom++, (*it)->name(), residue->name(), cur_residue,
-                (*it)->coordinate().x, (*it)->coordinate().y,
-                (*it)->coordinate().z,
-                get_element_symbol((*it)->element()))));
-        }
-        st.pop();
-        bool is_terminal = true;
-        const Graph::AdjList& adj_list = link_graph->edges(top);
-        for (int i = 0; i < adj_list.size(); i++) {
-            if (!marked[adj_list[i]]) {
-                marked[adj_list[i]] = true;
-                st.push(adj_list[i]);
-                is_terminal = false;
-            }
-        }
-        if (is_terminal)
-            file->insert_card(PdbFile::CardPtr(new PdbTerCard));
-        cur_residue++;
-    }
-
-    delete link_graph;
-
-    return std::make_pair(sequence, atom_map);
-}
-
-void PdbFileBuilder::build_connect_section(PdbFile *file,
-                                           const Structure& structure,
-                                           const vector<int>& sequence,
-                                           const vector<int>& atom_map) {
-    for (int i = 0; i < sequence.size(); i++) {
-        Structure::AdjList row = structure.bonds(sequence[i]);
-        for (int j = 0; j < row.size(); j++)
-            row[j] = atom_map[row[j]];
-        std::sort(row.begin(), row.end());
-        int complete_rows = row.size()/4;
-        for (int j = 0; j < complete_rows; j++) {
-            file->insert_connect_card(PdbFile::ConnectCardPtr(
-                new PdbConnectCard(i + 1, row[j*4], row[j*4 + 1], 
-                                   row[j*4 + 2], row[j*4 + 3])
-            ));
-        }
-           
-        PdbConnectCard card;
-        card.connect1 = i + 1;
-        // The fall-through is intentional.
-        switch (row.size()%4) {
-          case 0:
-            break;
-          case 3:
-            card.connect4 = row[complete_rows*4 + 2];
-          case 2:
-            card.connect3 = row[complete_rows*4 + 1];
-          case 1:
-            card.connect2 = row[complete_rows*4];
-            file->insert_connect_card(PdbFile::ConnectCardPtr(
-                    new PdbConnectCard(card)));
-            break;
-        }
-    }
-}
-*/
-
 
 }  // namespace gmml

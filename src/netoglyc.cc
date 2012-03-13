@@ -16,6 +16,7 @@
 #include "gmml/internal/fasta_sequence.h"
 #include "gmml/internal/proteins.h"
 #include "gmml/internal/structure.h"
+#include "gmml/internal/stubs/file.h"
 #include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 
@@ -32,8 +33,12 @@ struct NetOGlycRunner::Impl {
     static const char *kInputFileName;
     static const char *kOutputFileName;
 
-    explicit Impl(const string& startup_script)
-            : startup_script(startup_script) {}
+    explicit Impl(const File& startup_script)
+            : startup_script(startup_script) {
+        if (!set_full_pathname(&this->startup_script)) {
+            throw FileNotFoundException(this->startup_script.pathname());
+        }
+    }
 
     ~Impl() {
         STLDeleteContainerPointers(fasta_sequences.begin(),
@@ -44,7 +49,7 @@ struct NetOGlycRunner::Impl {
     void exec_netoglyc();
     void cleanup_files();
 
-    string startup_script;
+    File startup_script;
     vector<FastaSequence*> fasta_sequences;
 };
 
@@ -64,9 +69,10 @@ void NetOGlycRunner::Impl::exec_netoglyc() {
     int fd = open(kOutputFileName, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     dup2(fd, 1);
     close(fd);
-    const char* const args[] = { startup_script.c_str(), kInputFileName,
+    const char* const args[] = { startup_script.pathname().c_str(),
+                                 kInputFileName,
                                  (char *) NULL };
-    execvp(startup_script.c_str(), const_cast<char* const *>(args));
+    execvp(startup_script.pathname().c_str(), const_cast<char* const *>(args));
 }
 
 void NetOGlycRunner::Impl::cleanup_files() {
@@ -74,8 +80,8 @@ void NetOGlycRunner::Impl::cleanup_files() {
     remove(kOutputFileName);
 }
 
-NetOGlycRunner::NetOGlycRunner(const string& startup_script)
-        : impl_(new Impl(find_file(startup_script))) {
+NetOGlycRunner::NetOGlycRunner(const File& startup_script)
+        : impl_(new Impl(startup_script)) {
 }
 
 NetOGlycRunner::~NetOGlycRunner() {

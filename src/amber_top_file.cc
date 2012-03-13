@@ -75,7 +75,7 @@ Status AmberTopIntSection::append(const string& line) {
     return kStatusOK;
 }
 
-void AmberTopIntSection::print(std::ostream& out) {
+void AmberTopIntSection::print(std::ostream& out) const {
     out << "%FLAG " << name_ << std::endl;
     out << "%FORMAT(" << count_per_line_ << "I" << width_ << ")" << std::endl;
     if (size() == 0) {
@@ -109,7 +109,7 @@ Status AmberTopDoubleSection::append(const string& line) {
     return kStatusOK;
 }
 
-void AmberTopDoubleSection::print(std::ostream& out) {
+void AmberTopDoubleSection::print(std::ostream& out) const {
     out << "%FLAG " << name_ << std::endl;
     out << "%FORMAT(" << count_per_line_ << "E" << width_ << "." <<
            decimal_places_ << ")" << std::endl;
@@ -147,7 +147,7 @@ Status AmberTopStringSection::append(const string& line) {
     return kStatusOK;
 }
 
-void AmberTopStringSection::print(std::ostream& out) {
+void AmberTopStringSection::print(std::ostream& out) const {
     out << "%FLAG " << name_ << std::endl;
     out << "%FORMAT(" << count_per_line_ << "a" << width_ << ")" << std::endl;
     if (size() == 0) {
@@ -167,12 +167,6 @@ void AmberTopStringSection::print(std::ostream& out) {
         out << std::setw(width_) << std::left <<
                elements_[(lines)*count_per_line_ + i];
     out << std::endl;
-}
-
-void AmberTopFile::read(const string& file_name) {
-    std::ifstream stream(find_file(file_name).c_str());
-    read(stream);
-    stream.close();
 }
 
 AmberTopFile::SectionPtr AmberTopFile::create_section(const string& name,
@@ -294,21 +288,10 @@ void AmberTopFile::process_section(std::istream& input, SectionPtr section) {
     sections_.insert(SectionMap::value_type(section->name(), section));
 }
 
-void AmberTopFile::print() {
-    write(std::cout);
-}
-
-void AmberTopFile::print(const string& file_name) {
-    std::ofstream out;
-    out.open(file_name.c_str());
-    write(out);
-    out.close();
-}
-
-void AmberTopFile::write(std::ostream& out) {
+void AmberTopFile::write(std::ostream& out) const {
     out << "%VERSION " << get_version_string() << std::endl;
     for (size_t i = 0; i < section_list_.size(); i++)
-       sections_[section_list_[i]]->print(out);
+        operator[](section_list_[i]).print(out);
 }
 
 std::string AmberTopFile::get_version_string() const {

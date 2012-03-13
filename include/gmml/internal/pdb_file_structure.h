@@ -14,6 +14,7 @@
 
 namespace gmml {
 
+class File;
 class PdbAtomCard;
 class PdbConnectCard;
 class PdbFile;
@@ -53,7 +54,7 @@ class PdbFileStructure : public Structure {
     //    the order that they're found in the file.
     static PdbFileStructure *build(const PdbStructureBuilder& builder);
 
-    static PdbFileStructure *build(const std::string& file);
+    static PdbFileStructure *build(const File& file);
 
     static PdbFileStructure *build(const PdbFile& pdb_file);
 
@@ -103,7 +104,7 @@ class PdbStructureBuilder {
     // environment, which are typically specified via the global functions
     // add_mapping, add_head_mapping, and add_tail_mapping. Mappings defined
     // in this class override the global mappings.
-    explicit PdbStructureBuilder(const std::string& pdb_file);
+    //explicit PdbStructureBuilder(const std::string& pdb_file);
     explicit PdbStructureBuilder(const PdbFile& pdb_file);
 
     virtual ~PdbStructureBuilder();

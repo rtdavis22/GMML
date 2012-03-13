@@ -106,6 +106,15 @@ inline Element get_element_by_char(char letter) {
     }
 }
 
+inline Element get_element_by_name(const std::string& name) {
+    for (int i = 0; i < name.size(); i++) {
+        if (is_uppercase(name[i])) {
+            return get_element_by_char(name[i]);
+        }
+    }
+    return kElementUnknown;
+}
+
 class Atom {
   public:
     // If a type isn't given, it's set to the empty string.

@@ -50,6 +50,16 @@ inline double to_degrees(double radians) {
     return radians*180.0/kPi;
 }
 
+
+inline bool is_uppercase(char c) {
+    return 'A' <= c && c <= 'Z';
+}
+
+inline bool is_lowercase(char c) {
+    return 'a' <= c && c <= 'z';
+}
+
+
 // Handy functors
 struct DeletePtr {
     template<class T>
@@ -73,18 +83,13 @@ void STLDeleteContainerPointers(ForwardIterator begin, ForwardIterator end) {
 }
 
 enum LogLevel {
-  LOGLEVEL_INFO,     // Informational.  This is never actually used by
-                     // libprotobuf.
+  LOGLEVEL_INFO,     // Informational.
   LOGLEVEL_WARNING,  // Warns about issues that, although not technically a
-                     // problem now, could cause problems in the future.  For
-                     // example, a // warning will be printed when parsing a
-                     // message that is near the message size limit.
+                     // problem now, could cause problems in the future.
   LOGLEVEL_ERROR,    // An error occurred which should never happen during
                      // normal use.
   LOGLEVEL_FATAL,    // An error occurred from which the library cannot
-                     // recover.  This usually indicates a programming error
-                     // in the code which calls the library, especially when
-                     // compiled in debug mode.
+                     // recover.
 
 #ifdef NDEBUG
   LOGLEVEL_DFATAL = LOGLEVEL_ERROR

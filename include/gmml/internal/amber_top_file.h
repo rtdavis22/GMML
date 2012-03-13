@@ -19,6 +19,7 @@
 
 #include "gmml/internal/generic_type.h"
 #include "gmml/internal/stubs/common.h"
+#include "gmml/internal/stubs/file.h"
 
 namespace gmml {
 
@@ -40,7 +41,7 @@ class AmberTopSection {
 
     virtual void insert(GenericType element) { elements_.push_back(element); }
     void clear() { elements_.clear(); }
-    virtual void print(std::ostream& out) = 0;
+    virtual void print(std::ostream& out) const = 0;
 
     // Compute sum, minimum and maximum values of the section.
     GenericType sum() const;
@@ -72,7 +73,7 @@ class AmberTopIntSection : public AmberTopSection {
                        size_t size = 0);
 
     virtual Status append(const std::string&);
-    virtual void print(std::ostream&);
+    virtual void print(std::ostream&) const;
 
   private:
     DISALLOW_COPY_AND_ASSIGN(AmberTopIntSection);
@@ -84,7 +85,7 @@ class AmberTopDoubleSection : public AmberTopSection {
                           size_t size = 0);
 
     virtual Status append(const std::string&);
-    virtual void print(std::ostream&);
+    virtual void print(std::ostream&) const;
 
   private:
     size_t decimal_places_;
@@ -98,13 +99,13 @@ class AmberTopStringSection : public AmberTopSection {
                           size_t size = 0);
 
     virtual Status append(const std::string&);
-    virtual void print(std::ostream&);
+    virtual void print(std::ostream&) const;
 
   private:
     DISALLOW_COPY_AND_ASSIGN(AmberTopStringSection);
 };
 
-class AmberTopFile {
+class AmberTopFile : public Readable, public Writeable {
   public:
     // The three types of sections that are possible in the file.
     enum SectionType { kStringSection, kIntSection, kDoubleSection };
@@ -119,13 +120,11 @@ class AmberTopFile {
     AmberTopFile() {}
 
     // Create a topology file by reading in a file on disk.
-    explicit AmberTopFile(const std::string& file_name) { read(file_name); }
+    explicit AmberTopFile(const std::string& file_name) {
+        Readable::read(file_name);
+    }
 
     virtual ~AmberTopFile() {}
-
-    // Write the topology file to disk or stdout.
-    void print(const std::string& file_name);
-    void print();
 
     // Create and return a pointer to a section with the given name and
     // FORTRAN format string.
@@ -154,8 +153,8 @@ class AmberTopFile {
 
   private:
     void read(const std::string& file_name);
-    void read(std::istream&);
-    void write(std::ostream&);
+    virtual void read(std::istream&);
+    virtual void write(std::ostream&) const;
     enum SectionType get_section_type(const std::string&);
     enum CardType get_card_type(const std::string&);
     std::string extract_format(const std::string&);

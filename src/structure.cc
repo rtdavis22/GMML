@@ -27,7 +27,6 @@
 #include "utilities.h"
 
 using std::deque;
-using std::list;
 using std::map;
 using std::string;
 using std::vector;

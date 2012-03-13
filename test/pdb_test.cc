@@ -3,13 +3,14 @@
 #include "gmml/gmml.h"
 #include "gtest/gtest.h"
 
+using gmml::File;
 using gmml::PdbFileStructure;
 using gmml::Residue;
 
 class PdbStructureTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
-        structure = PdbFileStructure::build("dat/1RVZ_New.pdb");
+        structure = PdbFileStructure::build(File("dat/1RVZ_New.pdb"));
     }
 
     virtual void TearDown() {

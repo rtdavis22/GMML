@@ -16,6 +16,7 @@
 #include "gmml/internal/pdb_file.h"
 #include "gmml/internal/residue.h"
 #include "gmml/internal/standard_proteins.h"
+#include "gmml/internal/stubs/file.h"
 #include "gmml/internal/stubs/utils.h"
 #include "utilities.h"
 
@@ -31,7 +32,19 @@ namespace gmml {
 struct PdbFileStructure::Impl {
     // The information in the PDB file that is needed for building the
     // structure. A PdbAtomCard that is NULL indicates a TER card.
-    struct RelevantPdbInfo {
+    struct RelevantPdbInfo : public PdbCardVisitor {
+        virtual void visit(const PdbAtomCard *card) {
+            atom_cards.push_back(new PdbAtomCard(*card));
+        }
+
+        virtual void visit(const PdbConnectCard *card) {
+            connect_cards.push_back(new PdbConnectCard(*card));
+        }
+
+        virtual void visit(const PdbTerCard *card) {
+            atom_cards.push_back(NULL);
+        }
+
         std::vector<PdbAtomCard*> atom_cards;
         std::vector<PdbConnectCard*> connect_cards;
     };
@@ -107,25 +120,25 @@ PdbFileStructure::Impl::get_indexed_residues(
             continue;
         }
 
-        Atom *new_atom = new Atom(get_element_by_char((*it)->element[0]),
-                                  Coordinate((*it)->x, (*it)->y, (*it)->z),
-                                  (*it)->name, "", (*it)->charge);
+        Atom *new_atom = new Atom((*it)->element(),
+                                  (*it)->coordinate(),
+                                  (*it)->name(), "", (*it)->charge());
 
         // Get the triple representing this atom's residue.
-        Triplet<int> *triple = new Triplet<int>((*it)->chain_id,
-                                                (*it)->res_seq,
-                                                (*it)->i_code);
+        Triplet<int> *triple = new Triplet<int>((*it)->chain_id(),
+                                                (*it)->res_seq(),
+                                                (*it)->i_code());
 
         std::pair<iterator, bool> ret = residue_map->insert(
                 std::make_pair(triple, static_cast<PdbIndexedResidue*>(NULL)));
         if (!ret.second) {
             delete triple;
         } else {
-            ret.first->second = new PdbIndexedResidue((*it)->res_name);
+            ret.first->second = new PdbIndexedResidue((*it)->res_name());
         }
 
         PdbIndexedResidue *cur_residue = ret.first->second;
-        cur_residue->append(new_atom, (*it)->serial);
+        cur_residue->append(new_atom, (*it)->serial());
 
         // This may be problematic if the residues in the PDB are mixed up.
         if (cur_residue != prev_residue) {
@@ -145,27 +158,9 @@ PdbFileStructure::Impl::get_indexed_residues(
 PdbFileStructure::Impl::RelevantPdbInfo*
 PdbFileStructure::Impl::get_relevant_pdb_info(
         const PdbFile& pdb_file) {
-    RelevantPdbInfo *pdb_info = new RelevantPdbInfo;
-    PdbFile::const_iterator it = pdb_file.begin();
-    while (it != pdb_file.end()) {
-        switch (PdbFile::get_card_type(*it)) {
-            case PdbFile::ATOM:
-                pdb_info->atom_cards.push_back(new PdbAtomCard(*it));
-                break;
-            case PdbFile::CONECT:
-                pdb_info->connect_cards.push_back(new PdbConnectCard(*it));
-                break;
-            case PdbFile::TER:
-                pdb_info->atom_cards.push_back(NULL);
-                break;
-            default:
-                // We don't care about any other card types.
-                break;
-        }
-        ++it;
-    }
-
-    return pdb_info;
+    RelevantPdbInfo *info = new RelevantPdbInfo;
+    pdb_file.accept(info);
+    return info;
 }
 
 // Public implementation
@@ -204,25 +199,7 @@ PdbFileStructure::pdb_iterator PdbFileStructure::pdb_end() const {
     return impl_->residue_map.end();
 }
 
-namespace {
-
-vector<int> *get_connect_atoms(const PdbConnectCard *card) {
-    vector<int> *atoms = new vector<int>;
-    if (card->connect2 != kNotSet)
-        atoms->push_back(card->connect2);
-    if (card->connect3 != kNotSet)
-        atoms->push_back(card->connect3);
-    if (card->connect4 != kNotSet)
-        atoms->push_back(card->connect4);
-    if (card->connect5 != kNotSet)
-        atoms->push_back(card->connect5);
-    return atoms;
-}
-
-}  // namespace
-
-
-PdbFileStructure *PdbFileStructure::build(const string& file) {
+PdbFileStructure *PdbFileStructure::build(const File& file) {
     return build(PdbFile(file));
 }
 
@@ -313,11 +290,11 @@ PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
     for (vector<PdbConnectCard*>::const_iterator it =
                 pdb_info->connect_cards.begin();
             it != pdb_info->connect_cards.end(); ++it) {
-        int source = structure->impl_->atom_map[(*it)->connect1];
+        int source = structure->impl_->atom_map[(*it)->source()];
 
-        vector<int> *atoms = get_connect_atoms((*it));
-        for (int i = 0; i < atoms->size(); i++) {
-            int mapped_atom = structure->impl_->atom_map[(*atoms)[i]];
+        for (int i = 0; i < (*it)->bonded_atom_count(); i++) {
+            int bonded_atom = (*it)->get_bonded_atom(i);
+            int mapped_atom = structure->impl_->atom_map[bonded_atom];
             if (mapped_atom < source)
                 structure->add_bond(source, mapped_atom);
         }
@@ -326,9 +303,14 @@ PdbFileStructure *PdbFileStructure::build(const PdbStructureBuilder& builder) {
     return structure;
 }
 
+/*
 PdbStructureBuilder::PdbStructureBuilder(const string& pdb_file)
-        : pdb_file_(pdb_file),
-          mapping_info_(*kDefaultEnvironment.pdb_mapping_info()) {}
+        : pdb_file_(PdbFile(pdb_file)),
+          mapping_info_(*kDefaultEnvironment.pdb_mapping_info()) {
+    PdbFile pdb(pdb_file);
+    
+}
+*/
 
 PdbStructureBuilder::PdbStructureBuilder(const PdbFile& pdb_file)
         : pdb_file_(pdb_file),

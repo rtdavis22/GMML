@@ -32,7 +32,6 @@ struct CoordinateFile::Impl {
         std::for_each(coordinates_.begin(), coordinates_.end(), DeletePtr());
     }
 
-    void read(const string& file_name);
     void read(std::istream& in);
     bool process_coordinate_line(const string& line);
     Coordinate *parse_coordinate(const string& str);
@@ -55,20 +54,14 @@ CoordinateFile::CoordinateFile() : impl_(new Impl) {
 }
 
 CoordinateFile::CoordinateFile(const string& file_name) : impl_(new Impl) {
-    impl_->read(file_name);
+    Readable::read(file_name);
 }
 
 CoordinateFile::~CoordinateFile() {
 }
 
-void CoordinateFile::print(const string& file_name) const {
-    std::ofstream out;
-    out.open(file_name.c_str());
-    write(out);
-}
-
-void CoordinateFile::print() const {
-    write(std::cout);
+void CoordinateFile::read(std::istream& in) {
+    impl_->read(in);
 }
 
 void CoordinateFile::write(std::ostream& out) const {
@@ -113,11 +106,6 @@ void CoordinateFile::add_noncoordinate(double x, double y, double z) {
     impl_->noncoordinate_count_++;
 }
 
-
-void CoordinateFile::Impl::read(const string& file_name) {
-    std::ifstream stream(find_file(file_name).c_str());
-    read(stream);
-}
 
 void CoordinateFile::Impl::read(std::istream& in) {
     string line;

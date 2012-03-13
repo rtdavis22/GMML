@@ -22,7 +22,7 @@ namespace gmml {
 // Standard Library Additions
 
 // This makes static map creation easy with a call such as
-// std::map<T,U> map = CreateMap<T,U>(t1, u1)(t2, u2), ...;
+// std::map<T, U> map = CreateMap<T,U>(t1, u1)(t2, u2), ...;
 template<typename T, typename U>
 class CreateMap {
   public:
@@ -129,7 +129,7 @@ inline std::vector<std::string>& split(const std::string& str, char delimiter,
 }
 
 inline bool is_number(char c) {
-    return c >= '0' && c <= '9';
+    return '0' <= c && c <= '9';
 }
 
 inline int char_to_number(char c) {

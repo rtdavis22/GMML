@@ -10,6 +10,7 @@
 
 namespace gmml {
 
+class File;
 class LibraryFile;
 class LibraryFileSet;
 class LibraryFileStructure;
@@ -32,10 +33,7 @@ class Environment {
     // Add a path to the paths searched when looking for a file
     void add_path(const std::string& path);
 
-    // This function traverses the list of paths and then the current directory
-    // and returns the full path of the first file it finds. If the file isn't
-    // found, it throws a FileNotFoundException.
-    std::string find_file(const std::string& file_name) const;
+    bool set_full_pathname(File *file) const;
 
     void load_library_file(const std::string& file_name);
     void load_library_file(const LibraryFile& library_file);
@@ -90,8 +88,8 @@ inline void add_path(const std::string& path) {
     kDefaultEnvironment.add_path(path);
 }
 
-inline std::string find_file(const std::string& file_name) {
-    return kDefaultEnvironment.find_file(file_name);
+inline bool set_full_pathname(File *file) {
+    return kDefaultEnvironment.set_full_pathname(file);
 }
 
 inline void load_library_file(const std::string& file_name) {

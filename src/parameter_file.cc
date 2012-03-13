@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "gmml/internal/environment.h"
+#include "gmml/internal/stubs/file.h"
 #include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 
@@ -107,9 +108,9 @@ const char *ParameterFileProcessingException::what() const throw() {
 }
 
 // Private implementation
-class ParameterFile::Impl {
+class ParameterFile::Impl : public Readable {
   public:
-    explicit Impl(const string& file) { read(file); }
+    explicit Impl(const string& file) { Readable::read(file); }
     ~Impl();
 
     const AtomTypeMap& atom_types() const { return atom_types_; }
@@ -122,9 +123,8 @@ class ParameterFile::Impl {
     }
 
   private:
-    // These throw ParameterFileProcessingException.
-    void read(const string& file);
-    void read(std::istream&);
+    // Throws ParameterFileProcessingException.
+    virtual void read(std::istream&);
 
     void process_atom_type(const string& line);
     void process_hydrophilic(const string& line);
@@ -159,12 +159,6 @@ ParameterFile::Impl::~Impl() {
     std::for_each(dihedrals_.begin(), dihedrals_.end(), DeletePtr());
     std::for_each(generic_dihedrals_.begin(), generic_dihedrals_.end(),
                   DeletePtr());
-}
-
-void ParameterFile::Impl::read(const string& file_name) {
-    std::ifstream stream(find_file(file_name).c_str());
-    read(stream);
-    stream.close();
 }
 
 void ParameterFile::Impl::read(std::istream& in) {
@@ -472,9 +466,11 @@ double ParameterFile::Impl::extract_kv_double(const string& str,
 }
 
 // Public implementation
-ParameterFile::ParameterFile(const string& file) : impl_(new Impl(file)) {}
+ParameterFile::ParameterFile(const string& file) : impl_(new Impl(file)) {
+}
 
-ParameterFile::~ParameterFile() {}
+ParameterFile::~ParameterFile() {
+}
 
 const ParameterFile::AtomTypeMap& ParameterFile::atom_types() const {
     return impl_->atom_types();
@@ -845,7 +841,8 @@ ParameterFile::DihedralSet::const_iterator ParameterSet::Impl::find_generic(
 }
 
 // Public implementation
-ParameterSet::ParameterSet() : impl_(new Impl) {}
+ParameterSet::ParameterSet() : impl_(new Impl) {
+}
 
 void ParameterSet::load(const ParameterFile& parameter_file) {
     impl_->load(parameter_file);

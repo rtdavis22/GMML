@@ -35,7 +35,7 @@ struct AccessibilityGroup {
 };
 
 struct ResidueAccessibilityInfo {
-    ResidueAccessibilityInfo(const std::string& line);
+    explicit ResidueAccessibilityInfo(const std::string& line);
 
     ~ResidueAccessibilityInfo();
 
@@ -54,7 +54,7 @@ struct ResidueAccessibilityInfo {
 
 class RsaInfo {
   public:
-    RsaInfo(const std::string& rsa_file);
+    explicit RsaInfo(const std::string& rsa_file);
 
     // These should be made const.
     const ResidueAccessibilityInfo *lookup(PdbResidueId *pdb_id);
@@ -76,7 +76,7 @@ class RsaInfo {
 
 class NAccessResults {
   public:
-    NAccessResults(const std::string& pdb_file);
+    explicit NAccessResults(const std::string& pdb_file);
 
     ~NAccessResults() { delete rsa_info_; }
 

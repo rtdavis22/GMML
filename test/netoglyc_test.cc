@@ -5,12 +5,13 @@
 
 using std::vector;
 
+using gmml::File;
 using gmml::NetOGlycResults;
 using gmml::NetOGlycRunner;
 using gmml::OGlycosylationLocations;
 
 TEST(NetOGlycTest, SetInvalidStartupScript) {
-    EXPECT_THROW(NetOGlycRunner("dat/bad.sh"),
+    EXPECT_THROW(NetOGlycRunner(File("dat/bad.sh")),
                  gmml::FileNotFoundException);
 }
 

@@ -13,6 +13,7 @@
 
 #include "gmml/internal/boxed_structure.h"
 #include "gmml/internal/stubs/common.h"
+#include "gmml/internal/stubs/file.h"
 
 namespace gmml {
 
@@ -20,14 +21,16 @@ class LibraryFileStructure;
 
 // This class represents an AMBER OFF library file. The file specification can
 // be found here: library file http://ambermd.org/doc/OFF_file_format.txt.
-class LibraryFile {
+class LibraryFile : public Readable {
   public:
     typedef boost::shared_ptr<LibraryFileStructure> StructurePtr;
     typedef std::map<std::string, StructurePtr>::iterator iterator;
     typedef std::map<std::string, StructurePtr>::const_iterator
             const_iterator;
 
-    explicit LibraryFile(const std::string& file_name) { read(file_name); }
+    explicit LibraryFile(const std::string& file_name) {
+        Readable::read(file_name);
+    }
 
     const_iterator begin() const { return structures_.begin(); }
     const_iterator end() const { return structures_.end(); }
@@ -39,7 +42,6 @@ class LibraryFile {
 
   private:
     void read(std::istream&);
-    void read(const std::string& file_name);
 
     // A mapping from the structure names at the top of the file to the
     // corresponding structure in the file.

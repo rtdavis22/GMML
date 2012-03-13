@@ -8,6 +8,7 @@
 #include <string>
 
 #include "gmml/internal/stubs/common.h"
+#include "gmml/internal/stubs/file.h"
 
 namespace gmml {
 
@@ -15,7 +16,7 @@ class Coordinate;
 
 // This class represents an AMBER restart file.
 // See http://ambermd.org/formats.html#restart for the file specification.
-class CoordinateFile {
+class CoordinateFile : public Readable, public Writeable {
   public:
     // The number of places after the decimal point.
     static const int kCoordinatePrecision = 7;
@@ -37,13 +38,7 @@ class CoordinateFile {
 
     virtual ~CoordinateFile();
 
-    // Writes the coordinate file to a given file.
-    void print(const std::string& file_name) const;
-
-    // Writes the coordinate file to standard output.
-    void print() const;
-
-    void write(std::ostream& out) const;
+    virtual void write(std::ostream& out) const;
 
     // Returns the total number of entries (triples) in the file.
     // size() == coordinate_count() + noncoordinate_count()
@@ -68,6 +63,8 @@ class CoordinateFile {
     void add_noncoordinate(double x, double y, double z);
 
   private:
+    virtual void read(std::istream&);
+
     struct Impl;
     std::auto_ptr<Impl> impl_;
 

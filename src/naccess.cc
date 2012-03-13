@@ -3,6 +3,7 @@
 #include "gmml/internal/naccess.h"
 
 #include "gmml/internal/environment.h"
+#include "gmml/internal/stubs/file.h"
 #include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
 
@@ -41,11 +42,11 @@ ResidueAccessibilityInfo::ResidueAccessibilityInfo(const string& line) {
 }
 
 RsaInfo::RsaInfo(const string& rsa_file) {
-    std::ifstream in(rsa_file.c_str());
-    if (in.fail()) {
-        in.close();
+    File file(rsa_file);
+    if (!file.exists()) {
         throw FileNotFoundException(rsa_file);
     }
+    std::ifstream in(file.pathname().c_str());
     string line;
     while (getline(in, line)) {
         if (line.substr(0, 3) == "RES") {
@@ -82,9 +83,13 @@ const ResidueAccessibilityInfo *RsaInfo::lookup(PdbResidueId *pdb_id) {
 
 // TODO: remove warnings for ignoring return val.
 NAccessResults::NAccessResults(const string& pdb_file) : rsa_info_(NULL) {
-    string full_path_of_pdb = find_file(pdb_file);
+    File file(pdb_file);
+    set_full_pathname(&file);
+    if (!file.exists()) {
+        throw FileNotFoundException(pdb_file);
+    }
     system("mkdir -p .naccess");
-    system(("cp " + full_path_of_pdb + " .naccess/input.pdb").c_str());
+    system(("cp " + file.pathname() + " .naccess/input.pdb").c_str());
     string command = string(NAccess::get_naccess_path()) + "naccess input.pdb" +
                      " 2>/dev/null >/dev/null";
     int status = system(("cd .naccess && " + command).c_str());

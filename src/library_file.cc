@@ -63,12 +63,6 @@ void LibraryFile::read(std::istream& in) {
     }
 }
 
-void LibraryFile::read(const string& file_name) {
-    std::ifstream stream(find_file(file_name).c_str());
-    read(stream);
-    stream.close();
-}
-
 void LibraryFileSet::load(const LibraryFile& library_file) {
     LibraryFile::const_iterator it;
     for (it = library_file.begin(); it != library_file.end(); ++it) {

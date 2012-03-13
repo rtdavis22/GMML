@@ -68,6 +68,7 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/structure.h \
   include/gmml/internal/structure-inl.h \
   include/gmml/internal/stubs/common.h \
+  include/gmml/internal/stubs/file.h \
   include/gmml/internal/stubs/logging.h \
   include/gmml/internal/stubs/utils.h \
   include/gmml/internal/tree.h \
@@ -104,6 +105,7 @@ libgmml_a_SOURCES = \
   src/solvated_structure.cc \
   src/standard_proteins.cc \
   src/structure.cc \
+  src/stubs/file.cc \
   src/utilities.h
 
 libgmml_a_CPPFLAGS = -I$(top_srcdir)/include

@@ -3,227 +3,301 @@
 #ifndef GMML_INTERNAL_PDB_FILE_H_
 #define GMML_INTERNAL_PDB_FILE_H_
 
+#include <deque>
 #include <iosfwd>
-#include <list>
-#include <set>
 #include <string>
 #include <vector>
 
-#include "boost/shared_ptr.hpp"
-
+#include "gmml/internal/atom.h"
+#include "gmml/internal/geometry.h"
 #include "gmml/internal/stubs/common.h"
+#include "gmml/internal/stubs/file.h"
 
 namespace gmml {
 
 class PdbCard;
+class PdbCardVisitor;
 class PdbAtomCard;
 class PdbConnectCard;
+class PdbEndCard;
 class PdbLinkCard;
+class PdbTerCard;
+class PdbUnknownCard;
 
-// This class should undergo some significant changes soon. See below.
-class PdbFile {
+class PdbFile : public Readable, public Writeable {
   public:
-    enum CardType { ATOM, CONECT, END, HETATM, LINK, TER, UNKNOWN };
-    typedef boost::shared_ptr<PdbCard> CardPtr;
-    typedef boost::shared_ptr<PdbAtomCard> AtomCardPtr;
-    typedef boost::shared_ptr<PdbConnectCard> ConnectCardPtr;
-    typedef std::vector<std::string>::iterator iterator;
-    typedef std::vector<std::string>::const_iterator const_iterator;
-
+    // Creates an empty PDB file.
     PdbFile() {}
-    PdbFile(const std::string& file_name) { read(file_name); }
 
-    iterator begin() { return lines_.begin(); }
-    const_iterator begin() const { return lines_.begin(); }
+    explicit PdbFile(const File& file) { Readable::read(file); }
 
-    iterator end() { return lines_.end(); }
-    const_iterator end() const { return lines_.end(); }
-
-    // This function only uses the first six letters of the line to determine
-    // the card type, so the input doesn't have to include the whole line.
-    static CardType get_card_type(const std::string& line);
-
-    void print(const std::string& file) const;
-    void print() const;
-
-    void insert_card(CardPtr card_ptr) { cards_.push_back(card_ptr); }
-    void insert_at_front(CardPtr card_ptr) { cards_.push_front(card_ptr); }
-    void insert_atom_card(AtomCardPtr card_ptr);
-    void insert_connect_card(ConnectCardPtr card_ptr);
-    void insert_link_card(boost::shared_ptr<PdbLinkCard> card_ptr);
-
-    const std::list<boost::shared_ptr<PdbAtomCard> >& atom_cards() const {
-        return atom_cards_;
+    virtual ~PdbFile() {
+        STLDeleteContainerPointers(cards_.begin(), cards_.end());
     }
-    const std::list<boost::shared_ptr<PdbConnectCard> >& connect_cards() const {
-        return connect_cards_;
-    }
+    
+    // The PdbFile now owns the pointer (no copy is made).
+    void insert_card(PdbCard *card) { cards_.push_back(card); }
+    void insert_at_front(PdbCard *card) { cards_.push_front(card); }
+
+    void accept(PdbCardVisitor *visitor) const;
 
   private:
-    void read(const std::string& file_name);
-    void read(std::istream&);
-    void write(std::ostream&) const;
+    virtual void read(std::istream&);
+    virtual void write(std::ostream&) const;
 
-    std::list<CardPtr> cards_;
-    std::list<boost::shared_ptr<PdbAtomCard> > atom_cards_;
-    std::list<boost::shared_ptr<PdbConnectCard> > connect_cards_;
-
-    // The raw lines of the file. The preferred method for using the data in
-    // pdb file is probably to traverse the raw lines, query the card type, and
-    // create an instance of the corresponding subclass of PdbCard. This is
-    // much better than storing PdbCard (base class) pointers and
-    // dynamic_cast()ing them to the correct subclass of PdbCard. Only storing
-    // raw lines also have the benefit of not doing the work (parsing) until
-    // it's needed, as clients likely won't need to use all the lines in the
-    // file. Therefore I think the previous three data member should go away.
-    std::vector<std::string> lines_;
+    std::deque<PdbCard*> cards_;
 
     DISALLOW_COPY_AND_ASSIGN(PdbFile);
 };
 
-class PdbCard {
+class PdbCardVisitor {
+  public:
+    virtual ~PdbCardVisitor() {}
+
+    virtual void visit(const PdbAtomCard *card) {}
+    virtual void visit(const PdbConnectCard *card) {}
+    virtual void visit(const PdbEndCard *card) {}
+    virtual void visit(const PdbLinkCard *card) {}
+    virtual void visit(const PdbTerCard *card) {}
+    virtual void visit(const PdbUnknownCard *card) {}
+
+  protected:
+    PdbCardVisitor() {}
+
+  private:
+    DISALLOW_COPY_AND_ASSIGN(PdbCardVisitor);
+};
+
+class PdbLine {
+  public:
+    enum CardType { ATOM, CONECT, END, LINK, TER, UNKNOWN };
+
+    PdbLine(const std::string& line) : data_(line) {}
+
+    PdbCard *get_card() const;
+
+    const std::string& data() const { return data_; }
+
+  private:
+    CardType get_card_type() const;
+
+    std::string data_;
+};
+
+class PdbCard : public Writeable {
   public:
     virtual ~PdbCard() {}
 
-    virtual PdbFile::CardType get_type() const = 0;
-
     virtual void write(std::ostream&) const = 0;
-    virtual void read(const std::string&) = 0;
+
+    virtual void accept(PdbCardVisitor *visitor) const = 0;
+
+  protected:
+    virtual void read(const PdbLine& line) = 0;
+};
+
+class PdbAtomCardBuilder {
+  public:
+    PdbAtomCardBuilder();
+
+    void initialize_from_atom(const Atom& atom);
+
+    PdbAtomCard *build() const;
+
+    void set_serial(int serial) { serial_ = serial; }
+    void set_name(const std::string& name) { name_ = name; }
+    void set_alt_loc(char alt_loc) { alt_loc_ = alt_loc; }
+    void set_res_name(const std::string& res_name) { res_name_ = res_name; }
+    void set_chain_id(char chain_id) { chain_id_ = chain_id; }
+    void set_res_seq(int res_seq) { res_seq_ = res_seq; }
+    void set_i_code(char i_code) { i_code_ = i_code; }
+    void set_coordinate(const Coordinate& coordinate) {
+        coordinate_ = coordinate;
+    }
+    void set_occupancy(double occupancy) { occupancy_ = occupancy; }
+    void set_temp_factor(double temp_factor) { temp_factor_ = temp_factor; }
+    void set_element(Element element) { element_ = element; }
+    void set_charge(double charge) { charge_ = charge; }
+    void set_hetatm(bool is_hetatm) { is_hetatm_ = is_hetatm; }
+
+    int serial() const { return serial_; }
+    std::string name() const { return name_; }
+    char alt_loc() const { return alt_loc_; }
+    std::string res_name() const { return res_name_; }
+    char chain_id() const { return chain_id_; }
+    int res_seq() const { return res_seq_; }
+    char i_code() const { return i_code_; }
+    const Coordinate& coordinate() const { return coordinate_; }
+    double occupancy() const { return occupancy_; }
+    double temp_factor() const { return temp_factor_; }
+    Element element() const { return element_; }
+    double charge() const { return charge_; }
+    bool is_hetatm() const { return is_hetatm_; }
+
+  private:
+    void validate() const;
+
+    int serial_;
+    std::string name_;
+    char alt_loc_;
+    std::string res_name_;
+    char chain_id_;
+    int res_seq_;
+    char i_code_;
+    Coordinate coordinate_;
+    double occupancy_;
+    double temp_factor_;
+    Element element_;
+    double charge_;
+    bool is_hetatm_;
 };
 
 class PdbAtomCard : public PdbCard {
   public:
-    PdbAtomCard(const std::string& line) { read(line); }
-    PdbAtomCard(int serial, const std::string& name, 
-                const std::string& res_name, int res_seq, 
-                double x, double y, double z, std::string element)
-            : serial(serial), name(name), alt_loc(' '), res_name(res_name), 
-              chain_id(' '), res_seq(res_seq), i_code(' '),
-              x(x), y(y), z(z), occupancy(1.0), temp_factor(0.0),
-              element(element), charge(kNotSet), is_hetatm_(false) {}
+    explicit PdbAtomCard(const PdbLine& line) { read(line); }
 
-    bool set_hetatm() { is_hetatm_ = true; }
+    explicit PdbAtomCard(const PdbAtomCardBuilder& builder);
 
-    int serial;
-    std::string name;
-    char alt_loc;
-    std::string res_name;
-    char chain_id;
-    int res_seq;
-    char i_code;
-    double x;
-    double y;
-    double z;
-    double occupancy;
-    double temp_factor;
-    std::string element;
-    double charge;
+    virtual void write(std::ostream& out) const;
 
-    bool is_hetatm_;
+    virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
 
-    PdbFile::CardType get_type() const { return PdbFile::ATOM; }
+    int serial() const { return serial_; }
+    std::string name() const { return name_; }
+    char alt_loc() const { return alt_loc_; }
+    std::string res_name() const { return res_name_; }
+    char chain_id() const { return chain_id_; }
+    int res_seq() const { return res_seq_; }
+    char i_code() const { return i_code_; }
+    const Coordinate& coordinate() const { return coordinate_; }
+    double occupancy() const { return occupancy_; }
+    double temp_factor() const { return temp_factor_; }
+    Element element() const { return element_; }
+    double charge() const { return charge_; }
+    bool is_hetatm() const { return is_hetatm_; }
 
-    void write(std::ostream& out) const;
+  private:
+    virtual void read(const PdbLine& line) { return read(line.data()); }
     void read(const std::string& line);
+
+    int serial_;
+    std::string name_;
+    char alt_loc_;
+    std::string res_name_;
+    char chain_id_;
+    int res_seq_;
+    char i_code_;
+    Coordinate coordinate_;
+    double occupancy_;
+    double temp_factor_;
+    Element element_;
+    double charge_;
+    bool is_hetatm_;
 };
 
 class PdbTerCard : public PdbCard {
   public:
-    PdbTerCard(const std::string& line) { read(line); }
     PdbTerCard() {}
 
-    PdbFile::CardType get_type() const { return PdbFile::TER; }
+    explicit PdbTerCard(const PdbLine& line) { read(line); }
 
-    void write(std::ostream& out) const;
-    void read(const std::string& /* line */) {}
+    virtual void write(std::ostream& out) const;
+
+    virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
+
+  private:
+    virtual void read(const PdbLine& /* line */) {}
 };
 
 class PdbConnectCard : public PdbCard {
   public:
-    PdbConnectCard(const std::string& line) { read(line); }
-    PdbConnectCard(int connect1, int connect2, int connect3, int connect4,
-                   int connect5) : connect1(connect1), connect2(connect2),
-                                   connect3(connect3), connect4(connect4),
-                                   connect5(connect5) {}
-    PdbConnectCard() : connect1(kNotSet), connect2(kNotSet), connect3(kNotSet),
-                       connect4(kNotSet), connect5(kNotSet) {}
+    explicit PdbConnectCard(int source) : source_(source) {}
 
-    PdbFile::CardType get_type() const { return PdbFile::CONECT; }
+    explicit PdbConnectCard(const PdbLine& line) { read(line); }
 
-    void write(std::ostream& out) const;
+    static std::vector<PdbConnectCard*> *create_cards(
+            int source, const std::vector<int>& bonded_atoms);
+
+    virtual void write(std::ostream& out) const;
+
+    virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
+
+    int source() const { return source_; }
+
+    int bonded_atom_count() const { return bonded_atoms_.size(); }
+
+    // Precondition: 0 <= index < bonded_atom_count()
+    int get_bonded_atom(int index) const { return bonded_atoms_.at(index); }
+
+    // Precondition: bonded_atom_count() < kMaxBondedAtoms
+    void add_bonded_atom(int serial);
+
+  private:
+    static const int kMaxBondedAtoms = 4;
+    static const int kItemWidth = 5;
+
+    static std::string get_too_many_bonds_error();
+
+    virtual void read(const PdbLine& line) { read(line.data()); }
     void read(const std::string& line);
 
-    int connect1;
-    int connect2;
-    int connect3;
-    int connect4;
-    int connect5;
+    int source_;
+    std::vector<int> bonded_atoms_;
 };
 
 class PdbEndCard : public PdbCard {
   public:
-    PdbEndCard(const std::string& line) { read(line); }
     PdbEndCard() {}
 
-    PdbFile::CardType get_type() const { return PdbFile::END; }
+    explicit PdbEndCard(const PdbLine& line) { read(line); }
 
-    void write(std::ostream& out) const;
-    void read(const std::string& /* line */) {}
+    virtual void write(std::ostream& out) const;
+
+    virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
+
+  private:
+    virtual void read(const PdbLine& /* line */) {}    
 };
 
 class PdbLinkCard : public PdbCard {
   public:
-    PdbLinkCard(const std::string& line) { read(line); }
+    explicit PdbLinkCard(const PdbLine& line) { read(line); }
+
     PdbLinkCard(const std::string& name1, const std::string& res_name1,
                 int res_seq1, const std::string& name2, 
                 const std::string& res_name2, int res_seq2)
-            : name1(name1), res_name1(res_name1), res_seq1(res_seq1), 
-              name2(name2), res_name2(res_name2), res_seq2(res_seq2) {}
+            : name1_(name1), res_name1_(res_name1), res_seq1_(res_seq1), 
+              name2_(name2), res_name2_(res_name2), res_seq2_(res_seq2) {}
 
-    PdbFile::CardType get_type() const { return PdbFile::LINK; }
+    virtual void write(std::ostream& out) const;
 
-    void write(std::ostream& out) const;
+    virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
+
+  private:
+    virtual void read(const PdbLine& line) { read(line.data()); }
     void read(const std::string& line);
 
-    std::string name1;
-    std::string res_name1;
-    int res_seq1;
-    std::string name2;
-    std::string res_name2;
-    int res_seq2;
-
-    bool operator<(const PdbLinkCard& rhs) const { 
-        return res_seq1 < rhs.res_seq1 || (res_seq1 == rhs.res_seq1 &&
-                                           res_seq2 < rhs.res_seq2);
-    }
+    std::string name1_;
+    std::string res_name1_;
+    int res_seq1_;
+    std::string name2_;
+    std::string res_name2_;
+    int res_seq2_;
 };
 
 class PdbUnknownCard : public PdbCard {
   public:
-    PdbUnknownCard(const std::string& line) { read(line); }
+    explicit PdbUnknownCard(const PdbLine& line) { read(line); }
 
-    PdbFile::CardType get_type() const { return PdbFile::UNKNOWN; }
+    virtual void write(std::ostream& out) const;
 
-    void write(std::ostream& out) const;
-    void read(const std::string& line) { this->line = line; }
+    virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
 
-    std::string line;
+  private:
+    virtual void read(const PdbLine& line) { this->line_ = line.data(); }
+
+    std::string line_;
 };
-
-inline void PdbFile::insert_atom_card(AtomCardPtr card_ptr) {
-    insert_card(card_ptr);
-    atom_cards_.push_back(card_ptr);
-}
-
-inline void PdbFile::insert_connect_card(ConnectCardPtr card_ptr) {
-    insert_card(card_ptr);
-    connect_cards_.push_back(card_ptr);
-}
-
-inline void PdbFile::insert_link_card(boost::shared_ptr<PdbLinkCard> card_ptr) {
-    insert_card(card_ptr);
-}
-
 
 }  // namespace gmml
 

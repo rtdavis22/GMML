@@ -43,19 +43,8 @@ void PrepFile::write(std::ostream& out) const {
     out << "STOP" << endl;
 }
 
-void PrepFile::print(const std::string& file_name) const {
-    std::ofstream out;
-    out.open(file_name.c_str());
-    write(out);
-}
-
 void PrepFile::add_residue(ResiduePtr residue) {
     add_or_update_map(residues_, residue->name(), residue);
-}
-
-void PrepFile::read(const string& file_name) {
-    std::ifstream stream(find_file(file_name).c_str());
-    read(stream);
 }
 
 void PrepFile::read(std::istream& in) {

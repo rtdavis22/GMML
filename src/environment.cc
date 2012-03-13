@@ -12,6 +12,7 @@
 #include "gmml/internal/prep_file.h"
 #include "gmml/internal/residue.h"
 #include "gmml/internal/structure.h"
+#include "gmml/internal/stubs/file.h"
 #include "utilities.h"
 
 namespace gmml {
@@ -67,24 +68,20 @@ void Environment::add_tail_mapping(const string& from, const string& to) {
     pdb_mapping_info_->tail_map.put(from, to);
 }
 
-string Environment::find_file(const std::string& file_name) const {
-    std::ifstream in;
-    for (vector<string>::const_iterator it = paths_.begin();
-            it != paths_.end(); ++it) {
-        string full_path = *it + file_name;
-        in.open(full_path.c_str());
-        if (!in.fail()) {
-            in.close();
-            return full_path;
+bool Environment::set_full_pathname(File *file) const {
+    if (file->exists()) {
+        return true;
+    }
+
+    for (int i = 0; i < paths_.size(); i++) {
+        string full_path = paths_[i] + file->pathname();
+        File candidate(full_path);
+        if (candidate.exists()) {
+            file->set_pathname(full_path);
+            return true;
         }
-        in.clear();
     }
-    in.open(file_name.c_str());
-    if (!in.fail()) {
-        in.close();
-        return file_name;
-    }
-    throw FileNotFoundException(file_name);
+    return false;
 }
 
 Environment kDefaultEnvironment;

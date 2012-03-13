@@ -15,6 +15,7 @@
 #include "boost/shared_ptr.hpp"
 
 #include "gmml/internal/stubs/common.h"
+#include "gmml/internal/stubs/file.h"
 
 namespace gmml {
 
@@ -23,7 +24,7 @@ class Residue;
 struct PrepFileAtom;
 struct PrepFileResidue;
 
-class PrepFile {
+class PrepFile : public Readable, public Writeable {
   public:
     typedef boost::shared_ptr<PrepFileResidue> ResiduePtr;
 
@@ -33,13 +34,13 @@ class PrepFile {
 
     PrepFile() {}
 
-    explicit PrepFile(const std::string& file_name) { read(file_name); }
+    explicit PrepFile(const std::string& file_name) {
+        Readable::read(file_name);
+    }
 
     virtual ~PrepFile() {}
 
-    void write(std::ostream&) const;
-
-    void print(const std::string& file_name) const;
+    virtual void write(std::ostream&) const;
 
     void add_residue(ResiduePtr residue);
 
@@ -58,8 +59,7 @@ class PrepFile {
     std::string header2() { return header2_; }
 
   private:
-    void read(const std::string& file_name);
-    void read(std::istream&);
+    virtual void read(std::istream&);
 
     std::map<std::string, ResiduePtr> residues_;
     std::string header1_;
