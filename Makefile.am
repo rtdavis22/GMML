@@ -28,8 +28,8 @@ clean-local:
 gmml_baseincludedir = $(includedir)/gmml
 gmml_baseinclude_HEADERS = include/gmml/gmml.h
 
-gmmlincludedir = $(includedir)/gmml/internal
-gmmlinclude_HEADERS = \
+gmml_includedir = $(includedir)/gmml/internal
+gmml_include_HEADERS = \
   include/gmml/internal/amber_top_builder.h \
   include/gmml/internal/amber_top_file.h \
   include/gmml/internal/array_tree.h \
@@ -67,12 +67,16 @@ gmmlinclude_HEADERS = \
   include/gmml/internal/standard_proteins.h \
   include/gmml/internal/structure.h \
   include/gmml/internal/structure-inl.h \
+  include/gmml/internal/tree.h \
+  include/gmml/internal/tree_residue.h
+
+gmml_stubs_includedir = $(includedir)/gmml/internal/stubs
+gmml_stubs_include_HEADERS = \
   include/gmml/internal/stubs/common.h \
   include/gmml/internal/stubs/file.h \
   include/gmml/internal/stubs/logging.h \
-  include/gmml/internal/stubs/utils.h \
-  include/gmml/internal/tree.h \
-  include/gmml/internal/tree_residue.h
+  include/gmml/internal/stubs/utils.h
+
 
 lib_LIBRARIES = libgmml.a
 libgmml_a_SOURCES = \
