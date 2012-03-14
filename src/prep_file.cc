@@ -503,6 +503,7 @@ class PrepFileResidue::CreatePrepFile {
 
     void create() {
         create_coordinate_list();
+        add_dummy_atoms();
         set_residue_info();
         create_tree_and_loops();
         build_prep_file_residue();
