@@ -9,7 +9,6 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <queue>
 #include <sstream>
 #include <stack>
 #include <utility>
@@ -24,12 +23,10 @@
 
 namespace gmml {
 
-using std::cout; //remove
-using std::endl; //remove
 using std::deque;
+using std::endl;
 using std::map;
 using std::pair;
-using std::queue;
 using std::stack;
 using std::string;
 using std::vector;
@@ -78,11 +75,6 @@ void PrepFileSet::load(const PrepFile& prep_file) {
 }
 
 
-
-
-
-
-
 struct PrepFileResidue::Impl {
     enum OtherSectionType { kSectionLoop, kSectionImproper, kSectionDone,
                             kSectionOther };
@@ -123,98 +115,7 @@ struct PrepFileResidue::Impl {
     vector<Loop*> loops;
 };
 
-class PrepFileResidue::CreatePrepFile {
-  public:
-    CreatePrepFile(PrepFileResidue *prep_residue, const Residue& residue)
-            : prep_residue_(prep_residue), residue_(residue),
-//              visited_(residue.size(), false),
-              index_in_file_(residue.size() + 3, -1),
-              parents_(residue.size(), -1) {
-        Coordinate dummy1(-5.0, -5.0, -5.0);
-        Coordinate dummy2(-4.5, -5.0, -5.0);
-        Coordinate dummy3(-4.7, -4.2, -4.0);
-        coordinate_list_.push_back(dummy1);
-        coordinate_list_.push_back(dummy2);
-        coordinate_list_.push_back(dummy3);
-        for (int i = 0; i < residue.size(); i++)
-            coordinate_list_.push_back(residue.atoms(i)->coordinate());
-        create();
-    }
-
-  private:
-    void create();
-    void add_atom(int index, int parent1, int parent2, int parent3, int count);
-    void add_loop(int index1, int index2);
-    void visit_atom(int index, int parent1, int parent2, int parent3);
-    int get_index_in_file(int index) const;
-    void add_dummy_atom(int index);
-    void set_main_chain();
-    int get_parent_index(int index) const;
-
-    struct SubatomCompare {
-        SubatomCompare(const Residue *residue) : residue_(residue) {}
-        bool operator()(int atom1, int atom2) const {
-            string name = residue_->name();
-            if (residue_->name().size() < 3) {
-                return atom1 < atom2;
-            }
-            bool is_l = name[1] >= 'a' && name[1] <= 'z';
-            bool is_beta = name[2] == 'U' || name[2] == 'B' || name[2] == 'v';
-            cout << "is_l" << is_l << endl;
-            cout << "is_beta" << is_beta << endl;
-            string name1 = residue_->atoms(atom1)->name();
-            string name2 = residue_->atoms(atom2)->name();
-
-            if (name1[0] == 'H')
-                return true;
-            else if (name2[0] == 'H')
-                return false;
-
-            if (!is_l && !is_beta)
-                return name1 < name2;
-            else if (!is_l && is_beta)
-                return name1 > name2;
-            else if (is_l && !is_beta) {
-               
-                return name1 > name2;
-            }
-            else
-                return name1 < name2;
-/*
-            Element element1 = residue_->atoms(atom1)->element();
-            Element element2 = residue_->atoms(atom2)->element();
-            if (is_l) {
-                bool result = element1 == kElementO;
-                //if (is_beta)
-                //    return !result;
-                return result;
-            } else {
-                bool result = element2 == kElementO;
-                //if (is_beta)
-                //    return !result;
-                return result;
-            }
-*/
-        };
-
-        const Residue *residue_;
-    };
-
-    vector<pair<int, int> > loops_to_add;
-    vector<int> parents_;
-    vector<Coordinate> coordinate_list_;
-    PrepFileResidue *prep_residue_;
-    const Residue& residue_;
-//    deque<bool> visited_;
-    vector<int> index_in_file_;
-};
-
-
 //Public impl
-PrepFileResidue::PrepFileResidue(const Residue& residue) : impl_(new Impl) {
-    CreatePrepFile(this, residue);
-}
-
 PrepFileResidue::PrepFileResidue() : impl_(new Impl) {
 }
 
@@ -493,286 +394,294 @@ PrepFileResidue::Impl::get_other_section_type(const string& line) {
 }
 
 
-void PrepFileResidue::CreatePrepFile::create() {
-    add_dummy_atom(0);
-    add_dummy_atom(1);
-    add_dummy_atom(2);
+namespace {
 
-    prep_residue_->impl_->header = "";
-    prep_residue_->impl_->file = "";
-    prep_residue_->impl_->name = residue_.name();
-    prep_residue_->impl_->coordinate_type = kINT;
-    prep_residue_->impl_->output_format = kFormatted;
-    prep_residue_->impl_->geometry_type = kGeometryCorrect;
-    prep_residue_->impl_->dummy_atom_omission = kOmit;
-    prep_residue_->impl_->dummy_atom_position = kPositionBeg;
-    prep_residue_->impl_->dummy_atom_type = "DU";
+struct SubatomCompare {
+    SubatomCompare(const Residue *residue) : residue_(residue) {}
 
-    int start_index = 0;
-    if (residue_.head() != -1)
-        start_index = residue_.head();
+    bool operator()(int atom1, int atom2) const {
+        string name = residue_->name();
+        if (residue_->name().size() < 3) {
+            return atom1 < atom2;
+        }
+        bool is_l = name[1] >= 'a' && name[1] <= 'z';
+        bool is_beta = name[2] == 'U' || name[2] == 'B' || name[2] == 'v';
+        string name1 = residue_->atoms(atom1)->name();
+        string name2 = residue_->atoms(atom2)->name();
 
+        if (name1[0] == 'H')
+            return true;
+        else if (name2[0] == 'H')
+            return false;
 
-    //vector<int> parents(residue_.size(), -1);
-    deque<bool> processed(residue_.size(), false);
-    deque<bool> discovered(residue_.size(), false);
-    vector<vector<int> > tree(residue_.size());
-    stack<pair<int, int> > st1;
-    st1.push(std::make_pair(start_index, -1));
-    discovered[start_index] = true;
-    cout << "NAME: " << residue_.name() << endl;
-    while (!st1.empty()) {
-        pair<int, int> cur = st1.top();
-        st1.pop();
-        if (processed[cur.first]) continue;
-        parents_[cur.first] = cur.second;
-        if (cur.second >= 0)
-            tree[cur.second].push_back(cur.first);
-        vector<size_t> bonds = residue_.bonds(cur.first);
-      
+        if (!is_l && !is_beta)
+            return name1 < name2;
+        else if (!is_l && is_beta)
+            return name1 > name2;
+        else if (is_l && !is_beta) {
+            return name1 > name2;
+        }
+        else
+            return name1 < name2;
+   };
 
-/*
-        for (int i = 0; i < bonds.size(); i++) {
-            if (residue_.atoms(bonds[i])->name()[0] == 'O') {
-                std::swap(bonds[i], bonds[bonds.size() - 1]);
-                break;
+    const Residue *residue_;
+};
+
+}  // namespace
+
+class PrepFileResidue::CreatePrepFile {
+  public:
+    CreatePrepFile(PrepFileResidue *prep_residue, const Residue& residue)
+            : prep_residue_(prep_residue), residue_(residue),
+              index_in_file_(residue.size() + 3, -1),
+              parents_(residue.size(), -1), tree_(residue.size()) {
+        create();
+    }
+
+    ~CreatePrepFile() {
+        std::for_each(coordinate_list_.begin(), coordinate_list_.end(),
+                      DeletePtr());
+    }
+
+  private:
+    void create_coordinate_list() {
+        // The dummy coordinates can probably be just any 3 non-collinear
+        // coordinates.
+        coordinate_list_.push_back(new Coordinate(-5.0, -5.0, -5.0));
+        coordinate_list_.push_back(new Coordinate(-4.5, -5.0, -5.0));
+        coordinate_list_.push_back(new Coordinate(-4.7, -4.2, -4.0));
+        for (int i = 0; i < residue_.size(); i++)
+            coordinate_list_.push_back(new Coordinate(
+                    residue_.atoms(i)->coordinate()));
+    }
+
+    void add_dummy_atoms() {
+        add_dummy_atom(0);
+        add_dummy_atom(1);
+        add_dummy_atom(2);
+    }
+
+    void add_dummy_atom(int index) {
+        PrepFileAtom *prep_atom = new PrepFileAtom;
+        prep_atom->index = index + 1;
+        prep_atom->name = "DUMM";
+        prep_atom->type = "DU";
+        prep_atom->topological_type = PrepFileAtom::kTopTypeM;
+        prep_atom->bond_index = index;
+        prep_atom->angle_index = index - 1;
+        prep_atom->dihedral_index = index - 2;
+        if (index >= 1) {
+            prep_atom->bond_length = measure(*coordinate_list_[index],
+                                             *coordinate_list_[index - 1]);
+        } else {
+            prep_atom->bond_length = 0.0;
+        }
+        if (index >= 2) {
+            prep_atom->angle = to_degrees(
+                    measure(*coordinate_list_[index],
+                            *coordinate_list_[index - 1]));
+        } else {
+            prep_atom->angle = 0.0;
+        }
+        prep_atom->dihedral = 0.0;
+        prep_atom->charge = 0.0;
+        prep_residue_->impl_->atoms.push_back(prep_atom);
+    }
+
+    void set_residue_info() {
+        prep_residue_->impl_->header = "";
+        prep_residue_->impl_->file = "";
+        prep_residue_->impl_->name = residue_.name();
+        prep_residue_->impl_->coordinate_type = kINT;
+        prep_residue_->impl_->output_format = kFormatted;
+        prep_residue_->impl_->geometry_type = kGeometryCorrect;
+        prep_residue_->impl_->dummy_atom_omission = kOmit;
+        prep_residue_->impl_->dummy_atom_position = kPositionBeg;
+        prep_residue_->impl_->dummy_atom_type = "DU";
+    }
+
+    void create() {
+        create_coordinate_list();
+        set_residue_info();
+        create_tree_and_loops();
+        build_prep_file_residue();
+        set_main_chain_top_types();
+        add_loops();
+    }
+
+    int get_start_index() const {
+        int start_index = 0;
+        if (residue_.head() != -1)
+            start_index = residue_.head();
+        return start_index;
+    }
+
+    void create_tree_and_loops() {
+        deque<bool> processed(residue_.size(), false);
+        deque<bool> discovered(residue_.size(), false);
+        stack<pair<int, int> > st;
+
+        int start_index = get_start_index();
+        st.push(std::make_pair(start_index, -1));
+        discovered[start_index] = true;
+        while (!st.empty()) {
+            pair<int, int> cur = st.top();
+            st.pop();
+            if (processed[cur.first]) continue;
+            parents_[cur.first] = cur.second;
+            if (cur.second >= 0)
+                tree_[cur.second].push_back(cur.first);
+            vector<size_t> bonds = residue_.bonds(cur.first);
+
+            std::sort(bonds.begin(), bonds.end(), SubatomCompare(&residue_));
+
+            std::reverse(bonds.begin(), bonds.end());
+            for (int i = 0; i < bonds.size(); i++) {
+                if (processed[bonds[i]] && bonds[i] != parents_[cur.first]) {
+                    loops_to_add_.push_back(std::make_pair(cur.first,
+                                                           bonds[i]));
+                } else if (!discovered[bonds[i]]) {
+                    st.push(std::make_pair(bonds[i], cur.first));
+                }
+            }
+            processed[cur.first] = true;
+        }
+    }
+
+    vector<int> *get_main_chain_atoms() {
+        vector<int> *main_chain = new vector<int>;
+        if (residue_.head() != -1) {
+            main_chain->push_back(residue_.head());
+            if (residue_.tail() != -1) {
+                int cur = residue_.tail();
+                while (cur != residue_.head()) {
+                    main_chain->push_back(cur);
+                    cur = parents_[cur];
+                }
             }
         }
-*/
-        std::sort(bonds.begin(), bonds.end(), SubatomCompare(&residue_));
+        return main_chain;
+    }
 
-        cout << "bonds for atom " << residue_.atoms(cur.first)->name() << "; ";
-        for (int i = 0; i < bonds.size(); i++) {
-            cout << residue_.atoms(bonds[i])->name() << " ";
+    void set_main_chain_top_types() {
+        vector<int> *main_chain = get_main_chain_atoms();
+        for (int i = 0; i < main_chain->size(); i++) {
+            int index_in_file = get_index_in_file((*main_chain)[i]);
+            prep_residue_->impl_->atoms[index_in_file]->topological_type =
+                    PrepFileAtom::kTopTypeM;
         }
-        cout << endl;
+        delete main_chain;
+    }
 
-/*
-        if (residue_.name().size() > 2) {
-            char letter = residue_.name()[1];
-            bool is_l = 'a' <= letter && letter <= 'z';
-            if (!is_l)
-                std::reverse(bonds.begin(), bonds.end());
-
+    void add_loops() {
+        for (int i = 0; i < loops_to_add_.size(); i++) {
+            add_loop(get_index_in_file(loops_to_add_[i].first),
+                     get_index_in_file(loops_to_add_[i].second));
         }
-*/
+    }
 
-        std::reverse(bonds.begin(), bonds.end());
-        for (int i = 0; i < bonds.size(); i++) {
-            if (processed[bonds[i]] && bonds[i] != parents_[cur.first]) {
-                loops_to_add.push_back(std::make_pair(cur.first, bonds[i]));
-            } else if (!discovered[bonds[i]]) {
-                //parents_[bonds[i]] = cur;
-                //tree[cur].push_back(bonds[i]);
-                //discovered[bonds[i]] = true;
-                st1.push(std::make_pair(bonds[i], cur.first));
+    void build_prep_file_residue() {
+        int start_index = get_start_index();
+        vector<int> *main_chain = get_main_chain_atoms();
+
+        stack<int> st;
+        st.push(start_index);
+        while (!st.empty()) {
+            int cur = st.top();
+            st.pop();
+            add_prep_file_atom(cur);
+
+            vector<int> subatoms(tree_[cur]);
+
+            sort_subatoms(&subatoms, *main_chain);
+
+            for (int i = static_cast<int>(subatoms.size()) - 1; i >= 0; i--) {
+                st.push(subatoms[i]);
             }
         }
-        processed[cur.first] = true;
+        delete main_chain;
     }
 
-    cout << residue_.name() << endl;
-    for (int i = 0; i < tree.size(); i++) {
-        cout << residue_.atoms(i)->name() << ": ";
-        for (int j = 0; j < tree[i].size(); j++) {
-            cout << residue_.atoms(tree[i][j])->name() << " ";
-        }
-        cout << endl;
-    }
-    //cout << endl;
-
-    if (residue_.tail() != -1) {
-        cout << "tail: " << residue_.atoms(residue_.tail())->name() << endl;
-    }
-    vector<int> main_chain;
-    if (residue_.head() != -1) {
-        main_chain.push_back(residue_.head());
-        if (residue_.tail() != -1) {
-            int cur = residue_.tail();
-            while (cur != residue_.head()) {
-                main_chain.push_back(cur);
-                cur = parents_[cur];
-            }
-        }
+    void add_prep_file_atom(int index) {
+        int parent = get_parent_index(index);
+        int grandparent = get_parent_index(parent);
+        int greatgrandparent = get_parent_index(grandparent);
+        add_prep_file_atom(index, parent, grandparent, greatgrandparent);
     }
 
-    cout << "main chain: ";
-    for (int i = 0; i < main_chain.size(); i++)
-        cout << residue_.atoms(main_chain[i])->name() << " ";
-    cout << endl << endl;
+    void add_prep_file_atom(int index, int parent1, int parent2, int parent3) {
+        int index_in_file = prep_residue_->atom_count();
+        index_in_file_[index] = index_in_file;
+        PrepFileAtom *prep_atom = new PrepFileAtom;
+        prep_atom->index = index_in_file + 1;
 
-    stack<int> st;
-    st.push(start_index);
-    //vector<int> index_in_file(residue_.size(), -1);
-    while (!st.empty()) {
-        int cur = st.top();
-        st.pop();
-        //int index_in_file = prep_residue_->atom_count();
-        //index_in_file_[cur] = index_in_file;
-        add_atom(cur, get_parent_index(cur),
-                      get_parent_index(get_parent_index(cur)),
-                      get_parent_index(get_parent_index(get_parent_index(cur))),
-                      tree[cur].size());
+        const Atom* atom = residue_.atoms(index);
+        prep_atom->name = atom->name();
+        prep_atom->type = atom->type();
+        prep_atom->topological_type = PrepFileAtom::get_topological_type(
+                tree_[index].size());
+        prep_atom->bond_index = get_index_in_file(parent1) + 1;
+        prep_atom->angle_index = get_index_in_file(parent2) + 1;
+        prep_atom->dihedral_index = get_index_in_file(parent3) + 1;
+        prep_atom->bond_length = measure(*coordinate_list_[index + 3],
+                                         *coordinate_list_[parent1 + 3]);
+        prep_atom->angle = to_degrees(measure(*coordinate_list_[index + 3],
+                                              *coordinate_list_[parent1 + 3],
+                                              *coordinate_list_[parent2 + 3]));
+        prep_atom->dihedral = to_degrees(
+                measure(*coordinate_list_[index + 3],
+                        *coordinate_list_[parent1 + 3],
+                        *coordinate_list_[parent2 + 3],
+                        *coordinate_list_[parent3 + 3]));
 
-        vector<int> subatoms(tree[cur]);
+        prep_atom->charge = atom->charge();
 
-        for (int i = 0; i < static_cast<int>(subatoms.size()) - 1; i++) {
+        prep_residue_->impl_->atoms.push_back(prep_atom);
+    }
+
+    void sort_subatoms(vector<int> *subatoms, const vector<int>& main_chain) {
+        for (int i = 0; i < static_cast<int>(subatoms->size()) - 1; i++) {
             for (int j = 0; j < main_chain.size(); j++) {
-                if (subatoms[i] == main_chain[j]) {
-                    std::swap(subatoms[i], subatoms[subatoms.size() - 1]);
+                if ((*subatoms)[i] == main_chain[j]) {
+                    std::swap((*subatoms)[i],
+                              (*subatoms)[subatoms->size() - 1]);
                     break;
                 }
             }
         }
-
-        std::reverse(subatoms.begin(), subatoms.end());
-
-        for (int i = 0; i < subatoms.size(); i++) {
-            st.push(subatoms[i]);
-        }
-
     }
 
-    for (int i = 0; i < main_chain.size(); i++) {
-        int index_in_file = get_index_in_file(main_chain[i]);
-        prep_residue_->impl_->atoms[index_in_file]->topological_type =
-                PrepFileAtom::kTopTypeM;
+    void add_loop(int index1, int index2) {
+        prep_residue_->impl_->loops.push_back(new Loop(index1, index2));
     }
 
-    for (int i = 0; i < loops_to_add.size(); i++)
-        add_loop(get_index_in_file(loops_to_add[i].first),
-                 get_index_in_file(loops_to_add[i].second));
-    //visit_atom(start_index, -1, -2, -3);
+    int get_index_in_file(int index) const {
+        if (index < 0)
+            return index + 3;
+        return index_in_file_[index];
+    }
 
-    //set_main_chain();
+    int get_parent_index(int index) const {
+        if (index < 0)
+            return index - 1;
+        return parents_[index];
+    }
+
+    vector<pair<int, int> > loops_to_add_;
+    vector<int> parents_;
+    vector<Coordinate*> coordinate_list_;
+    PrepFileResidue *prep_residue_;
+    const Residue& residue_;
+    vector<int> index_in_file_;
+    vector<vector<int> > tree_;
+};
+
+
+// Move back up with PrepFileResidue
+PrepFileResidue::PrepFileResidue(const Residue& residue) : impl_(new Impl) {
+    CreatePrepFile(this, residue);
 }
-
-int PrepFileResidue::CreatePrepFile::get_parent_index(int index) const {
-    if (index < 0)
-        return index - 1;
-    return parents_[index];
-}
-
-void PrepFileResidue::CreatePrepFile::add_dummy_atom(int index) {
-    PrepFileAtom *prep_atom = new PrepFileAtom;
-    prep_atom->index = index + 1;
-    prep_atom->name = "DUMM";
-    prep_atom->type = "DU";
-    prep_atom->topological_type = PrepFileAtom::kTopTypeM;
-    prep_atom->bond_index = index;
-    prep_atom->angle_index = index - 1;
-    prep_atom->dihedral_index = index - 2;
-    if (index >= 1) {
-        prep_atom->bond_length = measure(coordinate_list_[index],
-                                         coordinate_list_[index - 1]);
-    } else {
-        prep_atom->bond_length = 0.0;
-    }
-    if (index >= 2) {
-        prep_atom->angle = to_degrees(measure(coordinate_list_[index],
-                                              coordinate_list_[index - 1]));
-    } else {
-        prep_atom->angle = 0.0;
-    }
-    prep_atom->dihedral = 0.0;
-    prep_atom->charge = 0.0;
-    prep_residue_->impl_->atoms.push_back(prep_atom);
-}
-
-
-int PrepFileResidue::CreatePrepFile::get_index_in_file(int index) const {
-    if (index < 0)
-        return index + 3;
-    return index_in_file_[index];
-}
-
-
-void PrepFileResidue::CreatePrepFile::add_atom(int index, int parent1,
-                                               int parent2, int parent3,
-                                               int count) {
-    int index_in_file = prep_residue_->atom_count();
-    index_in_file_[index] = index_in_file;
-    PrepFileAtom *prep_atom = new PrepFileAtom;
-    prep_atom->index = index_in_file + 1;
-
-    const Atom* atom = residue_.atoms(index);
-    prep_atom->name = atom->name();
-    prep_atom->type = atom->type();
-    prep_atom->topological_type = PrepFileAtom::get_topological_type(count);
-    prep_atom->bond_index = get_index_in_file(parent1) + 1;
-    prep_atom->angle_index = get_index_in_file(parent2) + 1;
-    prep_atom->dihedral_index = get_index_in_file(parent3) + 1;
-    prep_atom->bond_length = measure(coordinate_list_[index + 3],
-                                     coordinate_list_[parent1 + 3]);
-    prep_atom->angle = to_degrees(measure(coordinate_list_[index + 3],
-                               coordinate_list_[parent1 + 3],
-                               coordinate_list_[parent2 + 3]));
-    prep_atom->dihedral = to_degrees(measure(coordinate_list_[index + 3],
-                                  coordinate_list_[parent1 + 3],
-                                  coordinate_list_[parent2 + 3],
-                                  coordinate_list_[parent3 + 3]));
-    prep_atom->charge = atom->charge();
-
-    prep_residue_->impl_->atoms.push_back(prep_atom);
-}
-
-
-void PrepFileResidue::CreatePrepFile::add_loop(int index1, int index2) {
-    prep_residue_->impl_->loops.push_back(new Loop(index1, index2));
-}
-
-/*
-void PrepFileResidue::CreatePrepFile::visit_atom(int index, int parent1,
-                                                 int parent2, int parent3) {
-    if (visited_[index])
-        return;
-    visited_[index] = true;
-    int count = 0;
-    const vector<size_t>& bonds = residue_.bonds(index);
-    vector<int> sub_atoms;
-    vector<int> loops_to_add;
-    for (int i = 0; i < bonds.size(); i++) {
-        if (visited_[bonds[i]] && bonds[i] != parent1) {
-            loops_to_add.push_back(bonds[i]);
-            //add_loop(index_in_file_[index] + 1, index_in_file_[bonds[i]] + 1);
-
-            //cout << "loop from " << index << " (" <<
-            //        residue_.atoms(index)->name() << ") to " <<
-            //        bonds[i] << " (" << residue_.atoms(bonds[i])->name() <<
-            //        ")" << endl;
-        } else if (!visited_[bonds[i]]) {
-            count++;
-            sub_atoms.push_back(bonds[i]);
-        }
-    }
-
-    std::sort(sub_atoms.begin(), sub_atoms.end(), SubatomCompare(&residue_));
-    for (int i = 0; i < sub_atoms.size(); i++) {
-        if (residue_.tail() == sub_atoms[i]) {
-            std::swap(sub_atoms[i], sub_atoms[sub_atoms.size() - 1]);
-            break;
-        }
-    }
-
-  
-    parent_list_[index] = parent1;
-    add_atom(index, parent1, parent2, parent3, count);
-
-    //cout << "Atom " << index << " has subatom count " << count << " " <<
-    //        measure(coordinate_list_[index + 3], coordinate_list_[parent1 + 3]) << endl;
-    for (int i = 0; i < sub_atoms.size(); i++) {
-        visit_atom(sub_atoms[i], index, parent1, parent2);
-    }
-
-    for (int i = 0; i < loops_to_add.size(); i++) {
-        add_loop(index_in_file_[index],
-                 index_in_file_[loops_to_add[i]]);
-    }
-}
-
-*/
-
-
 
 struct PrepFileAtom::Impl {
     TopologicalType extract_topological_type(std::istream& in) const;
@@ -857,11 +766,6 @@ PrepFileAtom::TopologicalType PrepFileAtom::Impl::extract_topological_type(
 }
 
 
-
-
-
-
-
 namespace {
 
 void set_parent_list(const PrepFileResidue& residue,
@@ -922,7 +826,6 @@ void set_dummy_coordinates(const PrepFileResidue& residue,
 
 Residue *BuildPrepFileResidue::operator()(
         const PrepFileResidue& prep_file_residue) const {
-    //const vector<PrepFileAtom*> atom_list = prep_file_residue.atoms;
     // The index of the parent of each atom
     vector<int> parent_list(prep_file_residue.atom_count());
     set_parent_list(prep_file_residue, parent_list);
