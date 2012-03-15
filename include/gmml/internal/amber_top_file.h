@@ -41,7 +41,7 @@ class AmberTopSection {
 
     virtual void insert(GenericType element) { elements_.push_back(element); }
     void clear() { elements_.clear(); }
-    virtual void print(std::ostream& out) const = 0;
+    virtual void print(std::ostream& out) = 0;
 
     // Compute sum, minimum and maximum values of the section.
     GenericType sum() const;
@@ -73,7 +73,7 @@ class AmberTopIntSection : public AmberTopSection {
                        size_t size = 0);
 
     virtual Status append(const std::string&);
-    virtual void print(std::ostream&) const;
+    virtual void print(std::ostream&);
 
   private:
     DISALLOW_COPY_AND_ASSIGN(AmberTopIntSection);
@@ -85,7 +85,7 @@ class AmberTopDoubleSection : public AmberTopSection {
                           size_t size = 0);
 
     virtual Status append(const std::string&);
-    virtual void print(std::ostream&) const;
+    virtual void print(std::ostream&);
 
   private:
     size_t decimal_places_;
@@ -99,13 +99,15 @@ class AmberTopStringSection : public AmberTopSection {
                           size_t size = 0);
 
     virtual Status append(const std::string&);
-    virtual void print(std::ostream&) const;
+    virtual void print(std::ostream&);
 
   private:
     DISALLOW_COPY_AND_ASSIGN(AmberTopStringSection);
 };
 
-class AmberTopFile : public Readable, public Writeable {
+// Should implement Writeable, but there is some problem with making write
+// const and GenericType.
+class AmberTopFile : public Readable  {
   public:
     // The three types of sections that are possible in the file.
     enum SectionType { kStringSection, kIntSection, kDoubleSection };
@@ -151,10 +153,13 @@ class AmberTopFile : public Readable, public Writeable {
         return *sections_.find(s)->second;
     }
 
+    void print(const std::string& file_name);
+    void print();
+
   private:
     void read(const std::string& file_name);
     virtual void read(std::istream&);
-    virtual void write(std::ostream&) const;
+    virtual void write(std::ostream&);
     enum SectionType get_section_type(const std::string&);
     enum CardType get_card_type(const std::string&);
     std::string extract_format(const std::string&);

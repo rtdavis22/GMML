@@ -75,7 +75,7 @@ Status AmberTopIntSection::append(const string& line) {
     return kStatusOK;
 }
 
-void AmberTopIntSection::print(std::ostream& out) const {
+void AmberTopIntSection::print(std::ostream& out) {
     out << "%FLAG " << name_ << std::endl;
     out << "%FORMAT(" << count_per_line_ << "I" << width_ << ")" << std::endl;
     if (size() == 0) {
@@ -109,7 +109,7 @@ Status AmberTopDoubleSection::append(const string& line) {
     return kStatusOK;
 }
 
-void AmberTopDoubleSection::print(std::ostream& out) const {
+void AmberTopDoubleSection::print(std::ostream& out) {
     out << "%FLAG " << name_ << std::endl;
     out << "%FORMAT(" << count_per_line_ << "E" << width_ << "." <<
            decimal_places_ << ")" << std::endl;
@@ -147,7 +147,7 @@ Status AmberTopStringSection::append(const string& line) {
     return kStatusOK;
 }
 
-void AmberTopStringSection::print(std::ostream& out) const {
+void AmberTopStringSection::print(std::ostream& out) {
     out << "%FLAG " << name_ << std::endl;
     out << "%FORMAT(" << count_per_line_ << "a" << width_ << ")" << std::endl;
     if (size() == 0) {
@@ -288,7 +288,18 @@ void AmberTopFile::process_section(std::istream& input, SectionPtr section) {
     sections_.insert(SectionMap::value_type(section->name(), section));
 }
 
-void AmberTopFile::write(std::ostream& out) const {
+void AmberTopFile::print() {
+    write(std::cout);
+}
+
+void AmberTopFile::print(const string& file_name) {
+    std::ofstream out;
+    out.open(file_name.c_str());
+    write(out);
+    out.close();
+}
+
+void AmberTopFile::write(std::ostream& out) {
     out << "%VERSION " << get_version_string() << std::endl;
     for (size_t i = 0; i < section_list_.size(); i++)
         operator[](section_list_[i]).print(out);
