@@ -3,14 +3,19 @@
 #include "gmml/gmml.h"
 #include "gtest/gtest.h"
 
+using gmml::Atom;
 using gmml::File;
+using gmml::PdbFile;
 using gmml::PdbFileStructure;
+using gmml::PdbStructureBuilder;
 using gmml::Residue;
 
 class PdbStructureTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
-        structure = PdbFileStructure::build(File("dat/1RVZ_New.pdb"));
+        PdbFile pdb_file(File("dat/1RVZ_New.pdb"));
+        PdbStructureBuilder builder(pdb_file);
+        structure = builder.build();
     }
 
     virtual void TearDown() {
@@ -41,6 +46,14 @@ TEST_F(PdbStructureTest, MapResidueInvalid) {
     EXPECT_EQ(-1, structure->map_residue('Z', 3));
 }
 
-TEST_F(PdbStructureTest, MapAtomValue) {
-    
+TEST_F(PdbStructureTest, MapAtomValid) {
+    int atom_index = structure->map_atom(53);
+    ASSERT_GE(atom_index, 0);
+    ASSERT_LT(atom_index, structure->size());
+    const Atom *atom = structure->atoms(atom_index);
+    EXPECT_EQ("OH", atom->name());
+    EXPECT_EQ(gmml::kElementO, atom->element());
+    EXPECT_EQ(16.653, atom->coordinate().x);
+    EXPECT_EQ(-25.833, atom->coordinate().y);
+    EXPECT_EQ(15.868, atom->coordinate().z);
 }

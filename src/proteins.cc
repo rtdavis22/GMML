@@ -2,13 +2,14 @@
 
 #include "gmml/internal/proteins.h"
 
+#include <map>
+
+#include "gmml/internal/environment.h"
 #include "gmml/internal/residue.h"
 #include "gmml/internal/structure.h"
 #include "gmml/internal/stubs/common.h"
 #include "gmml/internal/stubs/logging.h"
 #include "utilities.h"
-
-#include <map>
 
 using std::map;
 using std::string;
@@ -40,7 +41,7 @@ const char *kAminoAcidCodes[] = {
   "VAL", "V"
 };
 
-}  // namespace gmml
+}  // namespace
 
 struct AminoAcidCodeSet::Impl {
     Impl();
@@ -125,6 +126,108 @@ vector<int> *get_asns_with_sequon(const Structure& structure) {
         }
     }
     return asns;
+}
+
+namespace {
+
+const char *kNTerminusMap[] = {
+  "ALA", "NALA",
+  "ARG", "NARG",
+  "ASN", "NASN",
+  "ASP", "NASP",
+  "CYS", "NCYS",
+  "CYX", "NCYX",
+  "GLN", "NGLN",
+  "GLU", "NGLU",
+  "GLY", "NGLY",
+  "HID", "NHID",
+  "HIE", "NHIE",
+  "HIP", "NHIP",
+  "ILE", "NILE",
+  "LEU", "NLEU",
+  "LYS", "NLYS",
+  "MET", "NMET",
+  "PHE", "NPHE",
+  "PRO", "NPRO",
+  "SER", "NSER",
+  "THR", "NTHR",
+  "TRP", "NTRP",
+  "TYR", "NTYR",
+  "VAL", "NVAL",
+  "HIS", "NHIE",
+  "GUA", "DG5",
+  "ADE", "DA5",
+  "CYT", "DC5",
+  "THY", "DT5",
+  "G", "RG5",
+  "A", "RA5",
+  "C", "RC5",
+  "U", "RU5",
+  "DG", "DG5",
+  "DA", "DA5",
+  "DC", "DC5",
+  "DT", "DT5"
+};
+
+const char *kCTerminusMap[] = {
+  "ALA", "CALA",
+  "ARG", "CARG",
+  "ASN", "CASN",
+  "ASP", "CASP",
+  "CYS", "CCYS",
+  "CYX", "CCYX",
+  "GLN", "CGLN",
+  "GLU", "CGLU",
+  "GLY", "CGLY",
+  "HID", "CHID",
+  "HIE", "CHIE",
+  "HIP", "CHIP",
+  "ILE", "CILE",
+  "LEU", "CLEU",
+  "LYS", "CLYS",
+  "MET", "CMET",
+  "PHE", "CPHE",
+  "PRO", "CPRO",
+  "SER", "CSER",
+  "THR", "CTHR",
+  "TRP", "CTRP",
+  "TYR", "CTYR",
+  "VAL", "CVAL",
+  "HIS", "CHIE",
+  "GUA", "DG3",
+  "ADE", "DA3",
+  "CYT", "DC3",
+  "THY", "DT3",
+  "G", "RG3",
+  "A", "RA3",
+  "C", "RC3",
+  "U", "RU3",
+  "DG", "DG3",
+  "DA", "DA3",
+  "DC", "DC3",
+  "DT", "DT3"
+};
+
+const char *kResidueMap[] = {
+  "HIS", "HIE",
+  // Only ones with a sulfur bonds should be CYX
+  "CYS", "CYX"
+};
+
+}  // namespace
+
+void load_amino_acid_mappings() {
+    for (int i = 0; i < ARRAY_SIZE(kNTerminusMap); i += 2) {
+        add_head_mapping(kNTerminusMap[i], kNTerminusMap[i + 1]);
+    }
+
+    for (int i = 0; i < ARRAY_SIZE(kCTerminusMap); i += 2) {
+        add_tail_mapping(kCTerminusMap[i], kCTerminusMap[i + 1]);
+    }
+
+    for (int i = 0; i < ARRAY_SIZE(kResidueMap); i += 2) {
+        add_residue_mapping(kResidueMap[i], kResidueMap[i + 1]);
+    }
 }
 
 }  // namespace gmml

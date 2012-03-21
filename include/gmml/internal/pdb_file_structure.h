@@ -19,13 +19,21 @@ class PdbAtomCard;
 class PdbConnectCard;
 class PdbFile;
 
+class PdbChain;
 class PdbMappingInfo;
+class PdbMappingResults;
 class PdbStructureBuilder;
 
 // TODO: This should be used throughout in place of Triplet<int>.
 struct PdbResidueId {
     PdbResidueId(char chain_id, int res_num, char i_code)
             : chain_id(chain_id), res_num(res_num), i_code(i_code) {}
+
+    bool equals(const PdbResidueId *rhs) const {
+        return chain_id == rhs->chain_id &&
+               res_num == rhs->res_num &&
+               i_code == rhs->i_code;
+    }
 
     char chain_id;
     int res_num;
@@ -34,7 +42,11 @@ struct PdbResidueId {
 
 class PdbFileStructure : public Structure {
   public:
-    typedef std::map<Triplet<int>*, int>::const_iterator pdb_iterator;
+    explicit PdbFileStructure(const PdbStructureBuilder& builder);
+
+    //explicit PdbFileStructure(const File& file);
+
+    //explicit PdbFileStructure(const PdbFile& pdb_file);
 
     virtual ~PdbFileStructure();
 
@@ -52,14 +64,7 @@ class PdbFileStructure : public Structure {
     //    mapping in PdbStructureBuilder), the atoms in the residue will be
     //    in the same order as the mapped residue. Otherwise, the atoms are in
     //    the order that they're found in the file.
-    static PdbFileStructure *build(const PdbStructureBuilder& builder);
 
-    static PdbFileStructure *build(const File& file);
-
-    static PdbFileStructure *build(const PdbFile& pdb_file);
-
-    pdb_iterator pdb_begin() const;
-    pdb_iterator pdb_end() const;
 
     // Returns the index of the atom corresponding to the atom with the given
     // pdb sequence number. -1 is returned if the sequence number is not in
@@ -80,9 +85,16 @@ class PdbFileStructure : public Structure {
         return map_residue(' ', residue_number);
     }
 
-  private:
-    PdbFileStructure();
+    void append(const IndexedResidue *residue,
+                const PdbResidueId *pdb_residue_id);
 
+    const PdbMappingResults *get_mapping_results() const;
+
+    int chain_count() const;
+
+    const PdbChain *chains(int index) const;
+
+  private:
     struct Impl;
     std::auto_ptr<Impl> impl_;
 
@@ -147,22 +159,25 @@ class PdbStructureBuilder {
     // 3. Tail mappings (if is_tail is true).
     // 4. Generic mappings. 
     // If a mapping is not found, the specified residue name is returned.
-    std::string map_pdb_residue(Triplet<int> *pdb_index,
+    std::string map_pdb_residue(const PdbResidueId *pdb_residue_id,
                                 const std::string& residue_name,
                                 bool is_head, bool is_tail) const;
 
-    PdbFileStructure *build() { return PdbFileStructure::build(*this); }
+    PdbFileStructure *build() { return new PdbFileStructure(*this); }
 
     const PdbFile& pdb_file() const { return pdb_file_; }
 
+    bool use_residue_map() const { return use_residue_map_; }
+
   private:
-    // TODO: make this a defensive copy of the PdbFile.
     const PdbFile& pdb_file_;
     PdbMappingInfo mapping_info_;
     std::map<Triplet<int>*, std::string,
              TripletPtrLess<int> > pdb_residue_map_;
+    bool use_residue_map_;
 };
 
+// Modify to all TripletLess
 struct PdbResidueIdLess {
     bool operator()(const PdbResidueId& lhs, const PdbResidueId& rhs) const {
         if (lhs.chain_id == rhs.chain_id) {
@@ -181,6 +196,71 @@ struct PdbResidueIdPtrLess {
     bool operator()(const PdbResidueId *lhs, const PdbResidueId *rhs) const {
         return PdbResidueIdLess()(*lhs, *rhs);
     }
+};
+
+class PdbMappingResults {
+  public:
+    ~PdbMappingResults() {
+        STLDeleteContainerPointers(unknown_residues_.begin(),
+                                   unknown_residues_.end());
+    }
+
+    void add_unknown_residue(const PdbResidueId *pdb_residue_id) {
+        unknown_residues_.push_back(new PdbResidueId(*pdb_residue_id));
+    }
+
+    void add_unknown_atom(int serial) {
+        unknown_atoms_.push_back(serial);
+    }
+
+    void add_removed_atom(int serial) {
+        removed_atoms_.push_back(serial);
+    }
+
+    int unknown_residue_count() const { return unknown_residues_.size(); }
+
+    const PdbResidueId *get_unknown_residue(int index) const {
+        return unknown_residues_.at(index);
+    }
+
+    int unknown_atom_count() const { return unknown_atoms_.size(); }
+
+    int get_unknown_atom(int index) const { return unknown_atoms_.at(index); }
+
+  private:
+    std::vector<PdbResidueId*> unknown_residues_;
+    std::vector<int> unknown_atoms_;
+    std::vector<int> removed_atoms_;
+};
+
+class PdbChain {
+  public:
+    ~PdbChain() {
+        STLDeleteContainerPointers(residues_.begin(), residues_.end());
+    }
+
+    void append_if_new(const PdbResidueId *pdb_residue_id) {
+        if (empty() || !residues_.back()->equals(pdb_residue_id)) {
+            append(pdb_residue_id);
+        }
+    }
+
+    int size() const { return residues_.size(); }
+
+    bool empty() const { return residues_.empty(); }
+
+    const PdbResidueId *at(int index) const { return residues_.at(index); }
+
+    const PdbResidueId *get_head_id() const { return residues_.front(); }
+
+    const PdbResidueId *get_tail_id() const { return residues_.back(); }
+
+  private:
+    void append(const PdbResidueId *pdb_residue_id) {
+        residues_.push_back(new PdbResidueId(*pdb_residue_id));
+    }
+
+    std::vector<PdbResidueId*> residues_;
 };
 
 }  // namespace gmml

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "gmml/internal/array_tree.h"
+#include "gmml/internal/carbohydrates.h"
 #include "gmml/internal/residue_classification.h"
 #include "gmml/internal/stubs/common.h"
 #include "gmml/internal/tree.h"
@@ -25,6 +26,10 @@ class GlycamCodeSet {
     // The default constructor populates the code maps. One maps from a residue
     // name to the corresponding letter and the other is letter to residue name.
     GlycamCodeSet();
+
+    static carbohydrate::RingType get_ring_type(const std::string& code);
+
+    static carbohydrate::Anomer get_anomer(const std::string& code);
 
     // These parsed residues are created from GlycamParser. It is important
     // to note that the name member of the parsed residue does include the
@@ -97,13 +102,13 @@ class GlycamCodeSet {
     std::string get_oxygen_name(const std::string& residue_name,
                                 int position) const;
 
-    // TODO: make these a Bimap
     std::map<std::string, std::string> name_to_letter_;
     std::map<std::string, std::string> letter_to_name_;
 
     DISALLOW_COPY_AND_ASSIGN(GlycamCodeSet);
 };
 
+// Replace with invalid_argument probably
 class GlycamCodeException : public std::exception {
   public:
     explicit GlycamCodeException(const std::string& what) : what_(what) {}

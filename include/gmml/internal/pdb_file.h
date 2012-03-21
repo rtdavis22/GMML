@@ -211,6 +211,8 @@ class PdbTerCard : public PdbCard {
 
 class PdbConnectCard : public PdbCard {
   public:
+    static const int kMaxBondedAtoms = 4;
+
     explicit PdbConnectCard(int source) : source_(source) {}
 
     explicit PdbConnectCard(const PdbLine& line) { read(line); }
@@ -233,7 +235,6 @@ class PdbConnectCard : public PdbCard {
     void add_bonded_atom(int serial);
 
   private:
-    static const int kMaxBondedAtoms = 4;
     static const int kItemWidth = 5;
 
     static std::string get_too_many_bonds_error();

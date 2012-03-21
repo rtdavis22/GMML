@@ -36,6 +36,7 @@ gmml_include_HEADERS = \
   include/gmml/internal/atom.h \
   include/gmml/internal/bimap.h \
   include/gmml/internal/boxed_structure.h \
+  include/gmml/internal/carbohydrates.h \
   include/gmml/internal/complete_residue.h \
   include/gmml/internal/coordinate_file.h \
   include/gmml/internal/coordinate_grid.h \
@@ -64,7 +65,6 @@ gmml_include_HEADERS = \
   include/gmml/internal/scoped_ptr.h \
   include/gmml/internal/sequence_parser.h \
   include/gmml/internal/solvated_structure.h \
-  include/gmml/internal/standard_proteins.h \
   include/gmml/internal/structure.h \
   include/gmml/internal/structure-inl.h \
   include/gmml/internal/tree.h \
@@ -107,7 +107,6 @@ libgmml_a_SOURCES = \
   src/residue.cc \
   src/sander_minimize.cc \
   src/solvated_structure.cc \
-  src/standard_proteins.cc \
   src/structure.cc \
   src/stubs/file.cc \
   src/utilities.h

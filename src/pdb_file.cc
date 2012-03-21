@@ -83,14 +83,13 @@ PdbAtomCardBuilder::PdbAtomCardBuilder()
         : serial_(-1), name_(""), alt_loc_(' '), res_name_(""), chain_id_(' '),
           res_seq_(-1), i_code_(' '), coordinate_(0.0, 0.0, 0.0),
           occupancy_(1.0), temp_factor_(0.0), element_(kElementUnknown),
-          charge_(0.0), is_hetatm_(false) {
+          charge_(kNotSet), is_hetatm_(false) {
 }
 
 void PdbAtomCardBuilder::initialize_from_atom(const Atom& atom) {
     name_ = atom.name();
     coordinate_ = atom.coordinate();
     element_ = atom.element();
-    charge_ = atom.charge();
 }
 
 PdbAtomCard *PdbAtomCardBuilder::build() const {

@@ -32,6 +32,8 @@ std::vector<std::vector<int>*> *find_proteins(const Structure& structure);
 
 std::vector<int> *get_asns_with_sequon(const Structure& structure);
 
+void load_amino_acid_mappings();
+
 }  // namespace gmml
 
 #endif  // GMML_INTERNAL_PROTEINS_H_

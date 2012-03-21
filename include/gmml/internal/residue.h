@@ -21,7 +21,9 @@ class Residue {
 
     Residue();
 
-    explicit Residue(const Residue *residue) { clone_from(residue); }
+    explicit Residue(const Residue *residue) : bonds_(NULL) {
+        clone_from(residue);
+    }
 
     explicit Residue(const std::string& name);
 

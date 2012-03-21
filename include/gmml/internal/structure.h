@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "gmml/internal/residue.h"
 #include "gmml/internal/stubs/common.h"
 
 namespace gmml {
@@ -150,7 +151,19 @@ class Structure {
     // map in which the keys of the map are the indices of the indexed atoms
     // and the values are the indices of the atoms in the structure.
     // The return value is the residue index of the residue in the structure.
-    int append(std::map<int, int>& atom_map, const IndexedResidue *residue);
+    //int append(std::map<int, int>& atom_map, const IndexedResidue *residue);
+
+    template<class ATOM_MAP>
+    int append(ATOM_MAP& atom_map, const IndexedResidue *residue) {
+        int prev_size = size();
+        int index = append(residue);
+        for (int i = 0; i < residue->size(); i++) {
+            typename ATOM_MAP::value_type entry(residue->get_atom_index(i),
+                                                prev_size + i);
+            atom_map.insert(entry);
+      }
+        return index;
+    }
 
     // This builds the residue from a prep file in the prep file set of the
     // default environment and appends it. This should probably be changed to

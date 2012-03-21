@@ -346,6 +346,7 @@ int Structure::append(const Residue *residue, bool load_bonds) {
     return residue_count() - 1;
 }
 
+/*
 int Structure::append(map<int, int>& atom_map, const IndexedResidue *residue) {
     int prev_size = size();
     int index = append(residue);
@@ -354,6 +355,7 @@ int Structure::append(map<int, int>& atom_map, const IndexedResidue *residue) {
     }
     return index;
 }
+*/
 
 int Structure::append(const string& name) {
     Structure *structure = build(name);
