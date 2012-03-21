@@ -296,6 +296,14 @@ int PdbFileStructure::map_residue(char chain_id, int residue_number,
     return -1;
 }
 
+const PdbResidueId *PdbFileStructure::map_residue_index(int index) const {
+    Impl::ResidueMapType::right_const_iterator it =
+            impl_->residue_map.right.find(index);
+    if (it != impl_->residue_map.right.end())
+        return it->second;
+    return NULL;
+}
+
 void PdbFileStructure::append(const IndexedResidue *residue,
                               const PdbResidueId *pdb_residue_id) {
     int residue_index = Structure::append(impl_->atom_map.left, residue);

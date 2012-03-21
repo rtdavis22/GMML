@@ -77,6 +77,8 @@ class PdbFileStructure : public Structure {
     int map_residue(char chain_id, int residue_number,
                     char insertion_code) const;
 
+    const PdbResidueId *map_residue_index(int index) const;
+
     int map_residue(char chain_id, int residue_number) {
         return map_residue(chain_id, residue_number, ' ');
     }
