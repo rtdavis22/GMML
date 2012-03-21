@@ -177,6 +177,8 @@ class PdbStructureBuilder {
     std::map<Triplet<int>*, std::string,
              TripletPtrLess<int> > pdb_residue_map_;
     bool use_residue_map_;
+
+    DISALLOW_COPY_AND_ASSIGN(PdbStructureBuilder);
 };
 
 // Modify to all TripletLess
@@ -253,9 +255,9 @@ class PdbChain {
 
     const PdbResidueId *at(int index) const { return residues_.at(index); }
 
-    const PdbResidueId *get_head_id() const { return residues_.front(); }
+    const PdbResidueId *head() const { return residues_.front(); }
 
-    const PdbResidueId *get_tail_id() const { return residues_.back(); }
+    const PdbResidueId *tail() const { return residues_.back(); }
 
   private:
     void append(const PdbResidueId *pdb_residue_id) {

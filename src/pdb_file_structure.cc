@@ -214,7 +214,7 @@ class PdbData : public PdbCardVisitor {
 
     bool is_head(const PdbResidueId *id) const {
         for (int i = 0; i < chains_.size(); i++) {
-            if (chains_[i]->size() > 0 && chains_[i]->get_head_id()->equals(id))
+            if (chains_[i]->size() > 0 && chains_[i]->head()->equals(id))
                 return true;
         }
         return false;
@@ -222,7 +222,7 @@ class PdbData : public PdbCardVisitor {
 
     bool is_tail(const PdbResidueId *id) const {
         for (int i = 0; i < chains_.size(); i++) {
-            if (chains_[i]->size() > 0 && chains_[i]->get_tail_id()->equals(id))
+            if (chains_[i]->size() > 0 && chains_[i]->tail()->equals(id))
                 return true;
         }
         return false;
