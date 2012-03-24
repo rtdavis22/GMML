@@ -41,6 +41,7 @@ struct CoordinateFile::Impl {
         throw std::invalid_argument(error);
     }
 
+    void write_coordinate_range(std::ostream& out, int start, int end) const;
     void write_coordinate(std::ostream& out,
                           const Coordinate& coordinate) const;
     void write_component(std::ostream& out, double component) const;
@@ -66,19 +67,10 @@ void CoordinateFile::read(std::istream& in) {
 
 void CoordinateFile::write(std::ostream& out) const {
     out << impl_->title_ << std::endl;
-    int size = impl_->coordinates_.size();
-    out << std::setw(kCountLabelWidth) <<
-           size - impl_->noncoordinate_count_ << std::endl;
-    bool odd = size & 1;
-    for (int i = 0; i < size - (odd == true); i += 2) {
-        impl_->write_coordinate(out, *impl_->coordinates_[i]);
-        impl_->write_coordinate(out, *impl_->coordinates_[i + 1]);
-        out << std::endl;
-    }
-    if (odd) {
-        impl_->write_coordinate(out, *impl_->coordinates_[size - 1]);
-        out << std::endl;
-    }
+    int coordinates = coordinate_count();
+    out << std::setw(kCountLabelWidth) << coordinates << std::endl;
+    impl_->write_coordinate_range(out, 0, coordinates - 1);
+    impl_->write_coordinate_range(out, coordinates, size() - 1);
 }
 
 size_t CoordinateFile::size() const {
@@ -153,6 +145,22 @@ Coordinate *CoordinateFile::Impl::parse_coordinate(const string& str) {
                                                  kCoordinateWidth));
     return new Coordinate(x, y, z);
 }
+
+void CoordinateFile::Impl::write_coordinate_range(std::ostream& out,
+                                                  int start, int end) const {
+    int count = end - start + 1;
+    bool is_odd = count & 1;
+    for (int i = start; i < end - is_odd + 1; i += 2) {
+        write_coordinate(out, *coordinates_[i]);
+        write_coordinate(out, *coordinates_[i + 1]);
+        out << std::endl;
+    }
+    if (is_odd) {
+        write_coordinate(out, *coordinates_[end]);
+        out << std::endl;
+    }
+}
+
 
 void CoordinateFile::Impl::write_coordinate(
         std::ostream& out, const Coordinate& coordinate) const {
