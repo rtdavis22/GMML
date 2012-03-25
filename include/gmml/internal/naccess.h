@@ -61,9 +61,8 @@ class RsaInfo {
 
     const ResidueAccessibilityInfo *lookup(char chain_id, int res_num,
                                            int i_code) {
-        PdbResidueId *pdb_id = new PdbResidueId(chain_id, res_num, i_code);
-        const ResidueAccessibilityInfo *ret = lookup(pdb_id);
-        delete pdb_id;
+        PdbResidueId pdb_id(chain_id, res_num, i_code);
+        const ResidueAccessibilityInfo *ret = lookup(&pdb_id);
         return ret;
     }
 
