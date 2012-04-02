@@ -286,11 +286,9 @@ int PdbFileStructure::map_atom(int pdb_index) const {
     return -1;
 }
 
-int PdbFileStructure::map_residue(char chain_id, int residue_number,
-                                  char insertion_code) const {
-    PdbResidueId pdb_residue_id(chain_id, residue_number, insertion_code);
+int PdbFileStructure::map_residue(const PdbResidueId *pdb_id) const {
     Impl::ResidueMapType::left_const_iterator it =
-            impl_->residue_map.left.find(&pdb_residue_id);
+            impl_->residue_map.left.find(const_cast<PdbResidueId*>(pdb_id));
     if (it != impl_->residue_map.left.end())
         return it->second;
     return -1;

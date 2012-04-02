@@ -71,19 +71,22 @@ class PdbFileStructure : public Structure {
     // the pdb file.
     int map_atom(int pdb_index) const;
 
-    // Returns the index of the residue corresponding to the residue with the
-    // given chain identifier, residue sequence number, and insertion code in
-    // the pdb file.
-    int map_residue(char chain_id, int residue_number,
-                    char insertion_code) const;
-
     const PdbResidueId *map_residue_index(int index) const;
 
-    int map_residue(char chain_id, int residue_number) {
+    int map_residue(const PdbResidueId *pdb_id) const;
+
+    // Convenience functions, maybe shouldn't include them.
+    int map_residue(char chain_id, int residue_number,
+                    char insertion_code) const {
+        PdbResidueId pdb_id(chain_id, residue_number, insertion_code);
+        return map_residue(&pdb_id);
+    }
+
+    int map_residue(char chain_id, int residue_number) const {
         return map_residue(chain_id, residue_number, ' ');
     }
 
-    int map_residue(int residue_number) {
+    int map_residue(int residue_number) const {
         return map_residue(' ', residue_number);
     }
 
