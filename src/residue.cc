@@ -64,7 +64,9 @@ void Residue::remove_atom(int index) {
         throw std::invalid_argument("Invalid residue index " +
                                     to_string(index) + ".");
     }
-    bonds_->remove_vertex(index);
+    if (bonds_ != NULL) {
+        bonds_->remove_vertex(index);
+    }
     delete atoms_[index];
     atoms_.erase(atoms_.begin() + index);
     if (head_ == index) {
