@@ -116,6 +116,7 @@ class PdbData : public PdbCardVisitor {
                         results->add_removed_hydrogen(serial, *it->first,
                                                       *it->second->atoms(i));
                         it->second->remove_atom(i);
+                        i--;
                     } else {
                         unknown_atom_found = true;
                         results->add_unknown_atom(serial);
