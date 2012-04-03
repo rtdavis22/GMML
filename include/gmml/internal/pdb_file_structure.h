@@ -174,12 +174,21 @@ class PdbStructureBuilder {
 
     bool use_residue_map() const { return use_residue_map_; }
 
+    bool unknown_hydrogens_removed() const {
+        return unknown_hydrogens_removed_;
+    }
+
+    void remove_unknown_hydrogens() { unknown_hydrogens_removed_ = true; }
+
+    void keep_unknown_hydrogens() { unknown_hydrogens_removed_ = false; }
+
   private:
     const PdbFile& pdb_file_;
     PdbMappingInfo mapping_info_;
     std::map<Triplet<int>*, std::string,
              TripletPtrLess<int> > pdb_residue_map_;
     bool use_residue_map_;
+    bool unknown_hydrogens_removed_;
 
     DISALLOW_COPY_AND_ASSIGN(PdbStructureBuilder);
 };
@@ -220,24 +229,28 @@ class PdbMappingResults {
         unknown_atoms_.push_back(serial);
     }
 
-    void add_removed_atom(int serial) {
-        removed_atoms_.push_back(serial);
+    void add_removed_hydrogen(int serial) {
+        removed_hydrogens_.push_back(serial);
     }
 
     int unknown_residue_count() const { return unknown_residues_.size(); }
 
-    const PdbResidueId *get_unknown_residue(int index) const {
-        return unknown_residues_.at(index);
+    const PdbResidueId *get_unknown_residue(int i) const {
+        return unknown_residues_.at(i);
     }
 
     int unknown_atom_count() const { return unknown_atoms_.size(); }
 
-    int get_unknown_atom(int index) const { return unknown_atoms_.at(index); }
+    int get_unknown_atom(int i) const { return unknown_atoms_.at(i); }
+
+    int removed_hydrogen_count() const { return removed_hydrogens_.size(); }
+
+    int get_removed_hydrogen(int i) const { return removed_hydrogens_.at(i); }
 
   private:
     std::vector<PdbResidueId*> unknown_residues_;
     std::vector<int> unknown_atoms_;
-    std::vector<int> removed_atoms_;
+    std::vector<int> removed_hydrogens_;
 };
 
 class PdbChain {

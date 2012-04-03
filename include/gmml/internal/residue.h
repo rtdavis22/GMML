@@ -45,7 +45,7 @@ class Residue {
 
     const std::vector<size_t>& bonds(int index) const;
 
-    void remove_atom(int index);
+    virtual void remove_atom(int index);
 
     void remove_atom(const std::string& name);
 
@@ -117,6 +117,11 @@ class IndexedResidue : public Residue {
     void append(const Atom *atom, int index) {
         Residue::append(atom);
         indices_.push_back(index);
+    }
+
+    virtual void remove_atom(int index) {
+        Residue::remove_atom(index);
+        indices_.erase(indices_.begin() + index);
     }
 
     void set_atom_index(int atom, int index) { indices_[atom] = index; }

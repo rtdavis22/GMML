@@ -111,8 +111,14 @@ class PdbData : public PdbCardVisitor {
                     }
                 }
                 if (!found) {
-                    unknown_atom_found = true;
-                    results->add_unknown_atom(it->second->get_atom_index(i));
+                    int serial = it->second->get_atom_index(i);
+                    if (it->second->atoms(i)->element() == kElementH) {
+                        results->add_removed_hydrogen(serial);
+                        it->second->remove_atom(i);
+                    } else {
+                        unknown_atom_found = true;
+                        results->add_unknown_atom(serial);
+                    }
                 }
             }
 
@@ -175,7 +181,8 @@ class PdbData : public PdbCardVisitor {
         for (int i = 0; i < pdb_bonds_.size(); i++) {
             int from = structure->map_atom(pdb_bonds_[i].first);
             int to = structure->map_atom(pdb_bonds_[i].second);
-            structure->add_bond(from, to);
+            if (from != -1 && to != -1)
+                structure->add_bond(from, to);
         }
     }
 
@@ -326,7 +333,8 @@ const PdbChain *PdbFileStructure::chains(int index) const {
 PdbStructureBuilder::PdbStructureBuilder(const PdbFile& pdb_file)
         : pdb_file_(pdb_file),
           mapping_info_(*kDefaultEnvironment.pdb_mapping_info()),
-          use_residue_map_(true) {}
+          use_residue_map_(true),
+          unknown_hydrogens_removed_(true) {}
 
 PdbStructureBuilder::~PdbStructureBuilder() {
     std::map<Triplet<int>*, std::string>::iterator it;
