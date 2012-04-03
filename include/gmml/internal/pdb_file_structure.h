@@ -14,6 +14,7 @@
 
 namespace gmml {
 
+class Atom;
 class File;
 class PdbAtomCard;
 class PdbConnectCard;
@@ -214,11 +215,31 @@ struct PdbResidueIdPtrLess {
     }
 };
 
+class PdbRemovedAtom {
+  public:
+    PdbRemovedAtom(int serial, const PdbResidueId& residue, const Atom& atom);
+
+    ~PdbRemovedAtom();
+
+    int serial() const { return serial_; }
+
+    const PdbResidueId& residue() const { return residue_; }
+
+    const Atom& atom() const { return *atom_; }
+
+  private:
+    const int serial_;
+    const PdbResidueId residue_;
+    const Atom *atom_;
+};
+
 class PdbMappingResults {
   public:
     ~PdbMappingResults() {
         STLDeleteContainerPointers(unknown_residues_.begin(),
                                    unknown_residues_.end());
+        STLDeleteContainerPointers(removed_hydrogens_.begin(),
+                                   removed_hydrogens_.end());
     }
 
     void add_unknown_residue(const PdbResidueId *pdb_residue_id) {
@@ -229,8 +250,9 @@ class PdbMappingResults {
         unknown_atoms_.push_back(serial);
     }
 
-    void add_removed_hydrogen(int serial) {
-        removed_hydrogens_.push_back(serial);
+    void add_removed_hydrogen(int serial, const PdbResidueId& residue,
+                              const Atom& atom) {
+        removed_hydrogens_.push_back(new PdbRemovedAtom(serial, residue, atom));
     }
 
     int unknown_residue_count() const { return unknown_residues_.size(); }
@@ -245,12 +267,14 @@ class PdbMappingResults {
 
     int removed_hydrogen_count() const { return removed_hydrogens_.size(); }
 
-    int get_removed_hydrogen(int i) const { return removed_hydrogens_.at(i); }
+    const PdbRemovedAtom *get_removed_hydrogen(int i) const {
+        return removed_hydrogens_.at(i);
+    }
 
   private:
     std::vector<PdbResidueId*> unknown_residues_;
     std::vector<int> unknown_atoms_;
-    std::vector<int> removed_hydrogens_;
+    std::vector<PdbRemovedAtom*> removed_hydrogens_;
 };
 
 class PdbChain {

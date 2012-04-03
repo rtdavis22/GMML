@@ -113,7 +113,8 @@ class PdbData : public PdbCardVisitor {
                 if (!found) {
                     int serial = it->second->get_atom_index(i);
                     if (it->second->atoms(i)->element() == kElementH) {
-                        results->add_removed_hydrogen(serial);
+                        results->add_removed_hydrogen(serial, *it->first,
+                                                      *it->second->atoms(i));
                         it->second->remove_atom(i);
                     } else {
                         unknown_atom_found = true;
@@ -386,6 +387,15 @@ string PdbStructureBuilder::map_pdb_residue(const PdbResidueId *pdb_residue_id,
         return name.first;
 
     return residue_name;
+}
+
+PdbRemovedAtom::PdbRemovedAtom(int serial, const PdbResidueId& residue,
+                               const Atom& atom)
+        : serial_(serial), residue_(residue), atom_(atom.clone()) {
+}
+
+PdbRemovedAtom::~PdbRemovedAtom() {
+    delete atom_;
 }
 
 }  // namespace gmml
