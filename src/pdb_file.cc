@@ -53,6 +53,8 @@ PdbCard *PdbLine::get_card() const {
             return new PdbConnectCard(*this);
         case END:
             return new PdbEndCard(*this);
+        case ENDMDL:
+            return new PdbEndMdlCard();
         case LINK:
             return new PdbLinkCard(*this);
         case UNKNOWN:
