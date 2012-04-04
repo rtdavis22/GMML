@@ -20,6 +20,7 @@ class PdbCardVisitor;
 class PdbAtomCard;
 class PdbConnectCard;
 class PdbEndCard;
+class PdbEndMdlCard;
 class PdbLinkCard;
 class PdbTerCard;
 class PdbUnknownCard;
@@ -57,6 +58,7 @@ class PdbCardVisitor {
     virtual void visit(const PdbAtomCard *card) {}
     virtual void visit(const PdbConnectCard *card) {}
     virtual void visit(const PdbEndCard *card) {}
+    virtual void visit(const PdbEndMdlCard *card) {}
     virtual void visit(const PdbLinkCard *card) {}
     virtual void visit(const PdbTerCard *card) {}
     virtual void visit(const PdbUnknownCard *card) {}
@@ -70,7 +72,7 @@ class PdbCardVisitor {
 
 class PdbLine {
   public:
-    enum CardType { ATOM, CONECT, END, LINK, TER, UNKNOWN };
+    enum CardType { ATOM, CONECT, END, ENDMDL, LINK, TER, UNKNOWN };
 
     PdbLine(const std::string& line) : data_(line) {}
 
@@ -298,6 +300,18 @@ class PdbUnknownCard : public PdbCard {
     virtual void read(const PdbLine& line) { this->line_ = line.data(); }
 
     std::string line_;
+};
+
+class PdbEndMdlCard : public PdbCard {
+  public:
+    PdbEndMdlCard() {}
+
+    virtual void write(std::ostream& out) const;
+
+    virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
+
+  private:
+    virtual void read(const PdbLine& /* line */) { }
 };
 
 }  // namespace gmml

@@ -75,6 +75,8 @@ PdbLine::CardType PdbLine::get_card_type() const {
         return END;
     else if (first_six == "LINK  ")
         return LINK;
+    else if (first_six == "ENDMDL")
+        return ENDMDL;
     else
         return UNKNOWN;
 }
@@ -302,6 +304,10 @@ void PdbLinkCard::write(std::ostream& out) const {
 
 void PdbUnknownCard::write(std::ostream& out) const {
     out << line_;
+}
+
+void PdbEndMdlCard::write(std::ostream& out) const {
+    out << "ENDMDL";
 }
 
 }  // namespace gmml

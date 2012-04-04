@@ -36,7 +36,8 @@ namespace {
 
 class PdbData : public PdbCardVisitor {
   public:
-    explicit PdbData(const PdbFile& pdb_file) : cur_chain_(new PdbChain) {
+    explicit PdbData(const PdbFile& pdb_file) : cur_chain_(new PdbChain),
+                                                ignore_remaining_atoms_(false) {
         chains_.push_back(cur_chain_);
         pdb_file.accept(this);
     }
@@ -52,6 +53,9 @@ class PdbData : public PdbCardVisitor {
     }
 
     virtual void visit(const PdbAtomCard *card) {
+        if (ignore_remaining_atoms_) {
+            return;
+        }
         Atom *atom = new Atom(card->element(), card->coordinate(),
                               card->name(), "", card->charge());
         PdbResidueId *residue_id = new PdbResidueId(card->chain_id(),
@@ -85,6 +89,10 @@ class PdbData : public PdbCardVisitor {
     virtual void visit(const PdbTerCard* /* card */) {
         cur_chain_ = new PdbChain;
         chains_.push_back(cur_chain_);
+    }
+
+    virtual void visit(const PdbEndMdlCard* /* card */) {
+        ignore_remaining_atoms_ = true;
     }
 
     PdbMappingResults *apply_residue_map(const PdbStructureBuilder& builder) {
@@ -237,6 +245,7 @@ class PdbData : public PdbCardVisitor {
         return false;
     }
 
+    bool ignore_remaining_atoms_;
     ResidueMapType pdb_residues_;
     vector<pair<int, int> > pdb_bonds_;
     vector<PdbChain*> chains_;
