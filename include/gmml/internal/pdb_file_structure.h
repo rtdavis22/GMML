@@ -5,7 +5,9 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
+#include <vector>
 
 #include "gmml/internal/bimap.h"
 #include "gmml/internal/structure.h"
@@ -39,6 +41,27 @@ struct PdbResidueId {
     char chain_id;
     int res_num;
     char i_code;
+};
+
+// Modify to use TripletLess
+struct PdbResidueIdLess {
+    bool operator()(const PdbResidueId& lhs, const PdbResidueId& rhs) const {
+        if (lhs.chain_id == rhs.chain_id) {
+            if (lhs.res_num == rhs.res_num) {
+                return lhs.i_code < rhs.i_code;
+            } else {
+                return lhs.res_num < rhs.res_num;
+            }
+        } else {
+            return lhs.chain_id < rhs.chain_id;
+        }
+    }
+};
+
+struct PdbResidueIdPtrLess {
+    bool operator()(const PdbResidueId *lhs, const PdbResidueId *rhs) const {
+        return PdbResidueIdLess()(*lhs, *rhs);
+    }
 };
 
 class PdbFileStructure : public Structure {
@@ -183,36 +206,25 @@ class PdbStructureBuilder {
 
     void keep_unknown_hydrogens() { unknown_hydrogens_removed_ = false; }
 
+    void add_residue_to_remove(const PdbResidueId *residue) {
+        residues_to_remove_.insert(new PdbResidueId(*residue));
+    }
+
+    bool is_to_be_removed(const PdbResidueId *residue) const {
+        return residues_to_remove_.find(residue) != residues_to_remove_.end();
+    }
+
   private:
     const PdbFile& pdb_file_;
     PdbMappingInfo mapping_info_;
+    // Change this to PdbResidueId.
     std::map<Triplet<int>*, std::string,
              TripletPtrLess<int> > pdb_residue_map_;
+    std::set<const PdbResidueId*, PdbResidueIdPtrLess> residues_to_remove_;
     bool use_residue_map_;
     bool unknown_hydrogens_removed_;
 
     DISALLOW_COPY_AND_ASSIGN(PdbStructureBuilder);
-};
-
-// Modify to all TripletLess
-struct PdbResidueIdLess {
-    bool operator()(const PdbResidueId& lhs, const PdbResidueId& rhs) const {
-        if (lhs.chain_id == rhs.chain_id) {
-            if (lhs.res_num == rhs.res_num) {
-                return lhs.i_code < rhs.i_code;
-            } else {
-                return lhs.res_num < rhs.res_num;
-            }
-        } else {
-            return lhs.chain_id < rhs.chain_id;
-        }
-    }
-};
-
-struct PdbResidueIdPtrLess {
-    bool operator()(const PdbResidueId *lhs, const PdbResidueId *rhs) const {
-        return PdbResidueIdLess()(*lhs, *rhs);
-    }
 };
 
 class PdbRemovedAtom {

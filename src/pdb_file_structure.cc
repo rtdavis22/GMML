@@ -5,10 +5,7 @@
 #include <cassert>
 
 #include <deque>
-#include <map>
-#include <string>
 #include <utility>
-#include <vector>
 
 #include "boost/bimap.hpp"
 #include "boost/bimap/set_of.hpp"
@@ -26,6 +23,7 @@
 using std::deque;
 using std::map;
 using std::pair;
+using std::set;
 using std::string;
 using std::vector;
 
@@ -93,6 +91,19 @@ class PdbData : public PdbCardVisitor {
 
     virtual void visit(const PdbEndMdlCard* /* card */) {
         ignore_remaining_atoms_ = true;
+    }
+
+    void remove_residues(const PdbStructureBuilder& builder) {
+        for (ResidueMapType::iterator it = pdb_residues_.begin();
+                it != pdb_residues_.end(); ++it) {
+            if (builder.is_to_be_removed(it->first)) {
+                delete it->first;
+                delete it->second;
+                pdb_residues_.erase(it++);
+            } else {
+                ++it;
+            }
+        }
     }
 
     PdbMappingResults *apply_residue_map(const PdbStructureBuilder& builder) {
@@ -263,6 +274,7 @@ struct PdbFileStructure::Impl {
     explicit Impl(const PdbStructureBuilder& builder)
             : pdb_data_(builder.pdb_file()),
               mapping_results(NULL) {
+        pdb_data_.remove_residues(builder);
         if (builder.use_residue_map()) {
             mapping_results = pdb_data_.apply_residue_map(builder);
         }
@@ -348,9 +360,13 @@ PdbStructureBuilder::PdbStructureBuilder(const PdbFile& pdb_file)
           unknown_hydrogens_removed_(true) {}
 
 PdbStructureBuilder::~PdbStructureBuilder() {
-    std::map<Triplet<int>*, std::string>::iterator it;
+    map<Triplet<int>*, std::string>::iterator it;
     for (it = pdb_residue_map_.begin(); it != pdb_residue_map_.end(); ++it) {
         delete it->first;
+    }
+    for (set<const PdbResidueId*>::iterator it = residues_to_remove_.begin();
+            it != residues_to_remove_.end(); ++it) {
+        delete *it;
     }
 }
 

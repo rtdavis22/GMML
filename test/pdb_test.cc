@@ -7,6 +7,7 @@ using gmml::Atom;
 using gmml::File;
 using gmml::PdbFile;
 using gmml::PdbFileStructure;
+using gmml::PdbResidueId;
 using gmml::PdbStructureBuilder;
 using gmml::Residue;
 
@@ -56,4 +57,19 @@ TEST_F(PdbStructureTest, MapAtomValid) {
     EXPECT_EQ(16.653, atom->coordinate().x);
     EXPECT_EQ(-25.833, atom->coordinate().y);
     EXPECT_EQ(15.868, atom->coordinate().z);
+}
+
+TEST(PdbStructureBuilder, IsToBeRemoved1) {
+    PdbFile pdb(File("dat/1RVZ_New.pdb"));
+    PdbStructureBuilder builder(pdb);
+    PdbResidueId id('A', 123, ' ');
+    builder.add_residue_to_remove(&id);
+    EXPECT_TRUE(builder.is_to_be_removed(&id));
+}
+
+TEST(PdbStructureBuilder, IsToBeRemoved2) {
+    PdbFile pdb(File("dat/1RVZ_New.pdb"));
+    PdbStructureBuilder builder(pdb);
+    PdbResidueId id('A', 123, ' ');
+    EXPECT_FALSE(builder.is_to_be_removed(&id));
 }
