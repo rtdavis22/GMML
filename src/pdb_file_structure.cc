@@ -94,8 +94,8 @@ class PdbData : public PdbCardVisitor {
     }
 
     void remove_residues(const PdbStructureBuilder& builder) {
-        for (ResidueMapType::iterator it = pdb_residues_.begin();
-                it != pdb_residues_.end(); ++it) {
+        ResidueMapType::iterator it = pdb_residues_.begin();
+        while (it != pdb_residues_.end()) {
             if (builder.is_to_be_removed(it->first)) {
                 delete it->first;
                 delete it->second;

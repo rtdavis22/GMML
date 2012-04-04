@@ -32,6 +32,12 @@ struct PdbResidueId {
     PdbResidueId(char chain_id, int res_num, char i_code)
             : chain_id(chain_id), res_num(res_num), i_code(i_code) {}
 
+    PdbResidueId(char chain_id, int res_num)
+            : chain_id(chain_id), res_num(res_num), i_code(' ') {}
+
+    explicit PdbResidueId(int res_num)
+            : chain_id(' '), res_num(res_num), i_code(' ') {}
+
     bool equals(const PdbResidueId *rhs) const {
         return chain_id == rhs->chain_id &&
                res_num == rhs->res_num &&
