@@ -125,9 +125,12 @@ class PdbFileStructure : public Structure {
 
     const PdbMappingResults *get_mapping_results() const;
 
+    // Returns the number of PDB chains in the file.
     int chain_count() const;
 
-    const PdbChain *chains(int index) const;
+    // Returns the i'th PDB chain in the file. A PDB chain is defined to be a
+    // sequence of residues between TER cards.
+    const PdbChain *chains(int i) const;
 
   private:
     struct Impl;
@@ -143,7 +146,7 @@ struct PdbMappingInfo {
     Bimap<std::string, std::string> atom_map;
 };
 
-// This class allows the user to configure how a particular pdb file is built.
+// This class allows the user to configure how a particular PDB file is built.
 // It follows the Builder pattern.
 class PdbStructureBuilder {
   public:
@@ -151,24 +154,12 @@ class PdbStructureBuilder {
     // environment, which are typically specified via the global functions
     // add_mapping, add_head_mapping, and add_tail_mapping. Mappings defined
     // in this class override the global mappings.
-    //explicit PdbStructureBuilder(const std::string& pdb_file);
+    // I don't think this should store a reference to the file.
     explicit PdbStructureBuilder(const PdbFile& pdb_file);
 
     virtual ~PdbStructureBuilder();
 
-    // The following 3 functions add a mapping from a particular residue in the
-    // pdb file.
-    void add_mapping(char chain_id, int residue_number,
-                     char insertion_code, const std::string& name);
-
-    void add_mapping(char chain_id, int residue_number,
-                     const std::string& name) {
-        add_mapping(chain_id, residue_number, ' ', name);
-    }
-
-    void add_mapping(int residue_number, const std::string& name) {
-        add_mapping(' ', residue_number, name);
-    }
+    void add_mapping(const PdbResidueId& pdb_id, const std::string& name);
 
     // Adds a mapping from all residues with a specified name.
     void add_mapping(const std::string& from, const std::string& to) {
@@ -202,16 +193,22 @@ class PdbStructureBuilder {
 
     const PdbFile& pdb_file() const { return pdb_file_; }
 
+    // 
     bool use_residue_map() const { return use_residue_map_; }
 
     bool unknown_hydrogens_removed() const {
         return unknown_hydrogens_removed_;
     }
 
+    // If residue mappings are used, this function can be called to remove
+    // hydrogens that are present in the PDB file but not the mapped structure.
     void remove_unknown_hydrogens() { unknown_hydrogens_removed_ = true; }
 
     void keep_unknown_hydrogens() { unknown_hydrogens_removed_ = false; }
 
+    // The residue with the given identifier will not be included in the
+    // structure, along with all associated bonds. It will, however, remain
+    // in a PdbChain.
     void add_residue_to_remove(const PdbResidueId *residue) {
         residues_to_remove_.insert(new PdbResidueId(*residue));
     }
@@ -233,6 +230,8 @@ class PdbStructureBuilder {
     DISALLOW_COPY_AND_ASSIGN(PdbStructureBuilder);
 };
 
+// This represents an atom that is present in the PDB file but was removed
+// when the structure was being built.
 class PdbRemovedAtom {
   public:
     PdbRemovedAtom(int serial, const PdbResidueId& residue, const Atom& atom);
@@ -295,6 +294,7 @@ class PdbMappingResults {
     std::vector<PdbRemovedAtom*> removed_hydrogens_;
 };
 
+// This represents a sequence of residues between TER cards.
 class PdbChain {
   public:
     ~PdbChain() {
@@ -311,7 +311,7 @@ class PdbChain {
 
     bool empty() const { return residues_.empty(); }
 
-    const PdbResidueId *at(int index) const { return residues_.at(index); }
+    const PdbResidueId *at(int i) const { return residues_.at(i); }
 
     const PdbResidueId *head() const { return residues_.front(); }
 
