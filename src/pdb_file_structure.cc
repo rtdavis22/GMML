@@ -36,7 +36,7 @@ class PdbData;
 
 class AddAminoAcidBonds {
   public:
-    static const double distance_cutoff = 4.0;
+    static const double kDistanceCutoff = 4.0;
 
     explicit AddAminoAcidBonds(PdbFileStructure *structure)
             : structure_(structure) {}
@@ -51,8 +51,9 @@ class AddAminoAcidBonds {
     void add_chain(const PdbChain& chain) {
         deque<bool> amino_acid(chain.size(), false);
         for (int i = 0; i < chain.size(); i++) {
-            if (is_amino_acid(*chain.at(i)))
+            if (is_amino_acid(*chain.at(i))) {
                 amino_acid[i] = true;
+            }
         }
         for (int i = 1; i < amino_acid.size(); i++) {
             if (amino_acid[i - 1] && amino_acid[i])
@@ -87,7 +88,7 @@ class AddAminoAcidBonds {
         const Atom *atom1 = structure_->atoms(atom1_index);
         const Atom *atom2 = structure_->atoms(atom2_index);
         double distance = measure(atom1->coordinate(), atom2->coordinate());
-        if (distance < distance_cutoff)
+        if (distance < kDistanceCutoff)
             structure_->add_bond(atom1_index, atom2_index);
     }
 
@@ -190,7 +191,9 @@ class PdbData : public PdbCardVisitor {
             structure->append(it->second, it->first);
         }
         add_pdb_bonds(structure);
-        AddAminoAcidBonds(structure)();
+        AddAminoAcidBonds x(structure);
+        x();
+        // Why doesn't AddAminoAcidBonds(structure)(); work!!!
     }
 
     int chain_count() const { return chains_.size(); }
