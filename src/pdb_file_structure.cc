@@ -262,7 +262,10 @@ struct ApplyResidueMap::Impl {
             results_->add_unknown_residue(it->first);
             return;
         }
-        remove_unknown_hydrogens(it, *mapped_structure);
+        if (builder_.are_unknown_hydrogens_removed()) {
+            remove_unknown_hydrogens(it, *mapped_structure);
+        }
+
         bool found = check_for_unknown_atoms(it->second, *mapped_structure);
         if (found) {
             return;
@@ -379,7 +382,7 @@ struct PdbFileStructure::Impl {
             : pdb_data_(builder.pdb_file()),
               mapping_results(NULL) {
         pdb_data_.remove_residues(builder);
-        if (builder.use_residue_map()) {
+        if (builder.is_residue_map_used()) {
             mapping_results = ApplyResidueMap(&pdb_data_, builder)();
         }
     }
@@ -460,8 +463,8 @@ const PdbChain *PdbFileStructure::chains(int index) const {
 PdbStructureBuilder::PdbStructureBuilder(const PdbFile& pdb_file)
         : pdb_file_(pdb_file),
           mapping_info_(*kDefaultEnvironment.pdb_mapping_info()),
-          use_residue_map_(true),
-          unknown_hydrogens_removed_(true) {}
+          is_residue_map_used_(true),
+          are_unknown_hydrogens_removed_(true) {}
 
 PdbStructureBuilder::~PdbStructureBuilder() {
     map<Triplet<int>*, std::string>::iterator it;

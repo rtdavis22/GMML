@@ -139,6 +139,8 @@ class PdbFileStructure : public Structure {
     DISALLOW_COPY_AND_ASSIGN(PdbFileStructure);
 };
 
+// Change these to one-way maps, I think. If Bimap is needed, use a 
+// Boost::bimap.
 struct PdbMappingInfo {
     Bimap<std::string, std::string> residue_map;
     Bimap<std::string, std::string> head_map;
@@ -159,6 +161,12 @@ class PdbStructureBuilder {
 
     virtual ~PdbStructureBuilder();
 
+    PdbFileStructure *build() { return new PdbFileStructure(*this); }
+
+
+    //
+    // Functions to add mappings.
+    //
     void add_mapping(const PdbResidueId& pdb_id, const std::string& name);
 
     // Adds a mapping from all residues with a specified name.
@@ -178,6 +186,31 @@ class PdbStructureBuilder {
         mapping_info_.tail_map.put(from, to);
     }
 
+
+    //
+    // Functions for setting other configurable parameters.
+    //
+    void ignore_residue_map() { is_residue_map_used_ = false; }
+
+    void use_residue_map() { is_residue_map_used_ = true; }
+
+    // If residue mappings are used, this function can be called to remove
+    // hydrogens that are present in the PDB file but not the mapped structure.
+    void remove_unknown_hydrogens() { are_unknown_hydrogens_removed_ = true; }
+
+    void keep_unknown_hydrogens() { are_unknown_hydrogens_removed_ = false; }
+
+    // The residue with the given identifier will not be included in the
+    // structure, along with all associated bonds. It will, however, remain
+    // in a PdbChain.
+    void add_residue_to_remove(const PdbResidueId *residue) {
+        residues_to_remove_.insert(new PdbResidueId(*residue));
+    }
+
+
+    //
+    // Functions for querying the information in the builder.
+    //
     // This function determines what a particular residue is mapped to.
     // The function considers mappings in this order:
     // 1. Individual residue mappings.
@@ -189,32 +222,20 @@ class PdbStructureBuilder {
                                 const std::string& residue_name,
                                 bool is_head, bool is_tail) const;
 
-    PdbFileStructure *build() { return new PdbFileStructure(*this); }
-
-    const PdbFile& pdb_file() const { return pdb_file_; }
-
-    // 
-    bool use_residue_map() const { return use_residue_map_; }
-
-    bool unknown_hydrogens_removed() const {
-        return unknown_hydrogens_removed_;
-    }
-
-    // If residue mappings are used, this function can be called to remove
-    // hydrogens that are present in the PDB file but not the mapped structure.
-    void remove_unknown_hydrogens() { unknown_hydrogens_removed_ = true; }
-
-    void keep_unknown_hydrogens() { unknown_hydrogens_removed_ = false; }
-
-    // The residue with the given identifier will not be included in the
-    // structure, along with all associated bonds. It will, however, remain
-    // in a PdbChain.
-    void add_residue_to_remove(const PdbResidueId *residue) {
-        residues_to_remove_.insert(new PdbResidueId(*residue));
-    }
-
     bool is_to_be_removed(const PdbResidueId *residue) const {
         return residues_to_remove_.find(residue) != residues_to_remove_.end();
+    }
+
+
+    //
+    // Accessors
+    //
+    const PdbFile& pdb_file() const { return pdb_file_; }
+
+    bool is_residue_map_used() const { return is_residue_map_used_; }
+
+    bool are_unknown_hydrogens_removed() const {
+        return are_unknown_hydrogens_removed_;
     }
 
   private:
@@ -224,8 +245,8 @@ class PdbStructureBuilder {
     std::map<Triplet<int>*, std::string,
              TripletPtrLess<int> > pdb_residue_map_;
     std::set<const PdbResidueId*, PdbResidueIdPtrLess> residues_to_remove_;
-    bool use_residue_map_;
-    bool unknown_hydrogens_removed_;
+    bool is_residue_map_used_;
+    bool are_unknown_hydrogens_removed_;
 
     DISALLOW_COPY_AND_ASSIGN(PdbStructureBuilder);
 };
