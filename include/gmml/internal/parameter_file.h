@@ -29,6 +29,9 @@ class ParameterFileBondPtrLess;
 class ParameterFileAnglePtrLess;
 class ParameterFileDihedralPtrLess;
 
+// TODO: Right now this just forwards everything to the pimpl class, so this
+// class is useless for inheritance. ForceModFile should derive from this
+// class, so it should be the one deriving from Readable, not the pimpl class.
 class ParameterFile {
   public:
     typedef std::map<std::string, ParameterFileAtom*> AtomTypeMap;
@@ -49,11 +52,33 @@ class ParameterFile {
     const DihedralSet& generic_dihedrals() const;
     const ImproperDihedralCollection& improper_dihedrals() const;
 
+    class Impl;
+
+  private:
+    std::auto_ptr<Impl> impl_;
+
+    DISALLOW_COPY_AND_ASSIGN(ParameterFile);
+};
+
+class ForceModFile {
+  public:
+    explicit ForceModFile(const std::string& file_name);
+
+    // The design note at the top would get rid of these.
+    const ParameterFile::AtomTypeMap& atom_types() const;
+    const ParameterFile::BondSet& bonds() const;
+    const ParameterFile::AngleSet& angles() const;
+    const ParameterFile::DihedralSet& dihedrals() const;
+    const ParameterFile::DihedralSet& generic_dihedrals() const;
+    const ImproperDihedralCollection& improper_dihedrals() const;
+
+    virtual ~ForceModFile();
+
   private:
     class Impl;
     std::auto_ptr<Impl> impl_;
 
-    DISALLOW_COPY_AND_ASSIGN(ParameterFile);
+    DISALLOW_COPY_AND_ASSIGN(ForceModFile);
 };
 
 class ParameterSet {
@@ -61,6 +86,8 @@ class ParameterSet {
     ParameterSet();
 
     void load(const ParameterFile& parameter_file);
+
+    void load(const ForceModFile& force_mod_file);
 
     // Throws ParameterFileProcessingException.
     void load(const std::string& file_name) { load(ParameterFile(file_name)); }

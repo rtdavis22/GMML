@@ -107,9 +107,12 @@ const char *ParameterFileProcessingException::what() const throw() {
     return what_.c_str();
 }
 
-// Private implementation
+
 class ParameterFile::Impl : public Readable {
   public:
+    // This is just here so ForceModFile::Impl can use it's own read function.
+    // See design note in header file.
+    Impl() {}
     explicit Impl(const string& file) { Readable::read(file); }
     ~Impl();
 
@@ -122,7 +125,7 @@ class ParameterFile::Impl : public Readable {
         return improper_dihedrals_;
     }
 
-  private:
+  protected:
     // Throws ParameterFileProcessingException.
     virtual void read(std::istream&);
 
@@ -149,6 +152,146 @@ class ParameterFile::Impl : public Readable {
     vector<HbondParameter> hbond_parameters_;
     map<string, vector<string> > equivalent_symbol_lists_;
 };
+
+class ForceModFile::Impl : public ParameterFile::Impl {
+  public:
+    explicit Impl(const string& file) { Readable::read(file); }
+
+  protected:
+    virtual void read(std::istream& in) {
+        getline(in, title_);
+        string section_name;
+        while (in.good()) {
+            getline(in, section_name);
+            trim(section_name);
+            if (section_name == "MASS") {
+                process_atom_types(in);
+            } else if (section_name == "BOND") {
+                process_bonds(in);
+            } else if (section_name == "ANGL") {
+                process_angles(in);
+            } else if (section_name == "DIHEDRAL") {
+                process_dihedrals(in);
+            } else if (section_name == "IMPR") {
+                process_improper_dihedrals(in);
+            } else if (section_name == "HBON") {
+                process_hbond_parameter_line(in);
+            } else if (section_name == "NONBON") {
+                process_nonbondeds(in);
+            }
+        }
+    }
+
+    void process_atom_types(std::istream& in) {
+        string line;
+        while (in.good()) {
+            getline(in, line);
+            trim(line);
+            if (line.empty())
+                return;
+            process_atom_type(line);
+        }
+    }
+
+    void process_bonds(std::istream& in) {
+        string line;
+        while (in.good()) {
+            getline(in, line);
+            trim(line);
+            if (line.empty())
+                return;
+            process_bond(line);
+        }
+    }
+
+    void process_angles(std::istream& in) {
+        string line;
+        while (in.good()) {
+            getline(in, line);
+            trim(line);
+            if (line.empty())
+                return;
+            process_angle(line);
+        }
+    }
+
+    void process_dihedrals(std::istream& in) {
+        string line;
+        while (in.good()) {
+            getline(in, line);
+            trim(line);
+            if (line.empty())
+                return;
+            int t = 0; // yeah...
+            process_dihedral(line, t, in);
+        }
+    }
+
+    void process_improper_dihedrals(std::istream& in) {
+        string line;
+        while (in.good()) {
+            getline(in, line);
+            trim(line);
+            if (line.empty())
+                return;
+            process_improper_dihedral(line);
+        }
+    }
+
+    void process_hbond_parameter_line(std::istream& in) {
+        string line;
+        while (in.good()) {
+            getline(in, line);
+            trim(line);
+            if (line.empty())
+                return;
+            process_hbond_parameters(line);
+        }
+    }
+
+    void process_nonbondeds(std::istream& in) {
+        string line;
+        while (in.good()) {
+            getline(in, line);
+            trim(line);
+            if (line.empty())
+                return;
+            process_6_12_parameters(line);
+        }
+    }
+};
+
+ForceModFile::ForceModFile(const string& file_name)
+        : impl_(new Impl(file_name)) {
+}
+
+ForceModFile::~ForceModFile() {
+}
+
+const ParameterFile::AtomTypeMap& ForceModFile::atom_types() const {
+    return impl_->atom_types();
+}
+
+const ParameterFile::BondSet& ForceModFile::bonds() const {
+    return impl_->bonds();
+}
+
+const ParameterFile::AngleSet& ForceModFile::angles() const {
+    return impl_->angles();
+}
+
+const ParameterFile::DihedralSet& ForceModFile::dihedrals() const {
+    return impl_->dihedrals();
+}
+
+const ParameterFile::DihedralSet& ForceModFile::generic_dihedrals() const {
+    return impl_->generic_dihedrals();
+}
+
+const ImproperDihedralCollection& ForceModFile::improper_dihedrals() const {
+    return impl_->improper_dihedrals();
+}
+
 
 ParameterFile::Impl::~Impl() {
     for (AtomTypeMap::iterator it = atom_types_.begin();
@@ -502,6 +645,7 @@ class ParameterSet::Impl {
     Impl() {}
 
     void load(const ParameterFile& parameter_file);
+    void load(const ForceModFile& force_mod_file);
     void load(const string& file_name) { load(ParameterFile(file_name)); }
 
     const ParameterFileAtom *lookup(const string& type) const;
@@ -562,6 +706,16 @@ class ParameterSet::Impl {
 };
 
 void ParameterSet::Impl::load(const ParameterFile& file) {
+    load_atom_types(file.atom_types().begin(), file.atom_types().end());
+    load_bonds(file.bonds().begin(), file.bonds().end());
+    load_angles(file.angles().begin(), file.angles().end());
+    load_dihedrals(file.generic_dihedrals().begin(),
+                   file.generic_dihedrals().end());
+    load_dihedrals(file.dihedrals().begin(), file.dihedrals().end());
+    load_improper_dihedrals(file.improper_dihedrals());
+}
+
+void ParameterSet::Impl::load(const ForceModFile& file) {
     load_atom_types(file.atom_types().begin(), file.atom_types().end());
     load_bonds(file.bonds().begin(), file.bonds().end());
     load_angles(file.angles().begin(), file.angles().end());
@@ -846,6 +1000,10 @@ ParameterSet::ParameterSet() : impl_(new Impl) {
 
 void ParameterSet::load(const ParameterFile& parameter_file) {
     impl_->load(parameter_file);
+}
+
+void ParameterSet::load(const ForceModFile& force_mod_file) {
+    impl_->load(force_mod_file);
 }
 
 const ParameterFileAtom *ParameterSet::lookup(const string& type) const {

@@ -48,6 +48,15 @@ void Environment::load_parameter_file(const ParameterFile& parameter_file) {
     parameter_files_->load(parameter_file);
 }
 
+void Environment::load_forcemod_file(const string& file_name) {
+    ForceModFile frcmod(file_name);
+    load_forcemod_file(frcmod);
+}
+
+void Environment::load_forcemod_file(const ForceModFile& frcmod) {
+    parameter_files_->load(frcmod);
+}
+
 void Environment::load_prep_file(const string& file_name) {
     prep_files_->load(file_name);
 }

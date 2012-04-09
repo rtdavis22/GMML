@@ -11,6 +11,7 @@
 namespace gmml {
 
 class File;
+class ForceModFile;
 class LibraryFile;
 class LibraryFileSet;
 class LibraryFileStructure;
@@ -40,6 +41,9 @@ class Environment {
 
     void load_parameter_file(const std::string& file_name);
     void load_parameter_file(const ParameterFile& parameter_file);
+
+    void load_forcemod_file(const std::string& file_name);
+    void load_forcemod_file(const ForceModFile& file);
 
     void load_prep_file(const std::string& file_name);
     void load_prep_file(const PrepFile& prep_file);
@@ -106,6 +110,14 @@ inline void load_parameter_file(const std::string& file_name) {
 
 inline void load_parameter_file(const ParameterFile& parameter_file) {
     kDefaultEnvironment.load_parameter_file(parameter_file);
+}
+
+inline void load_forcemod_file(const std::string& file_name) {
+    kDefaultEnvironment.load_forcemod_file(file_name);
+}
+
+inline void load_forcemod_file(const ForceModFile& forcemod_file) {
+    kDefaultEnvironment.load_forcemod_file(forcemod_file);
 }
 
 inline void load_prep_file(const std::string& file_name) {
