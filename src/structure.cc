@@ -767,6 +767,8 @@ int StructureAttach::operator()(Structure& structure,
 
     int target_atom_index = tail;
 
+    const Coordinate& tar3 = structure.atoms(target_atom_index)->coordinate();
+
     int residue_index = structure.get_residue_index(tail);
 
     string new_atom_name = structure.atoms(new_atom_index)->name();
@@ -796,8 +798,56 @@ int StructureAttach::operator()(Structure& structure,
     Vector<3> oxygen_position = direction;
     VectorBase<3> offset(Vector<3>(atoms[target_atom_index]->coordinate()) -
                          oxygen_position);
+
+
+
     structure.translate_residues_after(new_residue_index, offset[0], offset[1],
                                        offset[2]);
+
+
+
+
+
+    const Coordinate& tar = structure.atoms(target_atom_index)->coordinate();
+
+
+    Vector<3> carbon_direction =
+            Impl::get_connection_direction(structure, target_atom_index,
+                                           new_atom_index);
+
+
+    carbon_direction.normalize();
+    carbon_direction *= bond_length;
+    carbon_direction += Vector<3>(atoms[target_atom_index]->coordinate());
+    VectorBase<3> carbon_position = carbon_direction;
+
+
+    Coordinate oxygen_crd(oxygen_position[0], oxygen_position[1],
+                          oxygen_position[2]);
+    Coordinate carbon_crd(carbon_position[0], carbon_position[1],
+                          carbon_position[2]);
+    double cur_angle = measure(carbon_crd,
+                               atoms[target_atom_index]->coordinate(),
+                               atoms[new_atom_index]->coordinate());
+
+
+
+    RotationMatrix matrix(atoms[target_atom_index]->coordinate(),
+         Vector<3>(carbon_crd, atoms[target_atom_index]->coordinate()).cross(
+               Vector<3>(atoms[new_atom_index]->coordinate(),
+                         atoms[target_atom_index]->coordinate())),
+        to_radians(180.0 - 109.5) - cur_angle);
+
+
+    int start_atom = structure.get_atom_index(new_residue_index, 0);
+    for (int i = start_atom; i < structure.size(); i++) {
+        matrix.apply(structure.atoms(i)->mutable_coordinate());
+    }
+
+
+
+
+
 
     // Set the bond angles
     const Structure::AdjList& adj_atoms = structure.bonds(target_atom_index);
@@ -805,9 +855,9 @@ int StructureAttach::operator()(Structure& structure,
         if (adj_atoms[i] != new_atom_index) {
             int third_atom = adj_atoms[i];
             const ParameterFileAngle *parameter_angle = parm_set->lookup(
-                    atoms[third_atom]->type(),
-                    atoms[target_atom_index]->type(),
-                    atoms[new_atom_index]->type());
+                    structure.atoms(third_atom)->type(),
+                    structure.atoms(target_atom_index)->type(),
+                    structure.atoms(new_atom_index)->type());
 
             if (parameter_angle != NULL) {
                 structure.set_angle_after(new_residue_index,
@@ -817,6 +867,8 @@ int StructureAttach::operator()(Structure& structure,
             }
         }
     }
+
+
 
     // This sets torsions appropriately if the residues are sugars. I'm not
     // sure how to set them otherwise.
@@ -835,6 +887,7 @@ int StructureAttach::operator()(Structure& structure,
                                            residue_index, carbon_number,
                                            oxygen_number);
 
+
     return new_residue_index;
 }
 
@@ -843,8 +896,10 @@ Vector<3> StructureAttach::Impl::get_connection_direction(
     Vector<3> direction(0.0, 0.0, 0.0);
     const Structure::AtomList& atoms = structure.atoms();
     const Structure::AdjList& adj_atoms  = structure.bonds(source_index);
+    const Coordinate&  src_crd = atoms[source_index]->coordinate();
     for (int i = 0; i < adj_atoms.size(); i++) {
         if (adj_atoms[i] != target_index) {
+            
             Vector<3> v(atoms[adj_atoms[i]]->coordinate(),
                         atoms[source_index]->coordinate());
             v.normalize();
@@ -852,6 +907,7 @@ Vector<3> StructureAttach::Impl::get_connection_direction(
             direction.normalize();
         }
     }
+
     return direction;
 }
 
