@@ -129,6 +129,13 @@ AmberTopFile *AmberTopBuilder::build_common_sections(
     build_radii_and_screen(structure, file);
     build_garbage_sections(structure.size(), file);
 
+    int ep_atom_count = 0;
+    for (int i = 0; i < structure.size(); i++) {
+        if (structure.atoms(i)->type() == "EP")
+            ep_atom_count++;
+    }
+    (*pointer_section)[30] = ep_atom_count;
+
     for (int i = 0; i < pointer_section->size(); i++)
         if (!is_set((*pointer_section)[i]))
             (*pointer_section)[i] = 0;
