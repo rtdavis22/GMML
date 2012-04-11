@@ -226,7 +226,7 @@ class PdbStructureBuilder {
         return residues_to_remove_.at(index);
     }
 
-    bool residues_to_remove_count() const {
+    int residues_to_remove_count() const {
         return residues_to_remove_.size();
     }
 
