@@ -173,14 +173,13 @@ class PdbData : public PdbCardVisitor {
     }
 
     void remove_residues(const PdbStructureBuilder& builder) {
-        ResidueMapType::iterator it = pdb_residues_.begin();
-        while (it != pdb_residues_.end()) {
-            if (builder.is_to_be_removed(it->first)) {
+        for (int i = 0; i < builder.residues_to_remove_count(); i++) {
+            PdbResidueId id(*builder.residues_to_remove(i));
+            ResidueMapType::iterator it = pdb_residues_.find(&id);
+            if (it != pdb_residues_.end()) {
                 delete it->first;
                 delete it->second;
-                pdb_residues_.erase(it++);
-            } else {
-                ++it;
+                pdb_residues_.erase(it);
             }
         }
     }
@@ -471,10 +470,8 @@ PdbStructureBuilder::~PdbStructureBuilder() {
     for (it = pdb_residue_map_.begin(); it != pdb_residue_map_.end(); ++it) {
         delete it->first;
     }
-    for (set<const PdbResidueId*>::iterator it = residues_to_remove_.begin();
-            it != residues_to_remove_.end(); ++it) {
-        delete *it;
-    }
+    std::for_each(residues_to_remove_.begin(), residues_to_remove_.end(),
+                  DeletePtr());
 }
 
 void PdbStructureBuilder::add_mapping(const PdbResidueId& pdb_id,

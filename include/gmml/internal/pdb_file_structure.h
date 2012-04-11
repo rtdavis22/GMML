@@ -204,7 +204,7 @@ class PdbStructureBuilder {
     // structure, along with all associated bonds. It will, however, remain
     // in a PdbChain.
     void add_residue_to_remove(const PdbResidueId *residue) {
-        residues_to_remove_.insert(new PdbResidueId(*residue));
+        residues_to_remove_.push_back(new PdbResidueId(*residue));
     }
 
 
@@ -222,10 +222,13 @@ class PdbStructureBuilder {
                                 const std::string& residue_name,
                                 bool is_head, bool is_tail) const;
 
-    bool is_to_be_removed(const PdbResidueId *residue) const {
-        return residues_to_remove_.find(residue) != residues_to_remove_.end();
+    const PdbResidueId *residues_to_remove(int index) const {
+        return residues_to_remove_.at(index);
     }
 
+    bool residues_to_remove_count() const {
+        return residues_to_remove_.size();
+    }
 
     //
     // Accessors
@@ -244,7 +247,7 @@ class PdbStructureBuilder {
     // Change this to PdbResidueId.
     std::map<Triplet<int>*, std::string,
              TripletPtrLess<int> > pdb_residue_map_;
-    std::set<const PdbResidueId*, PdbResidueIdPtrLess> residues_to_remove_;
+    std::vector<PdbResidueId*> residues_to_remove_;
     bool is_residue_map_used_;
     bool are_unknown_hydrogens_removed_;
 
