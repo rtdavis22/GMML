@@ -210,8 +210,6 @@ const char *kCTerminusMap[] = {
 
 const char *kResidueMap[] = {
   "HIS", "HIE",
-  // Only ones with a sulfur bonds should be CYX
-  "CYS", "CYX"
 };
 
 }  // namespace
