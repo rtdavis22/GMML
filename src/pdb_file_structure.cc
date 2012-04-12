@@ -62,7 +62,7 @@ class AddAminoAcidBonds {
     }
 
     bool is_amino_acid(const PdbResidueId& residue) {
-        int index = structure_->map_residue(&residue);
+        int index = structure_->map_residue(residue);
         if (index == -1) {
             return false;
         }
@@ -71,8 +71,8 @@ class AddAminoAcidBonds {
 
     void bond_residues(const PdbResidueId& n_side,
                        const PdbResidueId& c_side) {
-        int n_side_index = structure_->map_residue(&n_side);
-        int c_side_index = structure_->map_residue(&c_side);
+        int n_side_index = structure_->map_residue(n_side);
+        int c_side_index = structure_->map_residue(c_side);
         if (n_side_index != -1 && c_side_index != -1)
             bond_residues(n_side_index, c_side_index);
     }
@@ -422,9 +422,9 @@ int PdbFileStructure::map_atom(int pdb_index) const {
     return -1;
 }
 
-int PdbFileStructure::map_residue(const PdbResidueId *pdb_id) const {
+int PdbFileStructure::map_residue(const PdbResidueId& pdb_id) const {
     Impl::ResidueMapType::left_const_iterator it =
-            impl_->residue_map.left.find(const_cast<PdbResidueId*>(pdb_id));
+            impl_->residue_map.left.find(const_cast<PdbResidueId*>(&pdb_id));
     if (it != impl_->residue_map.left.end())
         return it->second;
     return -1;

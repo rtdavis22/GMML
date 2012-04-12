@@ -103,22 +103,14 @@ class PdbFileStructure : public Structure {
 
     const PdbResidueId *map_residue_index(int index) const;
 
-    int map_residue(const PdbResidueId *pdb_id) const;
-
-    // Convenience functions, maybe shouldn't include them.
-    int map_residue(char chain_id, int residue_number,
-                    char insertion_code) const {
-        PdbResidueId pdb_id(chain_id, residue_number, insertion_code);
-        return map_residue(&pdb_id);
+    using Structure::residues;
+   
+    const Residue *residues(const PdbResidueId& pdb_id) const {
+        int index = map_residue(pdb_id);
+        return (index == -1)?NULL:residues(index);
     }
 
-    int map_residue(char chain_id, int residue_number) const {
-        return map_residue(chain_id, residue_number, ' ');
-    }
-
-    int map_residue(int residue_number) const {
-        return map_residue(' ', residue_number);
-    }
+    int map_residue(const PdbResidueId& pdb_id) const;
 
     void append(const IndexedResidue *residue,
                 const PdbResidueId *pdb_residue_id);

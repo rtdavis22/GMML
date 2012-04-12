@@ -31,7 +31,7 @@ TEST_F(PdbStructureTest, NotNull) {
 }
 
 TEST_F(PdbStructureTest, MapResidueValid) {
-    int residue_index = structure->map_residue('A', 7);
+    int residue_index = structure->map_residue(PdbResidueId('A', 7));
     ASSERT_GE(residue_index, 0);
     ASSERT_LT(residue_index, structure->residue_count());
     Residue *residue = structure->residues(residue_index);
@@ -39,12 +39,12 @@ TEST_F(PdbStructureTest, MapResidueValid) {
 }
 
 TEST_F(PdbStructureTest, MapResidueEmptyICode) {
-    EXPECT_EQ(structure->map_residue('A', 7),
-              structure->map_residue('A', 7, ' '));
+    EXPECT_EQ(structure->map_residue(PdbResidueId('A', 7)),
+              structure->map_residue(PdbResidueId('A', 7, ' ')));
 }
 
 TEST_F(PdbStructureTest, MapResidueInvalid) {
-    EXPECT_EQ(-1, structure->map_residue('Z', 3));
+    EXPECT_EQ(-1, structure->map_residue(PdbResidueId('Z', 3)));
 }
 
 TEST_F(PdbStructureTest, MapAtomValid) {
@@ -64,12 +64,12 @@ TEST(PdbStructureBuilder, IsToBeRemoved1) {
     PdbStructureBuilder builder(pdb);
     PdbResidueId id('A', 123, ' ');
     builder.add_residue_to_remove(&id);
-    EXPECT_TRUE(builder.is_to_be_removed(&id));
+    ASSERT_EQ(1, builder.residues_to_remove_count());
+    EXPECT_TRUE(builder.residues_to_remove(0)->equals(&id));
 }
 
 TEST(PdbStructureBuilder, IsToBeRemoved2) {
     PdbFile pdb(File("dat/1RVZ_New.pdb"));
     PdbStructureBuilder builder(pdb);
-    PdbResidueId id('A', 123, ' ');
-    EXPECT_FALSE(builder.is_to_be_removed(&id));
+    EXPECT_EQ(0, builder.residues_to_remove_count());
 }
