@@ -82,16 +82,22 @@ vector<vector<int>*> *find_proteins(const Structure& structure) {
 
         vector<int> *residues =
                 structure.get_adjacent_residues_by_atom(i, "N");
-        if (residues->size() > 0) {
-            continue;
+
+        int chain_start = i;
+        if (residues->size() == 1) {
+            string prev_residue = structure.residues((*residues)[0])->name();
+            if (prev_residue == "ACE")
+                chain_start = (*residues)[0];
+            else
+                continue;
         }
         
         vector<int> *new_chain = new vector<int>;
-        new_chain->push_back(i);
+        new_chain->push_back(chain_start);
         while (true) {
             // This should never happen.
             if (new_chain->size() > structure.residue_count()) {
-                LOG(ERROR) << "Amino acids form a cycle.";
+                LOG(WARNING) << "Amino acids form a cycle.";
                 delete new_chain;
                 break;
             }
