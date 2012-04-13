@@ -104,7 +104,7 @@ vector<vector<int>*> *find_proteins(const Structure& structure) {
             vector<int> *next_residue =
                     structure.get_adjacent_residues_by_atom(new_chain->back(),
                                                             "C");
-            if (next_residue->size() == 0) {
+            if (next_residue == NULL || next_residue->size() == 0) {
                 break;
             }
             new_chain->push_back((*next_residue)[0]);
