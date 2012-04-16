@@ -132,6 +132,10 @@ class PdbData : public PdbCardVisitor {
         if (ignore_remaining_atoms_) {
             return;
         }
+        if (card->alt_loc() > 'A' && card->alt_loc() <= 'Z') {
+            // Alternate locations should be dealt with at some time.
+            return;
+        }
         // The card should contain the pdb id.
         Atom *atom = new Atom(card->element(), card->coordinate(),
                               card->name(), "", card->charge());
