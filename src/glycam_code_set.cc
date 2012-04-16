@@ -371,7 +371,7 @@ TreeResidue *GlycamCodeSet::get_derivative_tree_residue(
     else if (derivative == "Me")
         return new TreeResidue("MEX", "CH3", oxygen);
     else if (derivative == "A")
-        return new TreeResidue("ACE", "C1A", oxygen);
+        return new TreeResidue("ACX", "C1A", oxygen);
 
     stringstream ss;
     ss << "There is no derivative in the GLYCAM code set represented by the " <<
@@ -393,14 +393,14 @@ int GlycamAttach::operator()(Structure& structure, Residue *residue,
         int oxygen = structure.get_atom_index(residue_index, atom_name);
         Atom *atom = structure.atoms(oxygen);
         atom->set_charge(atom->charge() + 0.031);
-    } else if (residue->name() == "MEX" || residue->name() == "ACE") {
+    } else if (residue->name() == "MEX" || residue->name() == "ACX") {
         int oxygen_number = atom_name[1] - '0';
         string carbon_name = "C" + to_string(oxygen_number);
         int carbon = structure.get_atom_index(residue_index, carbon_name);
         Atom *atom = structure.atoms(carbon);
         if (residue->name() == "MEX") {
             atom->set_charge(atom->charge() - 0.039);
-        } else if (residue->name() == "ACE") {
+        } else if (residue->name() == "ACX") {
             atom->set_charge(atom->charge() + 0.008);
         }
     }
