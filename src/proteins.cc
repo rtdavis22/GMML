@@ -120,12 +120,12 @@ vector<int> *get_asns_with_sequon(const Structure& structure) {
     vector<int> *asns = new vector<int>;
     for (int i = 0; i < chains->size(); i++) {
         const vector<int>& chain = *(*chains)[i];
-        for (int j = 2; j < chain.size(); j++) {
+        for (int j = 0; j < chain.size() - 2; j++) {
             if (structure.residues(chain[j])->name() != "ASN" ||
-                    structure.residues(chain[j - 1])->name() == "PRO") {
+                    structure.residues(chain[j + 1])->name() == "PRO") {
                 continue;
             }
-            string third = structure.residues(chain[j - 2])->name();
+            string third = structure.residues(chain[j + 2])->name();
             if (third == "SER" || third == "THR") {
                 asns->push_back(chain[j]);
             }
