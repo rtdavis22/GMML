@@ -224,7 +224,7 @@ std::string GlycamCodeSet::get_name_from_code(const string& code) const {
     else if (uppercase_code.substr(1) == "TV")
         return "Tyv";
     // I should probably make a table for these.
-    else if (uppercase_code == "SUL")
+    else if (uppercase_code == "SO3")
         return "sulfate";
     else if (uppercase_code == "OME")
         return "OME";
@@ -367,7 +367,7 @@ TreeResidue *GlycamCodeSet::get_derivative_tree_residue(
         const string& derivative, int pos) const {
     string oxygen = "O" + to_string(pos);
     if (derivative == "S")
-        return new TreeResidue("SUL", "S1", oxygen);
+        return new TreeResidue("SO3", "S1", oxygen);
     else if (derivative == "Me")
         return new TreeResidue("MEX", "CH3", oxygen);
     else if (derivative == "A")
@@ -389,7 +389,7 @@ string GlycamCodeSet::get_oxygen_name(const string& residue_code,
 int GlycamAttach::operator()(Structure& structure, Residue *residue,
                              const string& new_atom_name, int residue_index,
                              const string& atom_name) const {
-    if (residue->name() == "SUL") {
+    if (residue->name() == "SO3") {
         int oxygen = structure.get_atom_index(residue_index, atom_name);
         Atom *atom = structure.atoms(oxygen);
         atom->set_charge(atom->charge() + 0.031);
