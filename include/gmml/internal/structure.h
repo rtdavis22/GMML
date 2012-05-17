@@ -5,6 +5,7 @@
 
 #include <iosfwd>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -308,6 +309,9 @@ class Structure {
     int head() const { return head_; }
     int tail() const { return tail_; }
 
+    bool head_not_set() const { return head_ == -1; }
+    bool tail_not_set() const { return tail_ == -1; }
+
     // This may not be the best place for this, but right now it is here and
     // virtual so that box information can be retrieved from structures with
     // static type Structure and dynamic type LibraryFileStructure or
@@ -319,15 +323,14 @@ class Structure {
     //
     void set_bonds(const Graph *bonds);
 
-    void set_head(int head) { head_ = head; }
-    void set_tail(int tail) { tail_ = tail; }
+    void set_head(int head);
+    void set_tail(int tail);
 
-    void set_head(int residue, const std::string& atom) {
-        head_ = get_atom_index(residue, atom);
-    }
-    void set_tail(int residue, const std::string& atom) {
-        tail_ = get_atom_index(residue, atom);
-    }
+    void set_head(int residue, const std::string& atom);
+    void set_tail(int residue, const std::string& atom);
+
+    void unset_head() { head_ = -1; }
+    void unset_tail() { tail_ = -1; }
 
     //
     // File operations

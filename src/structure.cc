@@ -313,8 +313,17 @@ int Structure::append(const Structure *structure) {
     // Appending the residues modifies the head and tail of the structures based
     // on the heads and tails of the residues. We want to instead use the
     // head and tail of the whole structure.
-    set_head(prev_size + structure->head());
-    set_tail(prev_size + structure->tail());
+    if (structure->head_not_set()) {
+        unset_head();
+    } else {
+        set_head(prev_size + structure->head());
+    }
+
+    if (structure->tail_not_set()) {
+        unset_tail();
+    } else {
+        set_tail(prev_size + structure->tail());
+    }
 
     return first_residue;
 }
@@ -340,8 +349,17 @@ int Structure::append(const Residue *residue, bool load_bonds) {
 
     atoms_.insert(end(), new_residue->begin(), new_residue->end());
 
-    set_head(prev_size + new_residue->head());
-    set_tail(prev_size + new_residue->tail());
+    if (new_residue->head_not_set()) {
+        unset_head();
+    } else {
+        set_head(prev_size + new_residue->head());
+    }
+
+    if (new_residue->tail_not_set()) {
+        unset_tail();
+    } else {
+        set_tail(prev_size + new_residue->tail());
+    }
 
     return residue_count() - 1;
 }
@@ -759,7 +777,11 @@ int StructureAttach::operator()(Structure& structure,
     int new_residue_index = structure.append(new_structure);
 
     // Append modifies the head atom. This is not what we want on attach.
-    structure.set_head(structure_head);
+    if (structure_head == -1) {
+        structure.unset_head();
+    } else {
+        structure.set_head(structure_head);
+    }
     if (new_residue_index == -1)
         return -1;
 
@@ -799,8 +821,6 @@ int StructureAttach::operator()(Structure& structure,
     VectorBase<3> offset(Vector<3>(atoms[target_atom_index]->coordinate()) -
                          oxygen_position);
 
-
-
     structure.translate_residues_after(new_residue_index, offset[0], offset[1],
                                        offset[2]);
 
@@ -814,7 +834,6 @@ int StructureAttach::operator()(Structure& structure,
     Vector<3> carbon_direction =
             Impl::get_connection_direction(structure, target_atom_index,
                                            new_atom_index);
-
 
     carbon_direction.normalize();
     carbon_direction *= bond_length;
@@ -838,16 +857,10 @@ int StructureAttach::operator()(Structure& structure,
                          atoms[target_atom_index]->coordinate())),
         to_radians(180.0 - 109.5) - cur_angle);
 
-
     int start_atom = structure.get_atom_index(new_residue_index, 0);
     for (int i = start_atom; i < structure.size(); i++) {
         matrix.apply(structure.atoms(i)->mutable_coordinate());
     }
-
-
-
-
-
 
     // Set the bond angles
     const Structure::AdjList& adj_atoms = structure.bonds(target_atom_index);
@@ -868,8 +881,6 @@ int StructureAttach::operator()(Structure& structure,
         }
     }
 
-
-
     // This sets torsions appropriately if the residues are sugars. I'm not
     // sure how to set them otherwise.
     int carbon_number = kNotSet;
@@ -886,7 +897,6 @@ int StructureAttach::operator()(Structure& structure,
         carbohydrate::set_default_torsions(&structure, new_residue_index,
                                            residue_index, carbon_number,
                                            oxygen_number);
-
 
     return new_residue_index;
 }

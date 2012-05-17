@@ -88,6 +88,9 @@ class Residue {
     int head() const { return head_; }
     int tail() const { return tail_; }
 
+    bool head_not_set() const { return head_ == -1; }
+    bool tail_not_set() const { return tail_ == -1; }
+
   protected:
     void clone_from(const Residue *residue);
 
