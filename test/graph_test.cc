@@ -26,7 +26,6 @@ TEST_F(GraphTest, IsAdjacent) {
     EXPECT_TRUE(graph->is_adjacent(0, 3));
     EXPECT_TRUE(graph->is_adjacent(3, 0));
     EXPECT_FALSE(graph->is_adjacent(1, 3));
-    EXPECT_TRUE(false);
     EXPECT_FALSE(graph->is_adjacent(3, 1));
 }
 
