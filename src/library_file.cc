@@ -234,8 +234,17 @@ void LibraryFileStructure::read_connect_atoms(std::istream& in) {
         tail = convert_string<int>(line) - 1;
     }
 
-    set_head(head);
-    set_tail(tail);
+    if (head == -1) {
+        unset_head();
+    } else {
+        set_head(head);
+    }
+
+    if (tail == -1) {
+        unset_tail();
+    } else {
+        set_tail(tail);
+    }
 
     while (in.peek() != '!') {
         getline(in, line);
