@@ -42,15 +42,18 @@ inline bool is_set(T val) {
 
 const double kPi = 3.1415926535897932385;
 
-inline double to_radians(double degrees) {
+template<typename T>
+inline T to_radians(T degrees) {
     return degrees/180.0*kPi;
 }
 
-inline double to_degrees(double radians) {
+template<typename T>
+inline T to_degrees(T radians) {
     return radians*180.0/kPi;
 }
 
-
+// Similar functions are available in <cctype>, but I don't particularly want
+// to pull the whole header in.
 inline bool is_uppercase(char c) {
     return 'A' <= c && c <= 'Z';
 }
@@ -59,6 +62,9 @@ inline bool is_lowercase(char c) {
     return 'a' <= c && c <= 'z';
 }
 
+inline bool is_letter(char c) {
+    return is_uppercase(c) || is_lowercase(c);
+}
 
 // Handy functors
 struct DeletePtr {
