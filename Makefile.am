@@ -42,7 +42,6 @@ gmml_include_HEADERS = \
   include/gmml/internal/coordinate_grid.h \
   include/gmml/internal/fasta_sequence.h \
   include/gmml/internal/environment.h \
-  include/gmml/internal/generic_type.h \
   include/gmml/internal/geometry.h \
   include/gmml/internal/glycam_code_set.h \
   include/gmml/internal/glycam_parser.h \
@@ -87,7 +86,6 @@ libgmml_a_SOURCES = \
   src/coordinate_file.cc \
   src/fasta_sequence.cc \
   src/environment.cc \
-  src/generic_type.cc \
   src/geometry.cc \
   src/glycam_code_set.cc \
   src/glycam_parser.cc \
