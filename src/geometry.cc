@@ -41,6 +41,8 @@ RotationMatrix::RotationMatrix(const Coordinate& point, Vector<3> direction,
     matrix_[2][2] = w2 + (u2 + v2)*cos_t;
 }
 
+// See the NeRF algorithm in 
+// Jerod Parsons, J. Bradley Holmes, J. Maurice Rojas, Jerry Tsai, Charlie E. M. Strauss (2005). "Practical conversion from torsion space to Cartesian space for in silico protein synthesis". Journal of Computational Chemistry 26 (10): 1063–1068
 // TODO: fix this up.
 Coordinate calculate_point(const Coordinate& a, const Coordinate& b,
                            const Coordinate& c, double angle,
