@@ -162,7 +162,7 @@ class Structure {
             typename ATOM_MAP::value_type entry(residue->get_atom_index(i),
                                                 prev_size + i);
             atom_map.insert(entry);
-      }
+        }
         return index;
     }
 
