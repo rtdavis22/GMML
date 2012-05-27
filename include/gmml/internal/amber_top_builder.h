@@ -18,6 +18,7 @@
 namespace gmml {
 
 class AmberTopFile;
+class AmberTopIntSection;
 class AmberTopSection;
 class BoxedStructure;
 class ParameterSet;
@@ -37,11 +38,12 @@ struct DihedralType;
 // specification can be found here: http://ambermd.org/formats.html#topology.
 class AmberTopBuilder {
   public:
-    typedef boost::shared_ptr<AmberTopSection> SectionPtr;
     typedef amber_top_builder::TypeInfoType TypeInfoType;
     typedef amber_top_builder::BondType BondType;
     typedef amber_top_builder::AngleType AngleType;
     typedef amber_top_builder::DihedralType DihedralType;
+
+    static const int kPointerSectionSize = 32;
 
     // Factor by which to adjust the atomic charges.
     // See http://ambermd.org/Questions/units.html for an explanation.
@@ -154,15 +156,16 @@ class AmberTopBuilder {
     // bond (the bond from atom1_index to atom2_index).
     void insert_dihedrals(const Structure&, int atom1_index, int atom2_index,
                           std::vector<DihedralType*>& dihedral_types,
-                          SectionPtr dihedrals_with_hydrogen,
-                          SectionPtr dihedrals_without_hydrogen) const;
+                          AmberTopIntSection *dihedrals_with_hydrogen,
+                          AmberTopIntSection *dihedrals_without_hydrogen) const;
 
     // A helper to insert all improper dihedrals, where atom_index is the
     // center atom.
-    void insert_improper_dihedrals(const Structure&, int atom_index,
-                                   std::vector<DihedralType*>& dihedral_types,
-                                   SectionPtr dihedrals_with_hydrogen,
-                                   SectionPtr dihedrals_without_hydrogen) const;
+    void insert_improper_dihedrals(
+            const Structure&, int atom_index,
+            std::vector<DihedralType*>& dihedral_types,
+            AmberTopIntSection *dihedrals_with_hydrogen,
+            AmberTopIntSection *dihedrals_without_hydrogen) const;
 
     int get_dihedral_type_index(std::vector<DihedralType*>& dihedral_types,
                                 DihedralType *type) const;
@@ -317,7 +320,8 @@ class SectionComparer {
 
     // Each comparison takes O(n) time, so it may be preferable to use a
     // different data structure.
-    bool operator()(const std::string& s1, const std::string& s2) const;
+    bool operator()(const AmberTopSection *section1,
+                    const AmberTopSection *section2) const;
 
   private:
     // A smart pointer is used here because this functor will be passed to a

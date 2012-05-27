@@ -7,7 +7,7 @@
 
 #include "gmml/gmml.h"
 
-using gmml::AmberTopFile;
+using namespace gmml;
 
 const char *kIntStrings[] = { "one", "two", "three", "four", "five",
                               "six", "seven", "eight", "nine", "ten" };
@@ -15,14 +15,14 @@ const char *kIntStrings[] = { "one", "two", "three", "four", "five",
 int main() {
     AmberTopFile *file = new AmberTopFile;
 
-    AmberTopFile::SectionPtr string_section =
-            file->create_section("Int Names", "5a10");
+    AmberTopStringSection *string_section =
+            file->create_string_section("Int Names", "5a10");
 
-    AmberTopFile::SectionPtr int_section =
-            file->create_section("Radius", "10I4");
+    AmberTopIntSection *int_section =
+            file->create_int_section("Radius", "10I4");
 
-    AmberTopFile::SectionPtr double_section =
-            file->create_section("Circumference", "5E12.2");
+    AmberTopDoubleSection *double_section =
+            file->create_double_section("Circumference", "5E12.2");
 
     for (int i = 0; i < 10; i++) {
         string_section->insert(std::string(kIntStrings[i]));
