@@ -48,7 +48,7 @@ void Graph::remove_vertex(size_t vertex) {
     remove_vertex_list(vertices);
 }
 
-Graph::BFSResults *Graph::bfs(size_t start_index, size_t distance) const {
+vector<size_t> *Graph::bfs(size_t start_index, size_t distance) const {
     deque<bool> marked(edges_.size());
     vector<int> distances(edges_.size(), edges_.size());
     vector<int> *previous = new vector<int>(edges_.size(), -1);
@@ -73,11 +73,8 @@ Graph::BFSResults *Graph::bfs(size_t start_index, size_t distance) const {
             }
         }
     }
-
-    BFSResults *results = new BFSResults;
-    results->found = vertices_found;
-    results->previous = previous;
-    return results;
+    delete previous;
+    return vertices_found;
 }
 
 vector<size_t> *Graph::edge_bfs(size_t start_index, size_t end_index) const {

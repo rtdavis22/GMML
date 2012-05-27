@@ -18,13 +18,6 @@ class Graph {
     // AdjList is a random access list representing an adjacency list.
     typedef std::vector<size_t> AdjList;
 
-    struct BFSResults {
-        //~BFSResults();
-
-        std::vector<size_t> *found;
-        std::vector<int> *previous;
-    };
-
     // Create an empty graph.
     Graph() : edges_(0) {}
 
@@ -65,13 +58,13 @@ class Graph {
 
     // The function performs a breadth-first search, starting at the given
     // index. It returns a list of all the vertex indices it finds.
-    BFSResults *bfs(size_t start_index) const {
+    std::vector<size_t> *bfs(size_t start_index) const {
         return bfs(start_index, edges_.size());
     }
 
     // The function performs a breadth-first search, but only goes out to a
     // specified distance.
-    BFSResults *bfs(size_t start_index, size_t distance) const;
+    std::vector<size_t> *bfs(size_t start_index, size_t distance) const;
 
     // This is another form of breadth-first search. It only finds vertices
     // on the end_index side of the edge from start_index to end_index.
