@@ -51,7 +51,7 @@ class PdbTerCard;
 class PdbUnknownCard;
 
 /**
- The class represents a PDB file, which contains
+ \brief The class represents a PDB file, which contains
  \ref PdbCard "PdbCard"s.
  */
 class PdbFile : public Readable, public Writeable {
@@ -96,8 +96,10 @@ class PdbFile : public Readable, public Writeable {
 };
 
 /**
- This is an abstract class for analyzing and modifying \ref PdbCard "PdbCards"
- in \ref PdbFile "PdbFile"s. Clients may override any of the visit methods
+ \brief This is an abstract class for analyzing and modifying
+ \ref PdbCard "PdbCards" in \ref PdbFile "PdbFile"s.
+
+ Clients may override any of the visit methods
  below to specify an operation to be performed on a given card type.
  Calling PdbFile::accept with a PdbCardVisitor will cause these visit methods to
  be invoked.
@@ -122,7 +124,7 @@ class PdbCardVisitor {
 };
 
 /**
- This class represents a single line in a PDB file.
+ \brief This class represents a single line in a PDB file.
  */
 class PdbLine {
   public:
@@ -149,7 +151,7 @@ class PdbLine {
 };
 
 /**
- This abstract class represents a card (a type of entry) in a PDB file.
+ \brief This abstract class represents a card (a type of entry) in a PDB file.
  */
 class PdbCard : public Writeable {
   public:
@@ -170,8 +172,10 @@ class PdbCard : public Writeable {
 };
 
 /**
- This class is used to initialize the fields in a PdbAtomCard, which is
- immutable. Each of the accessors and modifiers corresponds to a field in ATOM
+ \brief This class is used to initialize the fields in a PdbAtomCard, which is
+ immutable.
+
+ Each of the accessors and modifiers corresponds to a field in ATOM
  and HETATM records, as specified in the PDB file specification.
  */
 class PdbAtomCardBuilder {
@@ -241,8 +245,9 @@ class PdbAtomCardBuilder {
 };
 
 /**
- This class represents an ATOM or HETATM record in a PDB file. The accessors
- correspond to fields in the PDB file specification.
+ \brief This class represents an ATOM or HETATM record in a PDB file.
+
+ The accessors correspond to fields in the PDB file specification.
  */
 class PdbAtomCard : public PdbCard {
   public:
@@ -288,7 +293,8 @@ class PdbAtomCard : public PdbCard {
 };
 
 /**
- This class represents a TER card as defined in the PDB file specification.
+ \brief This class represents a TER card as defined in the PDB file
+ specification.
  */
 class PdbTerCard : public PdbCard {
   public:
@@ -305,7 +311,9 @@ class PdbTerCard : public PdbCard {
 };
 
 /**
- This class represents a CONECT card as defined in the PDB file specification.
+ \brief This class represents a CONECT card as defined in the PDB file
+ specification.
+
  It consists of a source atom index and a list of bonded atom indices.
  */
 class PdbConnectCard : public PdbCard {
@@ -367,7 +375,8 @@ class PdbConnectCard : public PdbCard {
 };
 
 /**
- This class represents an END card as defined in the PDB file specification.
+ \brief This class represents an END card as defined in the PDB file
+ specification.
  */
 class PdbEndCard : public PdbCard {
   public:
@@ -384,7 +393,8 @@ class PdbEndCard : public PdbCard {
 };
 
 /**
- This class represents a LINK card as defined in the PDB file specification.
+ \brief This class represents a LINK card as defined in the PDB file
+ specification.
  */
 class PdbLinkCard : public PdbCard {
   public:
@@ -413,7 +423,8 @@ class PdbLinkCard : public PdbCard {
 };
 
 /**
- This class represents a card in a PDB file which we don't currently recognize.
+ \brief This class represents a card in a PDB file which we don't currently
+ recognize.
  */
 class PdbUnknownCard : public PdbCard {
   public:
@@ -430,7 +441,8 @@ class PdbUnknownCard : public PdbCard {
 };
 
 /**
- This class represents an ENDMDL card as defined in the PDB file specification.
+ \brief This class represents an ENDMDL card as defined in the PDB file
+ specification.
  */
 class PdbEndMdlCard : public PdbCard {
   public:
