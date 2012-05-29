@@ -51,7 +51,8 @@ class PdbTerCard;
 class PdbUnknownCard;
 
 /**
- The class represents a PDB file, a file which contains \ref PdbCard "PdbCard"s.
+ The class represents a PDB file, which contains
+ \ref PdbCard "PdbCard"s.
  */
 class PdbFile : public Readable, public Writeable {
   public:
