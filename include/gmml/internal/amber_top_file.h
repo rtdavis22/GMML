@@ -205,34 +205,9 @@ class AmberTopFile : public Readable  {
     // Remove a section by specifying the section name.
     bool remove_section(const std::string& name);
 
-    AmberTopIntSection *get_int_section(const std::string& name) {
-        for (int i = 0; i < int_sections_.size(); i++) {
-            if (int_sections_[i]->name() == name)
-                return int_sections_[i];
-        }
-        return NULL;
-    }
-
-    AmberTopDoubleSection *get_double_section(const std::string& name) {
-        for (int i = 0; i < double_sections_.size(); i++) {
-            if (double_sections_[i]->name() == name)
-                return double_sections_[i];
-        }
-        return NULL;
-    }
-
-    AmberTopStringSection *get_string_section(const std::string& name) {
-        for (int i = 0; i < string_sections_.size(); i++) {
-            if (string_sections_[i]->name() == name)
-                return string_sections_[i];
-        }
-        return NULL;
-    }
-
-    // Returns true if a section with the given name exists in the file.
-    //bool exists(const std::string& name) const {
-    //    return sections_.find(name) != sections_.end();
-    //}
+    AmberTopIntSection *get_int_section(const std::string& name);
+    AmberTopDoubleSection *get_double_section(const std::string& name);
+    AmberTopStringSection *get_string_section(const std::string& name);
 
     // Sort the sections of the file according to a sorting criterion.
     template <class Compare>
@@ -278,6 +253,33 @@ class AmberTopFile : public Readable  {
 
     DISALLOW_COPY_AND_ASSIGN(AmberTopFile);
 };
+
+inline AmberTopIntSection *AmberTopFile::get_int_section(
+        const std::string& name) {
+    for (int i = 0; i < int_sections_.size(); i++) {
+        if (int_sections_[i]->name() == name)
+            return int_sections_[i];
+    }
+    return NULL;
+}
+
+inline AmberTopDoubleSection *AmberTopFile::get_double_section(
+        const std::string& name) {
+    for (int i = 0; i < double_sections_.size(); i++) {
+        if (double_sections_[i]->name() == name)
+            return double_sections_[i];
+    }
+    return NULL;
+}
+
+inline AmberTopStringSection *AmberTopFile::get_string_section(\
+        const std::string& name) {
+    for (int i = 0; i < string_sections_.size(); i++) {
+        if (string_sections_[i]->name() == name)
+            return string_sections_[i];
+    }
+    return NULL;
+}
 
 }  // namespace gmml
 
