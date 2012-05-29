@@ -64,43 +64,23 @@ void PdbFile::accept(PdbCardVisitor *visitor) const {
 }
 
 PdbCard *PdbLine::get_card() const {
-    switch (get_card_type()) {
-        case ATOM:
-            return new PdbAtomCard(*this);
-        case TER:
-            return new PdbTerCard(*this);
-        case CONECT:
-            return new PdbConnectCard(*this);
-        case END:
-            return new PdbEndCard(*this);
-        case ENDMDL:
-            return new PdbEndMdlCard();
-        case LINK:
-            return new PdbLinkCard(*this);
-        case UNKNOWN:
-            return new PdbUnknownCard(*this);
-        default:
-            assert(false);
-    }
-}
-
-PdbLine::CardType PdbLine::get_card_type() const {
     string first_six = data_.substr(0, 6);
     first_six.resize(6, ' ');
-    if (first_six == "ATOM  " || first_six == "HETATM")
-        return ATOM;
-    else if (first_six == "TER   ")
-        return TER;
-    else if (first_six == "CONECT")
-        return CONECT;
-    else if (first_six == "END   ")
-        return END;
-    else if (first_six == "LINK  ")
-        return LINK;
-    else if (first_six == "ENDMDL")
-        return ENDMDL;
-    else
-        return UNKNOWN;
+    if (first_six == "ATOM  " || first_six == "HETATM") {
+        return new PdbAtomCard(*this);
+    } else if (first_six == "TER   ") {
+        return new PdbTerCard(*this);
+    } else if (first_six == "CONECT") {
+        return new PdbConnectCard(*this);
+    } else if (first_six == "END   ") {
+        return new PdbEndCard(*this);
+    } else if (first_six == "LINK  ") {
+        return new PdbLinkCard(*this);
+    } else if (first_six == "ENDMDL") {
+        return new PdbEndMdlCard();
+    } else {
+        return new PdbUnknownCard(*this);
+    }
 }
 
 PdbAtomCardBuilder::PdbAtomCardBuilder()

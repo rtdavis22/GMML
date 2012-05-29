@@ -144,8 +144,6 @@ class PdbLine {
     const std::string& data() const { return data_; }
 
   private:
-    CardType get_card_type() const;
-
     std::string data_;
 };
 
