@@ -48,34 +48,34 @@ using std::string;
 using std::vector;
 
 void AmberTopIntSection::append(const string& line) {
-    int count = line.size()/width_;
+    int count = line.size()/width();
     for (int j = 0; j < count; j++) {
-        string s = line.substr(j*width_, width_);
+        string s = line.substr(j*width(), width());
         int num = convert_string<int>(s);
         elements_.push_back(num);
     }
 }
 
 void AmberTopIntSection::print(std::ostream& out) {
-    out << "%FLAG " << name_ << std::endl;
-    out << "%FORMAT(" << count_per_line_ << "I" << width_ << ")" << std::endl;
+    out << "%FLAG " << name() << std::endl;
+    out << "%FORMAT(" << count_per_line() << "I" << width() << ")" << std::endl;
     if (elements_.empty()) {
         out << std::endl;
         return;
     }
-    size_t lines = size()/count_per_line_;
-    for (size_t i = 0; i < lines; i++) {
-        for (size_t j = 0; j < count_per_line_; j++) {
-            int val = elements_[i*count_per_line_ + j];
-            out << std::right << std::setw(width_) << val;
+    int lines = size()/count_per_line();
+    for (int i = 0; i < lines; i++) {
+        for (int j = 0; j < count_per_line(); j++) {
+            int val = elements_[i*count_per_line() + j];
+            out << std::right << std::setw(width()) << val;
         }
         out << std::endl;
     }
-    if (size()%count_per_line_ == 0)
+    if (size()%count_per_line() == 0)
         return;
-    for (size_t i = 0; i < size()%count_per_line_; i++) {
-        int val = elements_[lines*count_per_line_ + i];
-        out << std::right << std::setw(width_) << val;
+    for (int i = 0; i < size()%count_per_line(); i++) {
+        int val = elements_[lines*count_per_line() + i];
+        out << std::right << std::setw(width()) << val;
     }
     out << std::endl;
 }
@@ -85,44 +85,44 @@ int AmberTopIntSection::sum() const {
 }
 
 void AmberTopDoubleSection::append(const string& line) {
-    int count = line.size()/width_;
+    int count = line.size()/width();
     for (int j = 0; j < count; j++) {
-        string s = line.substr(j*width_, width_);
+        string s = line.substr(j*width(), width());
         double num = convert_string<double>(s);
         elements_.push_back(num);
     }
 }
 
 void AmberTopDoubleSection::print(std::ostream& out) {
-    out << "%FLAG " << name_ << std::endl;
-    out << "%FORMAT(" << count_per_line_ << "E" << width_ << "." <<
+    out << "%FLAG " << name() << std::endl;
+    out << "%FORMAT(" << count_per_line() << "E" << width() << "." <<
            decimal_places_ << ")" << std::endl;
     if (elements_.empty()) {
         out << std::endl;
         return;
     }
-    size_t lines = size()/count_per_line_;
-    for (size_t i = 0; i < lines; i++) {
-        for (size_t j = 0; j < count_per_line_; j++)
-            out << std::right << std::setw(width_) <<
+    int lines = size()/count_per_line();
+    for (int i = 0; i < lines; i++) {
+        for (int j = 0; j < count_per_line(); j++)
+            out << std::right << std::setw(width()) <<
                    std::setprecision(decimal_places_) << std::scientific <<
-                   elements_[i*count_per_line_ + j];
+                   elements_[i*count_per_line() + j];
         out << std::endl;
     }
-    if (size()%count_per_line_ == 0)
+    if (size()%count_per_line() == 0)
         return;
-    for (size_t i = 0; i < size()%count_per_line_; i++)
-        out << std::right << std::setw(width_) <<
+    for (int i = 0; i < size()%count_per_line(); i++)
+        out << std::right << std::setw(width()) <<
                std::setprecision(decimal_places_) <<
                std::scientific <<
-               elements_[(lines)*count_per_line_ + i];
+               elements_[(lines)*count_per_line() + i];
     out << std::endl;
 }
 
 void AmberTopStringSection::append(const string& line) {
-    size_t count = line.size()/width_;
-    for (size_t j = 0; j < count; j++) {
-        string s = line.substr(j*width_, width_);
+    int count = line.size()/width();
+    for (int j = 0; j < count; j++) {
+        string s = line.substr(j*width(), width());
         trim(s);
         if (s.empty()) {
             return;
@@ -132,24 +132,24 @@ void AmberTopStringSection::append(const string& line) {
 }
 
 void AmberTopStringSection::print(std::ostream& out) {
-    out << "%FLAG " << name_ << std::endl;
-    out << "%FORMAT(" << count_per_line_ << "a" << width_ << ")" << std::endl;
+    out << "%FLAG " << name() << std::endl;
+    out << "%FORMAT(" << count_per_line() << "a" << width() << ")" << std::endl;
     if (elements_.empty()) {
         out << std::endl;
         return;
     }
-    size_t lines = size()/count_per_line_;
-    for (size_t i = 0; i < lines; i++) {
-        for (size_t j = 0; j < count_per_line_; j++)
-            out << std::setw(width_) << std::left <<
-                   elements_[i*count_per_line_ + j];
+    int lines = size()/count_per_line();
+    for (int i = 0; i < lines; i++) {
+        for (int j = 0; j < count_per_line(); j++)
+            out << std::setw(width()) << std::left <<
+                   elements_[i*count_per_line() + j];
         out << std::endl;
     }
-    if (size()%count_per_line_ == 0)
+    if (size()%count_per_line() == 0)
         return;
-    for (size_t i = 0; i < size()%count_per_line_; i++)
-        out << std::setw(width_) << std::left <<
-               elements_[(lines)*count_per_line_ + i];
+    for (int i = 0; i < size()%count_per_line(); i++)
+        out << std::setw(width()) << std::left <<
+               elements_[(lines)*count_per_line() + i];
     out << std::endl;
 }
 
@@ -165,8 +165,8 @@ AmberTopIntSection *AmberTopFile::create_int_section(
 AmberTopIntSection *AmberTopFile::create_int_section(const string& name,
                                                      const string& format) {
     size_t i = format.find("I");
-    int count_per_line = convert_string<size_t>(format.substr(0, i));
-    int width = convert_string<size_t>(format.substr(i + 1));
+    int count_per_line = convert_string<int>(format.substr(0, i));
+    int width = convert_string<int>(format.substr(i + 1));
 
     return create_int_section(name, count_per_line, width);
 }
@@ -184,9 +184,9 @@ AmberTopDoubleSection *AmberTopFile::create_double_section(
         const string& name, const string& format) {
     size_t i = format.find("E");
     size_t j = format.find(".");
-    int count_per_line = convert_string<size_t>(format.substr(0, i));
-    int width = convert_string<size_t>(format.substr(i + 1, j - i - 1));
-    int decimal_places = convert_string<size_t>(format.substr(j + 1));
+    int count_per_line = convert_string<int>(format.substr(0, i));
+    int width = convert_string<int>(format.substr(i + 1, j - i - 1));
+    int decimal_places = convert_string<int>(format.substr(j + 1));
 
     return create_double_section(name, count_per_line, width, decimal_places);
 }
@@ -202,11 +202,13 @@ AmberTopStringSection *AmberTopFile::create_string_section(
 AmberTopStringSection *AmberTopFile::create_string_section(
         const string& name, const string& format) {
     size_t i = format.find("a");
-    int count_per_line = convert_string<size_t>(format.substr(0, i));
-    int width = convert_string<size_t>(format.substr(i + 1));
+    int count_per_line = convert_string<int>(format.substr(0, i));
+    int width = convert_string<int>(format.substr(i + 1));
 
     return create_string_section(name, count_per_line, width);
 }
+
+namespace {
 
 struct IsName {
     explicit IsName(const string& name) : name(name) {}
@@ -220,39 +222,46 @@ struct IsName {
 
 template<typename T>
 void remove_from_arr(T& vector, const string& name) {
-    typename T::iterator it = std::remove_if(vector.begin(), vector.end(), IsName(name));
+    typename T::iterator it =
+            std::remove_if(vector.begin(), vector.end(), IsName(name));
     vector.erase(it, vector.end());
 }
+
+}  // namespace
 
 bool AmberTopFile::remove_section(const string& name) {
     remove_from_arr(int_sections_, name);
     remove_from_arr(double_sections_, name);
     remove_from_arr(string_sections_, name);
-    vector<AmberTopSection*>::iterator it;
-    it = section_order_.erase(std::remove_if(section_order_.begin(),
-                                             section_order_.end(),
-                                             IsName(name)),
-                              section_order_.end());
-    // delete these
+
+    vector<AmberTopSection*>::iterator it = 
+            std::remove_if(section_order_.begin(), section_order_.end(),
+                                             IsName(name));
+    while (it != section_order_.end()) {
+        delete *it;
+        it = section_order_.erase(it);
+    }
     return true;
 }
 
 AmberTopFile::SectionType AmberTopFile::get_section_type(const string& line) {
-    if (line.find('I') != string::npos)
+    if (line.find('I') != string::npos) {
         return kIntSection;
-    else if (line.find('E') != string::npos)
+    } else if (line.find('E') != string::npos) {
         return kDoubleSection;
-    else
+    } else {
         return kStringSection;
+    }
 }
 
 AmberTopFile::CardType AmberTopFile::get_card_type(const string& line) {
-    if (line.find("%FLAG") == 0)
+    if (line.find("%FLAG") == 0) {
         return kFlagCard;
-    else if (line.find("%FORMAT") == 0)
+    } else if (line.find("%FORMAT") == 0) {
         return kFormatCard;
-    else
+    } else {
         return kOtherCard;
+    }
 }
 
 string AmberTopFile::extract_title(const string& line) {
@@ -337,7 +346,7 @@ void AmberTopFile::print(const string& file_name) {
 
 void AmberTopFile::write(std::ostream& out) {
     out << "%VERSION " << get_version_string() << std::endl;
-    for (size_t i = 0; i < section_order_.size(); i++)
+    for (int i = 0; i < section_order_.size(); i++)
         section_order_[i]->print(out);
 }
 

@@ -40,40 +40,66 @@
 
 namespace gmml {
 
-// This class represents a section in the topology file. It holds elements
-// of GenericType type, which can be strings, ints, or doubles. It also
-// contains the format of the section, which determines how the section is
-// read and written.
+/**
+ This class represents a type of section in the AMBER topology file.
+
+ Subclasses of this class determine how the data in the section is stored,
+ read, and written.
+ */
 class AmberTopSection {
   public:
     virtual ~AmberTopSection() {}
 
-    // This is the name of the section. It follows "%FLAG" in the
-    // topology file.
-    std::string name() const { return name_; }
-
-    // Append a line from topology file, which will typically consist of
-    // multiple elements, to the topology file.
+    /**
+     Appends a line of data from topology file to the section. This will
+     typically consist of multiple elements.
+     */
     virtual void append(const std::string&) = 0;
 
-    //virtual void insert(GenericType element) { elements_.push_back(element); }
+    /**
+     Removes all the elements of this section.
+     */
     virtual void clear() = 0;
+
+    /**
+     Prints this section to the given output stream.
+     */
     virtual void print(std::ostream& out) = 0;
 
+    /**
+     Returns the number of elements in the section.
+     */
     virtual size_t size() const = 0;
 
+    /**
+     Returns name of the section. It follows "%FLAG" in the topology file.
+     */
+    std::string name() const { return name_; }
+
+    /**
+     Returns the number of elements per line.
+     */
+    int count_per_line() const { return count_per_line_; }
+
+    /**
+     Returns the width of each elements (in columns).
+     */
+    int width() const { return width_; }
+
   protected:
-    //explicit AmberTopSection(const std::string& name) : name_(name) {}
+    /**
+     Creates a section with the given name, number of elements per line,
+     and width of each elements (in columns).
+     */
     AmberTopSection(const std::string& name, int count_per_line, int width)
             : name_(name), count_per_line_(count_per_line), width_(width) {
     }
 
-    // Make these prvate prolly
-    std::string name_;
-    size_t count_per_line_;
-    size_t width_;
-
   private:
+    std::string name_;
+    int count_per_line_;
+    int width_;
+
     DISALLOW_COPY_AND_ASSIGN(AmberTopSection);
 };
 
@@ -128,7 +154,7 @@ class AmberTopDoubleSection : public AmberTopSection {
     virtual size_t size() const { return elements_.size(); }
 
   private:
-    size_t decimal_places_;
+    int decimal_places_;
     std::vector<double> elements_;
 
     DISALLOW_COPY_AND_ASSIGN(AmberTopDoubleSection);
@@ -181,8 +207,10 @@ class AmberTopFile : public Readable  {
         Readable::read(file_name);
     }
 
-    // need to implement
-    virtual ~AmberTopFile() {}
+    virtual ~AmberTopFile() {
+        STLDeleteContainerPointers(section_order_.begin(),
+                                   section_order_.end());
+    }
 
     // Create and return a pointer to a section with the given name and
     // FORTRAN format string.
