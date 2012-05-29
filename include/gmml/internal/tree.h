@@ -1,6 +1,6 @@
-// The following is an external n-ary tree implementation. It is fairly bulky
-// and has many features that we have no use for so we should probably make our
-// own trimmed-down tree implementation at some point.
+// Note(Robert): The following is an external n-ary tree implementation.
+// It is fairly bulky and has many features that we have no use for so we
+// should probably make our own trimmed-down tree implementation at some point.
 
 //  STL-like templated tree class.
 //

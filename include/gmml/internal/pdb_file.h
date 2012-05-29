@@ -20,6 +20,11 @@
 
 // Author: Robert Davis
 
+/**
+ This file contains classes that represent and relate to PDB (Protein Data Bank) files.
+ The PDB file specification can be found here: http://www.wwpdb.org/docs.html.
+ */
+
 #ifndef GMML_INTERNAL_PDB_FILE_H_
 #define GMML_INTERNAL_PDB_FILE_H_
 
@@ -45,21 +50,39 @@ class PdbLinkCard;
 class PdbTerCard;
 class PdbUnknownCard;
 
+/**
+ The class represents a PDB file, a file which contains \ref PdbCard "PdbCard"s.
+ */
 class PdbFile : public Readable, public Writeable {
   public:
-    // Creates an empty PDB file.
+    /**
+     Creates a PdbFile with no cards.
+     */
     PdbFile() {}
 
+    /**
+     Initializes the PdbFile from the given File.
+     */
     explicit PdbFile(const File& file) { Readable::read(file); }
 
     virtual ~PdbFile() {
         STLDeleteContainerPointers(cards_.begin(), cards_.end());
     }
     
-    // The PdbFile now owns the pointer (no copy is made).
+    /**
+     Appends the given card to the file. The PdbFile now "owns" the pointer.
+     */
     void insert_card(PdbCard *card) { cards_.push_back(card); }
+
+    /**
+     Prepends the given card to the file. The PdbFile now "owns" the pointer.
+     */
     void insert_at_front(PdbCard *card) { cards_.push_front(card); }
 
+    /**
+     Accepts a PdbCardVisitor. This method is used to analyze and modify the
+     data in the PdbFile. It calls PdbCard::accept on each PdbCard.
+     */
     void accept(PdbCardVisitor *visitor) const;
 
   private:
@@ -71,17 +94,24 @@ class PdbFile : public Readable, public Writeable {
     DISALLOW_COPY_AND_ASSIGN(PdbFile);
 };
 
+/**
+ This is an abstract class for analyzing and modifying \ref PdbCard "PdbCards"
+ in \ref PdbFile "PdbFile"s. Clients may override any of the visit methods
+ below to specify an operation to be performed on a given card type.
+ Calling PdbFile::accept with a PdbCardVisitor will cause these visit methods to
+ be invoked.
+ */
 class PdbCardVisitor {
   public:
     virtual ~PdbCardVisitor() {}
 
-    virtual void visit(const PdbAtomCard *card) {}
-    virtual void visit(const PdbConnectCard *card) {}
-    virtual void visit(const PdbEndCard *card) {}
-    virtual void visit(const PdbEndMdlCard *card) {}
-    virtual void visit(const PdbLinkCard *card) {}
-    virtual void visit(const PdbTerCard *card) {}
-    virtual void visit(const PdbUnknownCard *card) {}
+    virtual void visit(const PdbAtomCard* /* card */) {}
+    virtual void visit(const PdbConnectCard* /* card */) {}
+    virtual void visit(const PdbEndCard* /*card */) {}
+    virtual void visit(const PdbEndMdlCard* /* card */) {}
+    virtual void visit(const PdbLinkCard* /* card */) {}
+    virtual void visit(const PdbTerCard* /* card */) {}
+    virtual void visit(const PdbUnknownCard* /* card */) {}
 
   protected:
     PdbCardVisitor() {}
@@ -90,14 +120,27 @@ class PdbCardVisitor {
     DISALLOW_COPY_AND_ASSIGN(PdbCardVisitor);
 };
 
+/**
+ This class represents a single line in a PDB file.
+ */
 class PdbLine {
   public:
     enum CardType { ATOM, CONECT, END, ENDMDL, LINK, TER, UNKNOWN };
 
-    PdbLine(const std::string& line) : data_(line) {}
+    /**
+     Creates a PdbLine from a line of data in a PDB file.
+     */
+    explicit PdbLine(const std::string& line) : data_(line) {}
 
+    /**
+     Returns a PdbCard that represents this line. The caller should free this
+     memory.
+     */
     PdbCard *get_card() const;
 
+    /**
+     Returns the contents of the line.
+     */
     const std::string& data() const { return data_; }
 
   private:
@@ -106,24 +149,48 @@ class PdbLine {
     std::string data_;
 };
 
+/**
+ This abstract class represents a card (a type of entry) in a PDB file.
+ */
 class PdbCard : public Writeable {
   public:
     virtual ~PdbCard() {}
 
+    /**
+     Writes the card to the given output stream.
+     */
     virtual void write(std::ostream&) const = 0;
 
+    /**
+     Accepts a PdbCardVisitor, which will analyze or modify the card.
+     */
     virtual void accept(PdbCardVisitor *visitor) const = 0;
 
   protected:
     virtual void read(const PdbLine& line) = 0;
 };
 
+/**
+ This class is used to initialize the fields in a PdbAtomCard, which is
+ immutable. Each of the accessors and modifiers corresponds to a field in ATOM
+ and HETATM records, as specified in the PDB file specification.
+ */
 class PdbAtomCardBuilder {
   public:
+    /**
+     Creates a PdbAtomCardBuilder with reasonable default values.
+     */
     PdbAtomCardBuilder();
 
+    /**
+     Initializes the element, name, and coordinate from the given Atom.
+     */
     void initialize_from_atom(const Atom& atom);
 
+    /**
+     If all fields are valid, a PdbAtomCard is returned. If one or more fields
+     is invalid, NULL is returned.
+     */
     PdbAtomCard *build() const;
 
     void set_serial(int serial) { serial_ = serial; }
@@ -174,6 +241,10 @@ class PdbAtomCardBuilder {
     bool is_hetatm_;
 };
 
+/**
+ This class represents an ATOM or HETATM record in a PDB file. The accessors
+ correspond to fields in the PDB file specification.
+ */
 class PdbAtomCard : public PdbCard {
   public:
     explicit PdbAtomCard(const PdbLine& line) { read(line); }
@@ -217,6 +288,9 @@ class PdbAtomCard : public PdbCard {
     bool is_hetatm_;
 };
 
+/**
+ This class represents a TER card as defined in the PDB file specification.
+ */
 class PdbTerCard : public PdbCard {
   public:
     PdbTerCard() {}
@@ -231,14 +305,29 @@ class PdbTerCard : public PdbCard {
     virtual void read(const PdbLine& /* line */) {}
 };
 
+/**
+ This class represents a CONECT card as defined in the PDB file specification.
+ It consists of a source atom index and a list of bonded atom indices.
+ */
 class PdbConnectCard : public PdbCard {
   public:
+    /**
+     This maximum number of bonded atoms indices that appear in a given
+     CONECT card.
+     */
     static const int kMaxBondedAtoms = 4;
 
+    /**
+     Constructs a PdbConnectCard with the given source atom index.
+     */
     explicit PdbConnectCard(int source) : source_(source) {}
 
     explicit PdbConnectCard(const PdbLine& line) { read(line); }
 
+    /**
+     Returns a sequence of \ref PdbConnectCard "PdbConnectCard"s with the given
+     source atom index and the specified bonded atom indices.
+     */
     static std::vector<PdbConnectCard*> *create_cards(
             int source, const std::vector<int>& bonded_atoms);
 
@@ -246,14 +335,24 @@ class PdbConnectCard : public PdbCard {
 
     virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
 
+    /**
+     Returns this card source atom index.
+     */
     int source() const { return source_; }
 
+    /**
+     Returns the number of bonded atom indices associated with this card.
+     */
     int bonded_atom_count() const { return bonded_atoms_.size(); }
 
-    // Precondition: 0 <= index < bonded_atom_count()
+    /**
+     Precondition: 0 <= index < bonded_atom_count()
+     */
     int get_bonded_atom(int index) const { return bonded_atoms_.at(index); }
 
-    // Precondition: bonded_atom_count() < kMaxBondedAtoms
+    /**
+     Precondition: bonded_atom_count() < kMaxBondedAtoms
+     */
     void add_bonded_atom(int serial);
 
   private:
@@ -268,6 +367,9 @@ class PdbConnectCard : public PdbCard {
     std::vector<int> bonded_atoms_;
 };
 
+/**
+ This class represents an END card as defined in the PDB file specification.
+ */
 class PdbEndCard : public PdbCard {
   public:
     PdbEndCard() {}
@@ -282,6 +384,9 @@ class PdbEndCard : public PdbCard {
     virtual void read(const PdbLine& /* line */) {}    
 };
 
+/**
+ This class represents a LINK card as defined in the PDB file specification.
+ */
 class PdbLinkCard : public PdbCard {
   public:
     explicit PdbLinkCard(const PdbLine& line) { read(line); }
@@ -308,6 +413,9 @@ class PdbLinkCard : public PdbCard {
     int res_seq2_;
 };
 
+/**
+ This class represents a card in a PDB file which we don't currently recognize.
+ */
 class PdbUnknownCard : public PdbCard {
   public:
     explicit PdbUnknownCard(const PdbLine& line) { read(line); }
@@ -322,6 +430,9 @@ class PdbUnknownCard : public PdbCard {
     std::string line_;
 };
 
+/**
+ This class represents an ENDMDL card as defined in the PDB file specification.
+ */
 class PdbEndMdlCard : public PdbCard {
   public:
     PdbEndMdlCard() {}

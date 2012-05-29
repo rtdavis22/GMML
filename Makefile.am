@@ -114,6 +114,10 @@ libgmml_a_CPPFLAGS = -I$(top_srcdir)/include
 uninstall-hook:
 	rm -rf $(includedir)/gmml
 
+docs: FORCE
+	cd docs && doxygen
+
+FORCE:
 
 EXTRA_DIST = \
   README \
