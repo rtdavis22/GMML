@@ -9,6 +9,7 @@
 #include "internal/complete_residue.h"
 #include "internal/coordinate_file.h"
 #include "internal/coordinate_grid.h"
+#include "internal/element.h"
 #include "internal/environment.h"
 #include "internal/fasta_sequence.h"
 #include "internal/geometry.h"
