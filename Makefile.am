@@ -43,7 +43,6 @@ gmml_include_HEADERS = \
   include/gmml/internal/element.h \
   include/gmml/internal/fasta_sequence.h \
   include/gmml/internal/environment.h \
-  include/gmml/internal/generic_type.h \
   include/gmml/internal/geometry.h \
   include/gmml/internal/glycam_code_set.h \
   include/gmml/internal/glycam_parser.h \
@@ -89,7 +88,6 @@ libgmml_a_SOURCES = \
   src/element.cc \
   src/fasta_sequence.cc \
   src/environment.cc \
-  src/generic_type.cc \
   src/geometry.cc \
   src/glycam_code_set.cc \
   src/glycam_parser.cc \
@@ -118,6 +116,10 @@ libgmml_a_CPPFLAGS = -I$(top_srcdir)/include
 uninstall-hook:
 	rm -rf $(includedir)/gmml
 
+docs: FORCE
+	cd docs && doxygen
+
+FORCE:
 
 EXTRA_DIST = \
   README \

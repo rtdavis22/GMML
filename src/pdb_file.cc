@@ -1,3 +1,23 @@
+// Copyright (c) 2012 The University of Georgia
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 // Author: Robert Davis
 
 #include "gmml/internal/pdb_file.h"
@@ -44,43 +64,23 @@ void PdbFile::accept(PdbCardVisitor *visitor) const {
 }
 
 PdbCard *PdbLine::get_card() const {
-    switch (get_card_type()) {
-        case ATOM:
-            return new PdbAtomCard(*this);
-        case TER:
-            return new PdbTerCard(*this);
-        case CONECT:
-            return new PdbConnectCard(*this);
-        case END:
-            return new PdbEndCard(*this);
-        case ENDMDL:
-            return new PdbEndMdlCard();
-        case LINK:
-            return new PdbLinkCard(*this);
-        case UNKNOWN:
-            return new PdbUnknownCard(*this);
-        default:
-            assert(false);
-    }
-}
-
-PdbLine::CardType PdbLine::get_card_type() const {
     string first_six = data_.substr(0, 6);
     first_six.resize(6, ' ');
-    if (first_six == "ATOM  " || first_six == "HETATM")
-        return ATOM;
-    else if (first_six == "TER   ")
-        return TER;
-    else if (first_six == "CONECT")
-        return CONECT;
-    else if (first_six == "END   ")
-        return END;
-    else if (first_six == "LINK  ")
-        return LINK;
-    else if (first_six == "ENDMDL")
-        return ENDMDL;
-    else
-        return UNKNOWN;
+    if (first_six == "ATOM  " || first_six == "HETATM") {
+        return new PdbAtomCard(*this);
+    } else if (first_six == "TER   ") {
+        return new PdbTerCard(*this);
+    } else if (first_six == "CONECT") {
+        return new PdbConnectCard(*this);
+    } else if (first_six == "END   ") {
+        return new PdbEndCard(*this);
+    } else if (first_six == "LINK  ") {
+        return new PdbLinkCard(*this);
+    } else if (first_six == "ENDMDL") {
+        return new PdbEndMdlCard();
+    } else {
+        return new PdbUnknownCard(*this);
+    }
 }
 
 PdbAtomCardBuilder::PdbAtomCardBuilder()

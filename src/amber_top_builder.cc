@@ -1,3 +1,25 @@
+// Copyright (c) 2012 The University of Georgia
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+// Author: Robert Davis
+
 #include "gmml/internal/amber_top_builder.h"
 
 #include <cmath>
@@ -74,7 +96,6 @@ const char *kSectionList[] = {
 
 }  // namespace
 
-typedef AmberTopFile::SectionPtr SectionPtr;
 typedef Structure::AtomList AtomList;
 
 const char *AmberTopBuilder::kDefaultTitle =
@@ -106,7 +127,9 @@ AmberTopFile *AmberTopBuilder::build(const SolvatedStructure& structure,
     AmberTopFile *file = build_common_sections(structure, title);
     build_box_section(structure, file);
     build_solvation_sections(structure, file);
+
     file->sort(SectionComparer());
+
     return file;
 }
 
@@ -114,10 +137,16 @@ AmberTopFile *AmberTopBuilder::build_common_sections(
         const Structure& structure, const string& title) const {
     AmberTopFile *file = new AmberTopFile;
 
-    SectionPtr title_section = file->create_section("TITLE", "20a4");
+    AmberTopStringSection *title_section =
+            file->create_string_section("TITLE", "20a4");
     title_section->insert(title);
 
-    SectionPtr pointer_section = file->create_section("POINTERS", "10I8", 32);
+    AmberTopIntSection *pointer_section =
+            file->create_int_section("POINTERS", "10I8");
+
+    for (int i = 0; i < kPointerSectionSize; i++) {
+        pointer_section->insert(0);
+    }
 
     build_residues(structure, file);
     build_atoms(structure, file);
@@ -134,19 +163,17 @@ AmberTopFile *AmberTopBuilder::build_common_sections(
         if (structure.atoms(i)->type() == "EP")
             ep_atom_count++;
     }
-    (*pointer_section)[30] = ep_atom_count;
-
-    for (int i = 0; i < pointer_section->size(); i++)
-        if (!is_set((*pointer_section)[i]))
-            (*pointer_section)[i] = 0;
+    pointer_section->set(30, ep_atom_count);
 
     return file;
 }
 
 void AmberTopBuilder::build_residues(const Structure& structure,
                                      AmberTopFile *file) const {
-    SectionPtr labels = file->create_section("RESIDUE_LABEL", "20a4");
-    SectionPtr pointers =  file->create_section("RESIDUE_POINTER", "10I8");
+    AmberTopStringSection *labels =
+            file->create_string_section("RESIDUE_LABEL", "20a4");
+    AmberTopIntSection *pointers =
+            file->create_int_section("RESIDUE_POINTER", "10I8");
 
     int count = 1;
     int largest_residue_size = 0;
@@ -159,16 +186,21 @@ void AmberTopBuilder::build_residues(const Structure& structure,
             largest_residue_size = residue_size;
     }
 
-    (*file)["POINTERS"][11] = structure.residue_count();
-    (*file)["POINTERS"][28] = largest_residue_size;
+    AmberTopIntSection *pointer_section = file->get_int_section("POINTERS");
+    pointer_section->set(11, structure.residue_count());
+    pointer_section->set(28, largest_residue_size);
 }
 
 void AmberTopBuilder::build_atoms(const Structure& structure,
                                   AmberTopFile *file) const {
-    SectionPtr types = file->create_section("AMBER_ATOM_TYPE", "20a4");
-    SectionPtr names = file->create_section("ATOM_NAME", "20a4");
-    SectionPtr charges = file->create_section("CHARGE", "5E16.8");
-    SectionPtr masses = file->create_section("MASS", "5E16.8");
+    AmberTopStringSection *types =
+            file->create_string_section("AMBER_ATOM_TYPE", "20a4");
+    AmberTopStringSection *names =
+            file->create_string_section("ATOM_NAME", "20a4");
+    AmberTopDoubleSection *charges =
+            file->create_double_section("CHARGE", "5E16.8");
+    AmberTopDoubleSection *masses =
+            file->create_double_section("MASS", "5E16.8");
 
     for (int i = 0; i < structure.size(); i++) {
         const Atom *atom = structure.atoms(i);
@@ -183,12 +215,13 @@ void AmberTopBuilder::build_atoms(const Structure& structure,
         masses->insert(parameter_atom->mass);
     }
 
-    (*file)["POINTERS"][0] = structure.size();
+    file->get_int_section("POINTERS")->set(0, structure.size());
 }
 
 void AmberTopBuilder::build_type_info(const Structure& structure,
                                       AmberTopFile *file) const {
-    SectionPtr indices = file->create_section("ATOM_TYPE_INDEX", "10I8");
+    AmberTopIntSection *indices =
+            file->create_int_section("ATOM_TYPE_INDEX", "10I8");
 
     vector<string> types;
     for (Structure::const_iterator it = structure.begin();
@@ -207,7 +240,7 @@ void AmberTopBuilder::build_type_info(const Structure& structure,
 
     build_nonbonded(file, types);
 
-    (*file)["POINTERS"][1] = types.size();
+    file->get_int_section("POINTERS")->set(1, types.size());
 }
 
 void AmberTopBuilder::build_nonbonded(AmberTopFile *file,
@@ -224,10 +257,10 @@ void AmberTopBuilder::build_nonbonded(AmberTopFile *file,
                                                    parameter_atom->well_depth));
     }
 
-    SectionPtr a_section =
-        file->create_section("LENNARD_JONES_ACOEF", "5E16.8");
-    SectionPtr b_section =
-        file->create_section("LENNARD_JONES_BCOEF", "5E16.8");
+    AmberTopDoubleSection *a_section =
+            file->create_double_section("LENNARD_JONES_ACOEF", "5E16.8");
+    AmberTopDoubleSection *b_section =
+            file->create_double_section("LENNARD_JONES_BCOEF", "5E16.8");
 
     int parm_index = 1;
     vector<vector<int> > parm_matrix(type_info_types.size());
@@ -247,8 +280,8 @@ void AmberTopBuilder::build_nonbonded(AmberTopFile *file,
 
     std::for_each(type_info_types.begin(), type_info_types.end(), DeletePtr());
 
-    SectionPtr nonbonded_indices =
-        file->create_section("NONBONDED_PARM_INDEX", "10I8");
+    AmberTopIntSection *nonbonded_indices =
+            file->create_int_section("NONBONDED_PARM_INDEX", "10I8");
     for (int i = 0; i < parm_matrix.size(); i++)
         for (int j = 0; j < parm_matrix[i].size(); j++)
             nonbonded_indices->insert(parm_matrix[i][j]);
@@ -256,15 +289,16 @@ void AmberTopBuilder::build_nonbonded(AmberTopFile *file,
 
 void AmberTopBuilder::build_excluded_atoms(const Structure& structure,
                                            AmberTopFile *file) const {
-    SectionPtr count_section = file->create_section("NUMBER_EXCLUDED_ATOMS",
-                                                    "10I8");
-    SectionPtr list_section = file->create_section("EXCLUDED_ATOMS_LIST",
-                                                   "10I8");
+    AmberTopIntSection *count_section =
+            file->create_int_section("NUMBER_EXCLUDED_ATOMS", "10I8");
+    AmberTopIntSection *list_section =
+            file->create_int_section("EXCLUDED_ATOMS_LIST", "10I8");
 
+using namespace std;
     int num_atoms = structure.size();
     for (int i = 0; i < num_atoms; i++) {
-        Graph::BFSResults *bfs_results = structure.bonds()->bfs(i, 3);
-        vector<size_t> *atoms = bfs_results->found;
+        vector<size_t> *atoms = structure.bonds()->bfs(i, 3);
+        //vector<size_t> *atoms = bfs_results->found;
         atoms->erase(std::remove_if(atoms->begin(), atoms->end(),
                                     std::bind2nd(std::less_equal<int>(), i)),
                      atoms->end());
@@ -276,22 +310,22 @@ void AmberTopBuilder::build_excluded_atoms(const Structure& structure,
             count_section->insert(1);
             list_section->insert(0);
         } else {
-            count_section->insert(static_cast<int>(atoms->size()));
+            count_section->insert(atoms->size());
             for (int j = 0; j < atoms->size(); j++)
-                list_section->insert(static_cast<int>((*atoms)[j]) + 1);
+                list_section->insert((*atoms)[j] + 1);
         }
         delete atoms;
     }
 
-    (*file)["POINTERS"][10] = count_section->sum();
+    file->get_int_section("POINTERS")->set(10, count_section->sum());
 }
 
 void AmberTopBuilder::build_bonds(const Structure& structure,
                                   AmberTopFile *file) const {
-    SectionPtr bonds_with_hydrogen =
-            file->create_section("BONDS_INC_HYDROGEN", "10I8");
-    SectionPtr bonds_without_hydrogen =
-            file->create_section("BONDS_WITHOUT_HYDROGEN", "10I8");
+    AmberTopIntSection *bonds_with_hydrogen =
+            file->create_int_section("BONDS_INC_HYDROGEN", "10I8");
+    AmberTopIntSection *bonds_without_hydrogen =
+            file->create_int_section("BONDS_WITHOUT_HYDROGEN", "10I8");
 
     vector<BondType*> bond_types;
     for (int i = 0; i < structure.size(); i++) {
@@ -303,7 +337,7 @@ void AmberTopBuilder::build_bonds(const Structure& structure,
             const Atom *atom2 = structure.atoms(adj_atoms[j]);
             int type_index = get_bond_type_index(bond_types, atom1->type(),
                                                  atom2->type());
-            SectionPtr section;
+            AmberTopIntSection *section;
             if (atom1->element() == kElementH || atom2->element() == kElementH)
                 section = bonds_with_hydrogen;
             else
@@ -314,10 +348,10 @@ void AmberTopBuilder::build_bonds(const Structure& structure,
         }
     }
 
-    SectionPtr force_constants =
-        file->create_section("BOND_FORCE_CONSTANT", "5E16.8");
-    SectionPtr equil_values =
-        file->create_section("BOND_EQUIL_VALUE", "5E16.8");
+    AmberTopDoubleSection *force_constants =
+            file->create_double_section("BOND_FORCE_CONSTANT", "5E16.8");
+    AmberTopDoubleSection *equil_values =
+            file->create_double_section("BOND_EQUIL_VALUE", "5E16.8");
     for (vector<BondType*>::iterator it = bond_types.begin();
             it != bond_types.end(); ++it) {
         force_constants->insert((*it)->force_constant);
@@ -326,18 +360,19 @@ void AmberTopBuilder::build_bonds(const Structure& structure,
 
     std::for_each(bond_types.begin(), bond_types.end(), DeletePtr());
 
-    (*file)["POINTERS"][2] = bonds_with_hydrogen->size()/3;
-    (*file)["POINTERS"][3] = bonds_without_hydrogen->size()/3;
-    (*file)["POINTERS"][12] = (*file)["POINTERS"][3];
-    (*file)["POINTERS"][15] = bond_types.size();
+    AmberTopIntSection *pointer_section = file->get_int_section("POINTERS");
+    pointer_section->set(2, bonds_with_hydrogen->size()/3);
+    pointer_section->set(3, bonds_without_hydrogen->size()/3);
+    pointer_section->set(12, pointer_section->get(3));
+    pointer_section->set(15, bond_types.size());
 }
 
 void AmberTopBuilder::build_angles(const Structure& structure,
                                    AmberTopFile *file) const {
-    SectionPtr angles_with_hydrogen =
-        file->create_section("ANGLES_INC_HYDROGEN", "10I8");
-    SectionPtr angles_without_hydrogen =
-        file->create_section("ANGLES_WITHOUT_HYDROGEN", "10I8");
+    AmberTopIntSection *angles_with_hydrogen =
+            file->create_int_section("ANGLES_INC_HYDROGEN", "10I8");
+    AmberTopIntSection *angles_without_hydrogen =
+            file->create_int_section("ANGLES_WITHOUT_HYDROGEN", "10I8");
 
     const Graph *bonds = structure.bonds();
     vector<AngleType*> angle_types;
@@ -367,13 +402,14 @@ void AmberTopBuilder::build_angles(const Structure& structure,
                                                       atom1->type(),
                                                       atom2->type(),
                                                       atom3->type());
-                SectionPtr section;
+                AmberTopIntSection *section;
                 if (atom1->element() == kElementH ||
                         atom2->element() == kElementH ||
-                        atom3->element() == kElementH)
+                        atom3->element() == kElementH) {
                     section = angles_with_hydrogen;
-                else
+                } else {
                     section = angles_without_hydrogen;
+                }
 
                 section->insert(adj_atom1*3);
                 section->insert(i*3);
@@ -383,10 +419,10 @@ void AmberTopBuilder::build_angles(const Structure& structure,
         }
     }
 
-    SectionPtr force_constants =
-        file->create_section("ANGLE_FORCE_CONSTANT", "5E16.8");
-    SectionPtr equil_values =
-        file->create_section("ANGLE_EQUIL_VALUE", "5E16.8");
+    AmberTopDoubleSection *force_constants =
+        file->create_double_section("ANGLE_FORCE_CONSTANT", "5E16.8");
+    AmberTopDoubleSection *equil_values =
+        file->create_double_section("ANGLE_EQUIL_VALUE", "5E16.8");
     for (vector<AngleType*>::iterator it = angle_types.begin();
             it != angle_types.end(); ++it) {
         force_constants->insert((*it)->force_constant);
@@ -395,18 +431,19 @@ void AmberTopBuilder::build_angles(const Structure& structure,
 
     std::for_each(angle_types.begin(), angle_types.end(), DeletePtr());
 
-    (*file)["POINTERS"][4] = angles_with_hydrogen->size()/4;
-    (*file)["POINTERS"][5] = angles_without_hydrogen->size()/4;
-    (*file)["POINTERS"][13] = (*file)["POINTERS"][5];
-    (*file)["POINTERS"][16] = angle_types.size();
+    AmberTopIntSection *pointer_section = file->get_int_section("POINTERS");
+    pointer_section->set(4, angles_with_hydrogen->size()/4);
+    pointer_section->set(5, angles_without_hydrogen->size()/4);
+    pointer_section->set(13, pointer_section->get(5));
+    pointer_section->set(16, angle_types.size());
 }
 
 void AmberTopBuilder::build_dihedrals(const Structure& structure,
                                       AmberTopFile *file) const {
-    SectionPtr dihedrals_with_hydrogen =
-        file->create_section("DIHEDRALS_INC_HYDROGEN", "10I8");
-    SectionPtr dihedrals_without_hydrogen =
-        file->create_section("DIHEDRALS_WITHOUT_HYDROGEN", "10I8");
+    AmberTopIntSection *dihedrals_with_hydrogen =
+            file->create_int_section("DIHEDRALS_INC_HYDROGEN", "10I8");
+    AmberTopIntSection *dihedrals_without_hydrogen =
+            file->create_int_section("DIHEDRALS_WITHOUT_HYDROGEN", "10I8");
 
     vector<DihedralType*> dihedral_types;
 
@@ -427,13 +464,16 @@ void AmberTopBuilder::build_dihedrals(const Structure& structure,
                                   dihedrals_without_hydrogen);
     }
 
-    SectionPtr force_constants =
-        file->create_section("DIHEDRAL_FORCE_CONSTANT", "5E16.8");
-    SectionPtr periodicities =
-        file->create_section("DIHEDRAL_PERIODICITY", "5E16.8");
-    SectionPtr phases = file->create_section("DIHEDRAL_PHASE", "5E16.8");
-    SectionPtr scees = file->create_section("SCEE_SCALE_FACTOR", "5E16.8");
-    SectionPtr scnbs = file->create_section("SCNB_SCALE_FACTOR", "5E16.8");
+    AmberTopDoubleSection *force_constants =
+            file->create_double_section("DIHEDRAL_FORCE_CONSTANT", "5E16.8");
+    AmberTopDoubleSection *periodicities =
+            file->create_double_section("DIHEDRAL_PERIODICITY", "5E16.8");
+    AmberTopDoubleSection *phases =
+            file->create_double_section("DIHEDRAL_PHASE", "5E16.8");
+    AmberTopDoubleSection *scees =
+            file->create_double_section("SCEE_SCALE_FACTOR", "5E16.8");
+    AmberTopDoubleSection *scnbs =
+            file->create_double_section("SCNB_SCALE_FACTOR", "5E16.8");
 
     for (vector<DihedralType*>::iterator it = dihedral_types.begin();
             it != dihedral_types.end(); ++it) {
@@ -444,22 +484,26 @@ void AmberTopBuilder::build_dihedrals(const Structure& structure,
         scnbs->insert((*it)->scnb);
     }
 
-    (*file)["POINTERS"][6] = dihedrals_with_hydrogen->size()/5;
-    (*file)["POINTERS"][7] = dihedrals_without_hydrogen->size()/5;
-    (*file)["POINTERS"][14] = (*file)["POINTERS"][7];
-    (*file)["POINTERS"][17] = dihedral_types.size();
+    AmberTopIntSection *pointer_section = file->get_int_section("POINTERS");
+    pointer_section->set(6, dihedrals_with_hydrogen->size()/5);
+    pointer_section->set(7, dihedrals_without_hydrogen->size()/5);
+    pointer_section->set(14, pointer_section->get(7));
+    pointer_section->set(17, dihedral_types.size());
 
     std::for_each(dihedral_types.begin(), dihedral_types.end(), DeletePtr());
 }
 
 void AmberTopBuilder::build_radii_and_screen(const Structure& structure,
                                              AmberTopFile *file) const {
-    SectionPtr radius_set = file->create_section("RADIUS_SET", "1a80");
+    AmberTopStringSection *radius_set =
+            file->create_string_section("RADIUS_SET", "1a80");
     string radius_name = "modified Bondi radii (mbondi)";
     radius_set->insert(radius_name);
 
-    SectionPtr radii_section = file->create_section("RADII", "5E16.8");
-    SectionPtr screen_section = file->create_section("SCREEN", "5E16.8");
+    AmberTopDoubleSection *radii_section =
+            file->create_double_section("RADII", "5E16.8");
+    AmberTopDoubleSection *screen_section =
+            file->create_double_section("SCREEN", "5E16.8");
     const Structure::AtomList& atoms = structure.atoms();
     for (int i = 0; i < atoms.size(); i++) {
         std::pair<double, double> radius_and_screen =
@@ -471,16 +515,17 @@ void AmberTopBuilder::build_radii_and_screen(const Structure& structure,
 
 void AmberTopBuilder::build_garbage_sections(int atom_count,
                                              AmberTopFile *file) const {
-    file->create_section("SOLTY", "5E16.8");
-    file->create_section("HBOND_ACOEF", "5E16.8");
-    file->create_section("HBOND_BCOEF", "5E16.8");
-    file->create_section("HBCUT", "5E16.8");
-    SectionPtr chain_section =
-        file->create_section("TREE_CHAIN_CLASSIFICATION", "20a4");
-    SectionPtr join_array = file->create_section("JOIN_ARRAY", "10I8");
-    SectionPtr i_rotat = file->create_section("IROTAT", "10I8");
+    file->create_double_section("SOLTY", "5E16.8");
+    file->create_double_section("HBOND_ACOEF", "5E16.8");
+    file->create_double_section("HBOND_BCOEF", "5E16.8");
+    file->create_double_section("HBCUT", "5E16.8");
+    AmberTopStringSection *chain_section =
+            file->create_string_section("TREE_CHAIN_CLASSIFICATION", "20a4");
+    AmberTopIntSection *join_array =
+            file->create_int_section("JOIN_ARRAY", "10I8");
+    AmberTopIntSection *i_rotat = file->create_int_section("IROTAT", "10I8");
     for (int i = 0; i < atom_count; i++) {
-        chain_section->insert(GenericType("M"));
+        chain_section->insert("M");
         join_array->insert(0);
         i_rotat->insert(0);
     }
@@ -491,19 +536,20 @@ void AmberTopBuilder::build_box_section(const BoxedStructure& boxed_structure,
     const Box *box = boxed_structure.box();
     if (box == NULL)
         return;
-    SectionPtr box_section = file->create_section("BOX_DIMENSIONS", "5E16.8");
+    AmberTopDoubleSection *box_section =
+            file->create_double_section("BOX_DIMENSIONS", "5E16.8");
     box_section->insert(box->angle);
     box_section->insert(box->length);
     box_section->insert(box->width);
     box_section->insert(box->height);
 
-    (*file)["POINTERS"][27] = 1;
+    file->get_int_section("POINTERS")->set(27, 1);
 }
 
 void AmberTopBuilder::build_solvation_sections(
         const SolvatedStructure& structure, AmberTopFile *file) const {
-    SectionPtr atoms_per_molecule = file->create_section("ATOMS_PER_MOLECULE",
-                                                         "10I8");
+    AmberTopIntSection *atoms_per_molecule =
+            file->create_int_section("ATOMS_PER_MOLECULE", "10I8");
     int last_solute_atom = structure.last_solute_atom();
     int first_solvent_atom = last_solute_atom + 1;
 
@@ -513,8 +559,7 @@ void AmberTopBuilder::build_solvation_sections(
     for (int i = 0; i < marked.size(); i++) {
         if (!marked[i]) {
             num_molecules++;
-            Graph::BFSResults *results = structure.bonds()->bfs(i);
-            vector<size_t> *component = results->found;
+            vector<size_t> *component = structure.bonds()->bfs(i);
             atoms_per_molecule->insert(static_cast<int>(component->size()));
             for (int j = 0; j < component->size(); j++) {
                 int atom = (*component)[j];
@@ -526,8 +571,8 @@ void AmberTopBuilder::build_solvation_sections(
         }
     }
 
-    SectionPtr solvent_pointers = file->create_section("SOLVENT_POINTERS",
-                                                       "3I8");
+    AmberTopIntSection *solvent_pointers =
+            file->create_int_section("SOLVENT_POINTERS", "3I8");
     int last_solute_residue = structure.get_residue_index(last_solute_atom);
     solvent_pointers->insert(last_solute_residue + 1);
     solvent_pointers->insert(num_molecules);
@@ -591,11 +636,12 @@ int AmberTopBuilder::get_angle_type_index(vector<AngleType*>& angles,
     return std::distance(angles.begin(), it) + 1;
 }
 
-void AmberTopBuilder::insert_dihedrals(const Structure& structure,
-                                       int atom1_index, int atom2_index,
-                                       vector<DihedralType*>& dihedral_types,
-                                       SectionPtr with_hydrogen,
-                                       SectionPtr without_hydrogen) const {
+void AmberTopBuilder::insert_dihedrals(
+        const Structure& structure,
+        int atom1_index, int atom2_index,
+        vector<DihedralType*>& dihedral_types,
+        AmberTopIntSection *with_hydrogen,
+        AmberTopIntSection *without_hydrogen) const {
     const Structure::AdjList& adj_atoms1 = structure.bonds(atom1_index);
     const Structure::AdjList& adj_atoms2 = structure.bonds(atom2_index);
 
@@ -636,14 +682,15 @@ void AmberTopBuilder::insert_dihedrals(const Structure& structure,
                     type->scnb = kDefaultScnb;
 
                 int type_index = get_dihedral_type_index(dihedral_types, type);
-                SectionPtr section;
+                AmberTopIntSection *section;
                 if (atom1->element() == kElementH ||
                         atom2->element() == kElementH ||
                         atom3->element() == kElementH ||
-                        atom4->element() == kElementH)
+                        atom4->element() == kElementH) {
                     section = with_hydrogen;
-                else
+                } else {
                     section = without_hydrogen;
+                }
 
                 section->insert(static_cast<int>(adj_atoms1[i])*3);
                 section->insert(atom1_index*3);
@@ -659,8 +706,8 @@ void AmberTopBuilder::insert_improper_dihedrals(
         const Structure& structure,
         int atom_index,
         vector<DihedralType*>& dihedral_types,
-        SectionPtr dihedrals_with_hydrogen,
-        SectionPtr dihedrals_without_hydrogen) const {
+        AmberTopIntSection *dihedrals_with_hydrogen,
+        AmberTopIntSection *dihedrals_without_hydrogen) const {
     const Structure::AdjList& adj_atoms = structure.bonds(atom_index);
 
     const Atom *center_atom = structure.atoms(atom_index);
@@ -684,7 +731,7 @@ void AmberTopBuilder::insert_improper_dihedrals(
                                      term.phase, 0.0, 0.0);
 
                 int type_index = get_dihedral_type_index(dihedral_types, type);
-                SectionPtr section;
+                AmberTopIntSection *section;
                 if (center_atom->element() == kElementH ||
                         adj_atom1->element() == kElementH ||
                         adj_atom2->element() == kElementH ||
@@ -803,9 +850,10 @@ SectionComparer::SectionComparer()
         : section_list_(new vector<string>(
             kSectionList, kSectionList + ARRAY_SIZE(kSectionList))) {}
 
-bool SectionComparer::operator()(const string& s1, const string& s2) const {
-    return std::find(section_list_->begin(), section_list_->end(), s1) <
-           std::find(section_list_->begin(), section_list_->end(), s2);
+bool SectionComparer::operator()(const AmberTopSection *s1,
+                                 const AmberTopSection *s2) const {
+    return std::find(section_list_->begin(), section_list_->end(), s1->name()) <
+           std::find(section_list_->begin(), section_list_->end(), s2->name());
 }
 
 }  // namespace gmml

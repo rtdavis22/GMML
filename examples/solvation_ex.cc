@@ -3,11 +3,7 @@
 
 #include "gmml/gmml.h"
 
-using gmml::build;
-using gmml::load_library_file;
-using gmml::load_parameter_file;
-using gmml::load_prep_file;
-using gmml::Structure;
+using namespace gmml;
 
 // This builds the structure that corresponds to the following sequence in
 // GLYCAM condensed nomenclature:
@@ -55,7 +51,7 @@ int main() {
 
     Structure *solvent = build("TIP3PBOX");
 
-    Structure *solvated = solvate(*glycan, *solvent, 10.0, 1.5);
+    SolvatedStructure *solvated = solvate(*glycan, *solvent, 10.0, 1.5);
 
     solvated->print_amber_top_file("solvated.top");
     solvated->print_coordinate_file("solvated.rst");

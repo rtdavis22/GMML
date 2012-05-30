@@ -127,7 +127,7 @@ int main() {
         add_residue_mapping(kResidueMap[i], kResidueMap[i + 1]);
     }
 
-    PdbFile pdb("1RVZ_New.pdb");
+    PdbFile pdb(File("1RVZ_New.pdb"));
 
     // PdbStructureBuilder allows us to specify custom mappings for this
     // particular pdb file.
@@ -138,18 +138,18 @@ int main() {
 
     // This mapping overrides the previous mapping for the residue with
     // chain_id 'A' and res_num 12 in the pdb file.
-    builder.add_mapping('A', 12, "HIE");
+    builder.add_mapping(PdbResidueId('A', 12), "HIE");
 
     // These residues in the pdb file are disulfide bonded so we want to map
     // them both to CYX.
-    builder.add_mapping('A', 8, "CYX");
-    builder.add_mapping('B', 637, "CYX");
+    builder.add_mapping(PdbResidueId('A', 8), "CYX");
+    builder.add_mapping(PdbResidueId('B', 637), "CYX");
 
     PdbFileStructure *structure = builder.build();
 
     // We can search for a particular residue in the structure using its
     // pdb identifier:
-    int res_index = structure->map_residue('A', 12);
+    int res_index = structure->map_residue(PdbResidueId('A', 12));
     const Residue *residue = structure->residues(res_index);
     cout << "Atoms in " << residue->name() << ":" << endl;
     for (int i = 0; i < residue->size(); i++) {

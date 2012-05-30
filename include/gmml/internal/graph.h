@@ -1,3 +1,23 @@
+// Copyright (c) 2012 The University of Georgia
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 // Author: Robert Davis
 
 #ifndef GMML_INTERNAL_GRAPH_H_
@@ -17,13 +37,6 @@ class Graph {
   public:
     // AdjList is a random access list representing an adjacency list.
     typedef std::vector<size_t> AdjList;
-
-    struct BFSResults {
-        //~BFSResults();
-
-        std::vector<size_t> *found;
-        std::vector<int> *previous;
-    };
 
     // Create an empty graph.
     Graph() : edges_(0) {}
@@ -65,13 +78,13 @@ class Graph {
 
     // The function performs a breadth-first search, starting at the given
     // index. It returns a list of all the vertex indices it finds.
-    BFSResults *bfs(size_t start_index) const {
+    std::vector<size_t> *bfs(size_t start_index) const {
         return bfs(start_index, edges_.size());
     }
 
     // The function performs a breadth-first search, but only goes out to a
     // specified distance.
-    BFSResults *bfs(size_t start_index, size_t distance) const;
+    std::vector<size_t> *bfs(size_t start_index, size_t distance) const;
 
     // This is another form of breadth-first search. It only finds vertices
     // on the end_index side of the edge from start_index to end_index.

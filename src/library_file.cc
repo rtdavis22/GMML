@@ -1,3 +1,23 @@
+// Copyright (c) 2012 The University of Georgia
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 // Author: Robert Davis
 
 #include "gmml/internal/library_file.h"
@@ -234,8 +254,17 @@ void LibraryFileStructure::read_connect_atoms(std::istream& in) {
         tail = convert_string<int>(line) - 1;
     }
 
-    set_head(head);
-    set_tail(tail);
+    if (head == -1) {
+        unset_head();
+    } else {
+        set_head(head);
+    }
+
+    if (tail == -1) {
+        unset_tail();
+    } else {
+        set_tail(tail);
+    }
 
     while (in.peek() != '!') {
         getline(in, line);

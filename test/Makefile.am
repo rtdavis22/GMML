@@ -13,7 +13,7 @@ gmml_test_SOURCES = \
   glycam_parser_test.cc \
   graph_test.cc \
   netoglyc_test.cc \
-  pdb_test.cc \
+  pdb_structure_test.cc \
   prep_file_test.cc \
   sander_minimize_test.cc
 

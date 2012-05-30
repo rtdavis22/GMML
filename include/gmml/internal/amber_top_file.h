@@ -1,3 +1,23 @@
+// Copyright (c) 2012 The University of Georgia
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 // Author: Robert Davis
 //
 // This file contains a representation of the AMBER topology file.
@@ -15,93 +35,157 @@
 #include <string>
 #include <vector>
 
-#include "boost/shared_ptr.hpp"
-
-#include "gmml/internal/generic_type.h"
 #include "gmml/internal/stubs/common.h"
 #include "gmml/internal/stubs/file.h"
 
 namespace gmml {
 
-// This class represents a section in the topology file. It holds elements
-// of GenericType type, which can be strings, ints, or doubles. It also
-// contains the format of the section, which determines how the section is
-// read and written.
+/**
+ This class represents a type of section in the AMBER topology file.
+
+ Subclasses of this class determine how the data in the section is stored,
+ read, and written.
+ */
 class AmberTopSection {
   public:
     virtual ~AmberTopSection() {}
 
-    // This is the name of the section. It follows "%FLAG" in the
-    // topology file.
-    std::string name() const { return name_; }
+    /**
+     Appends a line of data from topology file to the section. This will
+     typically consist of multiple elements.
+     */
+    virtual void append(const std::string&) = 0;
 
-    // Append a line from topology file, which will typically consist of
-    // multiple elements, to the topology file.
-    virtual Status append(const std::string&) = 0;
+    /**
+     Removes all the elements of this section.
+     */
+    virtual void clear() = 0;
 
-    virtual void insert(GenericType element) { elements_.push_back(element); }
-    void clear() { elements_.clear(); }
+    /**
+     Prints this section to the given output stream.
+     */
     virtual void print(std::ostream& out) = 0;
 
-    // Compute sum, minimum and maximum values of the section.
-    GenericType sum() const;
-    GenericType max() const;
-    GenericType min() const;
+    /**
+     Returns the number of elements in the section.
+     */
+    virtual size_t size() const = 0;
 
-    size_t size() const { return elements_.size(); }
+    /**
+     Returns name of the section. It follows "%FLAG" in the topology file.
+     */
+    std::string name() const { return name_; }
 
-    GenericType& operator[](size_t i) { return elements_[i]; }
-    const GenericType& operator[](size_t i) const { return elements_[i]; }
+    /**
+     Returns the number of elements per line.
+     */
+    int count_per_line() const { return count_per_line_; }
+
+    /**
+     Returns the width of each elements (in columns).
+     */
+    int width() const { return width_; }
 
   protected:
-    explicit AmberTopSection(const std::string& name) : name_(name) {}
-    AmberTopSection(const std::string& name, size_t size)
-            : name_(name), elements_(size) {}
-
-    std::string name_;
-    size_t count_per_line_;
-    size_t width_;
-    std::vector<GenericType> elements_;
+    /**
+     Creates a section with the given name, number of elements per line,
+     and width of each elements (in columns).
+     */
+    AmberTopSection(const std::string& name, int count_per_line, int width)
+            : name_(name), count_per_line_(count_per_line), width_(width) {
+    }
 
   private:
+    std::string name_;
+    int count_per_line_;
+    int width_;
+
     DISALLOW_COPY_AND_ASSIGN(AmberTopSection);
 };
 
 class AmberTopIntSection : public AmberTopSection {
   public:
-    AmberTopIntSection(const std::string& name, const std::string& format,
-                       size_t size = 0);
+    AmberTopIntSection(const std::string& name, int count_per_line, int width)
+            : AmberTopSection(name, count_per_line, width) {
+    }
 
-    virtual Status append(const std::string&);
+    int sum() const;
+
+    void set(int index, int value) { elements_.at(index) = value; }
+
+    int get(int index) const { return elements_.at(index); }
+
+    virtual void append(const std::string&);
+
+    void insert(int value) { elements_.push_back(value); }
+
     virtual void print(std::ostream&);
 
+    virtual void clear() { elements_.clear(); }
+
+    virtual size_t size() const { return elements_.size(); }
+
   private:
+    std::vector<int> elements_;
+
     DISALLOW_COPY_AND_ASSIGN(AmberTopIntSection);
 };
 
 class AmberTopDoubleSection : public AmberTopSection {
   public:
-    AmberTopDoubleSection(const std::string& name, const std::string& format,
-                          size_t size = 0);
+    AmberTopDoubleSection(const std::string& name, int count_per_line,
+                          int width, int decimal_places)
+            : AmberTopSection(name, count_per_line, width),
+              decimal_places_(decimal_places) {
+    }
 
-    virtual Status append(const std::string&);
+    void set(int index, double value) { elements_.at(index) = value; }
+
+    double get(int index) const { return elements_.at(index); }
+
+    virtual void append(const std::string&);
+
+    void insert(double value) { elements_.push_back(value); }
+
     virtual void print(std::ostream&);
 
+    virtual void clear() { elements_.clear(); }
+
+    virtual size_t size() const { return elements_.size(); }
+
   private:
-    size_t decimal_places_;
+    int decimal_places_;
+    std::vector<double> elements_;
 
     DISALLOW_COPY_AND_ASSIGN(AmberTopDoubleSection);
 };
 
 class AmberTopStringSection : public AmberTopSection {
   public:
-    AmberTopStringSection(const std::string& name, const std::string& format,
-                          size_t size = 0);
+    AmberTopStringSection(const std::string& name, int count_per_line,
+                          int width)
+            : AmberTopSection(name, count_per_line, width) {
+    }
 
-    virtual Status append(const std::string&);
+    void set(int index, const std::string& value) {
+        elements_.at(index) = value;
+    }
+
+    std::string get(int index) const { return elements_.at(index); }
+
+    virtual void append(const std::string&);
+
+    void insert(const std::string& value) { elements_.push_back(value); }
+
     virtual void print(std::ostream&);
 
+    virtual void clear() { return elements_.clear(); }
+
+    virtual size_t size() const { return elements_.size(); }
+
   private:
+    std::vector<std::string> elements_;
+
     DISALLOW_COPY_AND_ASSIGN(AmberTopStringSection);
 };
 
@@ -115,9 +199,6 @@ class AmberTopFile : public Readable  {
     // These classify the control lines of the file ("%FLAG", "%FORMAT")
     enum CardType { kFlagCard, kFormatCard, kOtherCard };
 
-    typedef boost::shared_ptr<AmberTopSection> SectionPtr;
-    typedef std::map<std::string, SectionPtr> SectionMap;
-
     // Create a topology file with no sections
     AmberTopFile() {}
 
@@ -126,31 +207,40 @@ class AmberTopFile : public Readable  {
         Readable::read(file_name);
     }
 
-    virtual ~AmberTopFile() {}
+    virtual ~AmberTopFile() {
+        STLDeleteContainerPointers(section_order_.begin(),
+                                   section_order_.end());
+    }
 
     // Create and return a pointer to a section with the given name and
     // FORTRAN format string.
-    SectionPtr create_section(const std::string& name,
-                              const std::string& format, size_t size = 0);
+    AmberTopIntSection *create_int_section(const std::string& name,
+                                           const std::string& format);
+    AmberTopIntSection *create_int_section(const std::string& name,
+                                           int count_per_line, int width);
+
+    AmberTopDoubleSection *create_double_section(const std::string& name,
+                                                 const std::string& format);
+    AmberTopDoubleSection *create_double_section(const std::string& name,
+                                                 int count_per_line, int width,
+                                                 int decimal_places);
+
+    AmberTopStringSection *create_string_section(const std::string& name,
+                                                 const std::string& format);
+    AmberTopStringSection *create_string_section(const std::string& name,
+                                                 int count_per_line, int width);
 
     // Remove a section by specifying the section name.
     bool remove_section(const std::string& name);
 
-    // Returns true if a section with the given name exists in the file.
-    bool exists(const std::string& name) const {
-        return sections_.find(name) != sections_.end();
-    }
+    AmberTopIntSection *get_int_section(const std::string& name);
+    AmberTopDoubleSection *get_double_section(const std::string& name);
+    AmberTopStringSection *get_string_section(const std::string& name);
 
     // Sort the sections of the file according to a sorting criterion.
     template <class Compare>
     void sort(Compare comp) {
-        std::sort(section_list_.begin(), section_list_.end(), comp);
-    }
-
-    // Access the sections of the file
-    AmberTopSection& operator[](const std::string& s) { return *sections_[s]; }
-    const AmberTopSection& operator[](const std::string& s) const {
-        return *sections_.find(s)->second;
+        std::sort(section_order_.begin(), section_order_.end(), comp);
     }
 
     void print(const std::string& file_name);
@@ -163,16 +253,61 @@ class AmberTopFile : public Readable  {
     enum SectionType get_section_type(const std::string&);
     enum CardType get_card_type(const std::string&);
     std::string extract_format(const std::string&);
+
+    void add_int_section(AmberTopIntSection *section) {
+        int_sections_.push_back(section);
+        section_order_.push_back(section);
+    }
+
+    void add_double_section(AmberTopDoubleSection *section) {
+        double_sections_.push_back(section);
+        section_order_.push_back(section);
+    }
+
+    void add_string_section(AmberTopStringSection *section) {
+        string_sections_.push_back(section);
+        section_order_.push_back(section);
+    }
+
     std::string extract_title(const std::string&);
     std::string extract_version(const std::string&);
-    void process_section(std::istream&, SectionPtr);
+    void process_section(std::istream&, AmberTopSection *section);
     std::string get_version_string() const;
 
-    SectionMap sections_;
-    std::vector<std::string> section_list_;
+    std::vector<AmberTopIntSection*> int_sections_;
+    std::vector<AmberTopDoubleSection*> double_sections_;
+    std::vector<AmberTopStringSection*> string_sections_;
+    std::vector<AmberTopSection*> section_order_;
 
     DISALLOW_COPY_AND_ASSIGN(AmberTopFile);
 };
+
+inline AmberTopIntSection *AmberTopFile::get_int_section(
+        const std::string& name) {
+    for (int i = 0; i < int_sections_.size(); i++) {
+        if (int_sections_[i]->name() == name)
+            return int_sections_[i];
+    }
+    return NULL;
+}
+
+inline AmberTopDoubleSection *AmberTopFile::get_double_section(
+        const std::string& name) {
+    for (int i = 0; i < double_sections_.size(); i++) {
+        if (double_sections_[i]->name() == name)
+            return double_sections_[i];
+    }
+    return NULL;
+}
+
+inline AmberTopStringSection *AmberTopFile::get_string_section(\
+        const std::string& name) {
+    for (int i = 0; i < string_sections_.size(); i++) {
+        if (string_sections_[i]->name() == name)
+            return string_sections_[i];
+    }
+    return NULL;
+}
 
 }  // namespace gmml
 
