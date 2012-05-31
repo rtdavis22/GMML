@@ -884,7 +884,7 @@ Residue *BuildPrepFileResidue::operator()(
     int tail = -1;
     for (size_t i = 3; i < prep_file_residue.atom_count(); i++) {
         const PrepFileAtom *prep_atom = prep_file_residue.atoms(i);
-        Element element = get_element_by_char(prep_atom->name[0]);
+        const Element& element = guess_element_by_letter(prep_atom->name[0]);
         Atom *atom = new Atom(element, *coordinates[i], prep_atom->name,
                               prep_atom->type, prep_atom->charge);
         atoms->push_back(atom);

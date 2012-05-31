@@ -156,7 +156,6 @@ class PdbData : public PdbCardVisitor {
             // Alternate locations should be dealt with at some time.
             return;
         }
-        // The card should contain the pdb id.
         Atom *atom = new Atom(card->element(), card->coordinate(),
                               card->name(), "", card->charge());
         PdbResidueId *residue_id = new PdbResidueId(card->chain_id(),
@@ -314,7 +313,7 @@ struct ApplyResidueMap::Impl {
         IndexedResidue *residue = it->second;
         for (int i = 0; i < residue->size(); i++) {
             const Atom *atom = residue->atoms(i);
-            if (atom->element() != kElementH)
+            if (atom->element() != Element("H"))
                 continue;
             if (!is_atom_in_structure(mapped_structure, atom->name())) {
                 int serial = residue->get_atom_index(i);
