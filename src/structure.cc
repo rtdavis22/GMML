@@ -159,7 +159,7 @@ vector<int> *Structure::get_flexible_linkages() const {
         for (int j = 0; j < adj_list.size(); j++) {
             if (get_residue_index(adj_list[j]) == parent_index &&
                     !is_cyclic(adj_list[j]) &&
-                    atoms_[adj_list[j]]->element() == kElementC) {
+                    atoms_[adj_list[j]]->element() == Element("C")) {
                 is_flexible = true;
                 break;
             }
@@ -571,12 +571,12 @@ int Structure::get_anomeric_index(int residue_index) const {
     int residue_size = residues(residue_index)->size();
     int residue_end = residue_start + residue_size - 1;
     for (int i = residue_start; i <= residue_end; i++) {
-        if (atoms(i)->element() == kElementO)
+        if (atoms(i)->element() == Element("O"))
             continue;
         const AdjList& adj_list = bonds(i);
         for (int j = 0; j < adj_list.size(); j++) {
             if ((adj_list[j] < residue_start || adj_list[j] > residue_end) &&
-                    atoms_[adj_list[j]]->element() == kElementO)
+                    atoms_[adj_list[j]]->element() == Element("O"))
                 return i;
         }
     }
@@ -592,7 +592,7 @@ int Structure::get_parent_atom(int residue_index) const {
         const AdjList& adj_list = bonds(anomeric_index);
         for (int i = 0; i < adj_list.size(); i++) {
             if ((adj_list[i] < residue_start || adj_list[i] > residue_end) &&
-                    atoms_[adj_list[i]]->element() == kElementO)
+                    atoms_[adj_list[i]]->element() == Element("O"))
                 return adj_list[i];
         }
     }
@@ -751,7 +751,7 @@ void Structure::print(std::ostream& out) const {
             Atom *atom = atoms_[j];
             out << "Atom: name - " << atom->name() <<
                    ", type - " << atom->type() <<
-                   ", element - " << static_cast<int>(atom->element()) <<
+                   ", element - " << atom->element().symbol() <<
                    ", coordinate - " << atom->coordinate().x << " " <<
                    atom->coordinate().y << " " << atom->coordinate().z <<
                    std::endl;

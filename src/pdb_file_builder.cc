@@ -29,6 +29,7 @@
 #include <utility>
 
 #include "gmml/internal/atom.h"
+#include "gmml/internal/element.h"
 #include "gmml/internal/graph.h"
 #include "gmml/internal/pdb_file.h"
 #include "gmml/internal/proteins.h"
@@ -77,7 +78,7 @@ struct BuildPdbFile::Impl {
 
         int start_atom = structure_.get_atom_index(index, 0);
         for (int i = start_atom; i < start_atom + residue->size(); i++) {
-            if (structure_.atoms(i)->element() == kElementH &&
+            if (structure_.atoms(i)->element() == Element("H") &&
                     !builder_.hydrogens_included()) {
                 continue;
             }
@@ -171,8 +172,8 @@ struct BuildPdbFile::Impl {
                 structure_.get_residue_index(atom2_index));
         if (amino_acids.lookup(residue1->name()) &&
                 amino_acids.lookup(residue2->name())) {
-            return atom1->element() == kElementS &&
-                   atom2->element() == kElementS;
+            return atom1->element() == Element("S") &&
+                   atom2->element() == Element("S");
         }
         return true;
     }

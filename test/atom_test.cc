@@ -8,8 +8,8 @@ using gmml::Coordinate;
 using gmml::Element;
 
 TEST(AtomTest, Constructor1) {
-    Atom atom(gmml::kElementC, Coordinate(1.0, 2.0, 3.0), "C", 0.2);
-    EXPECT_EQ(atom.element(), gmml::kElementC);
+    Atom atom(Element("C"), Coordinate(1.0, 2.0, 3.0), "C", 0.2);
+    EXPECT_TRUE(atom.element() == Element("C"));
     EXPECT_EQ(atom.coordinate().x, 1.0);
     EXPECT_EQ(atom.coordinate().y, 2.0);
     EXPECT_EQ(atom.coordinate().z, 3.0);

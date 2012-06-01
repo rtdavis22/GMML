@@ -3,13 +3,7 @@
 #include "gmml/gmml.h"
 #include "gtest/gtest.h"
 
-using gmml::Atom;
-using gmml::File;
-using gmml::PdbFile;
-using gmml::PdbFileStructure;
-using gmml::PdbResidueId;
-using gmml::PdbStructureBuilder;
-using gmml::Residue;
+using namespace gmml;
 
 class PdbStructureTest : public ::testing::Test {
   protected:
@@ -53,7 +47,7 @@ TEST_F(PdbStructureTest, MapAtomValid) {
     ASSERT_LT(atom_index, structure->size());
     const Atom *atom = structure->atoms(atom_index);
     EXPECT_EQ("OH", atom->name());
-    EXPECT_EQ(gmml::kElementO, atom->element());
+    EXPECT_TRUE(atom->element() == Element("O"));
     EXPECT_EQ(16.653, atom->coordinate().x);
     EXPECT_EQ(-25.833, atom->coordinate().y);
     EXPECT_EQ(15.868, atom->coordinate().z);

@@ -1,6 +1,30 @@
+// Copyright (c) 2012 The University of Georgia
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+// Author: Kyle Forrester
+
 #include "gmml/internal/element.h"
 
 #include <stdexcept>
+
+#include "gmml/internal/stubs/common.h"
 
 using std::string;
 
@@ -15,15 +39,15 @@ namespace {
 struct ElementData {
     const std::string symbol;
     const std::string name;
-    double mass; // in g/mol
-    double exact_mass; // in g/mol
-    double ionization_energy; // in eV
-    double electron_affinity; // in eV
-    double electron_negativity; // pauling scale
-    double covalent_radius; // in angstroms
+    double mass;  // in g/mol
+    double exact_mass;  // in g/mol
+    double ionization_energy;  // in eV
+    double electron_affinity;  // in eV
+    double electron_negativity;  // pauling scale
+    double covalent_radius;  // in angstroms
     double van_der_waals_radius; // in angstroms
-    double boiling_point; // in kelvin
-    double melting_point; // in kelvin
+    double boiling_point;  // in kelvin
+    double melting_point;  // in kelvin
 };
 
 const ElementData kElementData[] = {
@@ -148,27 +172,35 @@ const ElementData kElementData[] = {
     {"Uuo", "Ununoctium", 294, 0, 0, 0, 0, 0, 0, 0, 0},
 };
 
-const int kElementDataSize = sizeof(kElementData) / sizeof(*kElementData);
+const int kElementDataSize = ARRAY_SIZE(kElementData);
 
 }  // namespace
-
 
 Element::Element(const std::string& symbol) {
     atomic_number_ = 0;
     for (int i = 1; i < kElementDataSize; i++) {
-        if (symbol.compare(kElementData[i].symbol) == 0) {
+        if (symbol == kElementData[i].symbol) {
             atomic_number_ = i;
             break;
         }
     }
-    if (atomic_number_ == 0)
-        throw std::invalid_argument("Element Symbol not recognized.");
-
+    if (atomic_number_ == 0) {
+        throw std::invalid_argument("Element symbol not recognized.");
+    }
 }
 
 Element::Element(int atomic_number) : atomic_number_(atomic_number) {
-    if (atomic_number_ < 1 || atomic_number_ >= kElementDataSize)
+    if (atomic_number_ < 1 || atomic_number_ >= kElementDataSize) {
        throw std::invalid_argument("Atomic Number not recognized.");
+    }
+}
+
+Element Element::from_name(const std::string &name) {
+    for (int i = 1; i < kElementDataSize; i++) {
+        if (name == kElementData[i].name)
+            return Element(i);
+    }
+    throw std::invalid_argument("Element Name not recognized.");
 }
 
 std::string Element::symbol() const {
@@ -230,14 +262,6 @@ double Element::boiling_point() const {
 
 double Element::melting_point() const {
     return kElementData[atomic_number_].melting_point;
-}
-
-Element from_name(const std::string &name) {
-    for (int i = 1; i < kElementDataSize; i++) {
-        if (name == kElementData[i].name)
-            return Element(i);
-    }
-    throw std::invalid_argument("Element Name not recognized.");
 }
 
 }  // namespace gmml

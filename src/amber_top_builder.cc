@@ -34,6 +34,7 @@
 #include "gmml/internal/amber_top_file.h"
 #include "gmml/internal/atom.h"
 #include "gmml/internal/boxed_structure.h"
+#include "gmml/internal/element.h"
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
 #include "gmml/internal/graph.h"
@@ -343,7 +344,8 @@ void AmberTopBuilder::build_bonds(const Structure& structure,
             int type_index = get_bond_type_index(bond_types, atom1->type(),
                                                  atom2->type());
             AmberTopIntSection *section;
-            if (atom1->element() == kElementH || atom2->element() == kElementH)
+            Element hydrogen("H");
+            if (atom1->element() == hydrogen || atom2->element() == hydrogen)
                 section = bonds_with_hydrogen;
             else
                 section = bonds_without_hydrogen;
@@ -408,9 +410,10 @@ void AmberTopBuilder::build_angles(const Structure& structure,
                                                       atom2->type(),
                                                       atom3->type());
                 AmberTopIntSection *section;
-                if (atom1->element() == kElementH ||
-                        atom2->element() == kElementH ||
-                        atom3->element() == kElementH) {
+                Element hydrogen("H");
+                if (atom1->element() == hydrogen ||
+                        atom2->element() == hydrogen ||
+                        atom3->element() == hydrogen) {
                     section = angles_with_hydrogen;
                 } else {
                     section = angles_without_hydrogen;
@@ -688,10 +691,11 @@ void AmberTopBuilder::insert_dihedrals(
 
                 int type_index = get_dihedral_type_index(dihedral_types, type);
                 AmberTopIntSection *section;
-                if (atom1->element() == kElementH ||
-                        atom2->element() == kElementH ||
-                        atom3->element() == kElementH ||
-                        atom4->element() == kElementH) {
+                Element hydrogen("H");
+                if (atom1->element() == hydrogen ||
+                        atom2->element() == hydrogen ||
+                        atom3->element() == hydrogen ||
+                        atom4->element() == hydrogen) {
                     section = with_hydrogen;
                 } else {
                     section = without_hydrogen;
@@ -737,13 +741,15 @@ void AmberTopBuilder::insert_improper_dihedrals(
 
                 int type_index = get_dihedral_type_index(dihedral_types, type);
                 AmberTopIntSection *section;
-                if (center_atom->element() == kElementH ||
-                        adj_atom1->element() == kElementH ||
-                        adj_atom2->element() == kElementH ||
-                        adj_atom3->element() == kElementH)
+                Element hydrogen("H");
+                if (center_atom->element() == hydrogen ||
+                        adj_atom1->element() == hydrogen ||
+                        adj_atom2->element() == hydrogen ||
+                        adj_atom3->element() == hydrogen) {
                     section = dihedrals_with_hydrogen;
-                else
+                } else {
                     section = dihedrals_without_hydrogen;
+                }
 
                 section->insert(static_cast<int>(adj_atoms[i])*3);
                 section->insert(static_cast<int>(adj_atoms[j])*3);
@@ -784,63 +790,50 @@ std::pair<double, double> AmberTopBuilder::get_radius_and_screen(
         const Structure& structure,
         int atom_index) const {
     const Atom *atom = structure.atoms(atom_index);
-    double radius;
-    double screen;
-    if (atom->element() == kElementH) {
+    const Element& element = atom->element();
+    double radius = kNotSet;
+    double screen = kNotSet;
+    if (element == Element("H")) {
         double screen = 0.85;
         const Structure::AdjList& adj_atoms = structure.bonds(atom_index);
         if (adj_atoms.empty()) {
             radius = 1.2;
         } else {
-            switch (structure.atoms(adj_atoms[0])->element()) {
-                case kElementC:
-                case kElementN:
-                    radius = 1.3;
-                    break;
-                case kElementH:
-                case kElementO:
-                case kElementS:
+            const Element& adj_el = structure.atoms(adj_atoms[0])->element();
+            if (adj_el == Element("C") || adj_el == Element("N")) {
+                radius = 1.3;
+            } else if (adj_el == Element("H") || adj_el == Element("O") ||
+                    adj_el == Element("S")) {
                     radius = 0.8;
-                    break;
             }
         }
         return std::make_pair(radius, screen);
     }
-    switch (atom->element()) {
-        case kElementC: {
-            string type = atom->type();
-            if (type == "C1" || type == "C2" || type == "C3")
-                radius = 2.2;
-            else
-                radius = 1.7;
-            screen = 0.72;
-            break;
-        }
-        case kElementN:
-            radius = 1.55;
-            screen = 0.79;
-            break;
-        case kElementO:
-            radius = 1.5;
-            screen = 0.85;
-            break;
-        case kElementF:
-            radius = 1.5;
-            break;
-        case kElementSi:
-            radius = 2.1;
-            break;
-        case kElementP:
-            radius = 1.85;
-            screen = 0.86;
-            break;
-        case kElementS:
-            radius = 1.8;
-            screen = 0.96;
-            break;
-        case kElementCl:
+    if (element == Element("C")) {
+        string type = atom->type();
+        if (type == "C1" || type == "C2" || type == "C3")
+            radius = 2.2;
+        else
             radius = 1.7;
-            break;
+        screen = 0.72;
+    } else if (element == Element("N")) {
+        radius = 1.55;
+        screen = 0.79;
+    } else if (element == Element("O")) {
+        radius = 1.5;
+        screen = 0.85;
+    } else if (element == Element("F")) {
+        radius = 1.5;
+    } else if (element == Element("Si")) {
+        radius = 2.1;
+    } else if (element == Element("P")) {
+        radius = 1.85;
+        screen = 0.86;
+    } else if (element == Element("S")) {
+        radius = 1.8;
+        screen = 0.96;
+    } else if (element == Element("Cl")) {
+        radius = 1.7;
     }
 
     if (!is_set(radius))

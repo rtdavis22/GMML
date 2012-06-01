@@ -31,6 +31,7 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "gmml/internal/element.h"
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
 #include "utilities.h"
@@ -86,7 +87,7 @@ PdbCard *PdbLine::get_card() const {
 PdbAtomCardBuilder::PdbAtomCardBuilder()
         : serial_(-1), name_(""), alt_loc_(' '), res_name_(""), chain_id_(' '),
           res_seq_(-1), i_code_(' '), coordinate_(0.0, 0.0, 0.0),
-          occupancy_(1.0), temp_factor_(0.0), element_(kElementUnknown),
+          occupancy_(1.0), temp_factor_(0.0), element_(),
           charge_(kNotSet), is_hetatm_(false) {
 }
 
@@ -145,7 +146,7 @@ void PdbAtomCard::write(std::ostream& out) const {
         set_in_string(str, occupancy_, 54, 6, 'R', 2);
     if (is_set(temp_factor_))
         set_in_string(str, temp_factor_, 60, 6, 'R', 2);
-    set_in_string(str, get_element_symbol(element_), 76, 2, 'R');
+    set_in_string(str, element_.symbol(), 76, 2, 'R');
     if (is_set(charge_))
         set_in_string(str, charge_, 78, 2, 'R');
     trim(str);
@@ -180,9 +181,10 @@ void PdbAtomCard::read(const string& line) {
     }
     string element_str = input.substr(76, 2);
     trim(element_str);
-    element_ = get_element_by_symbol(element_str.c_str());
-    if (element_ == kElementUnknown) {
-        element_ = get_element_by_name(name_);
+    try {
+        element_ = Element(element_str);
+    } catch(const std::invalid_argument& e) {
+        element_ = Element();
     }
     try {
         charge_ = convert_string<double>(input.substr(78, 2));
