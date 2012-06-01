@@ -35,8 +35,6 @@
 #include <map>
 #include <numeric>
 #include <stdexcept>
-#include <string>
-#include <vector>
 
 #include "gmml/internal/environment.h"
 #include "utilities.h"
@@ -279,7 +277,6 @@ struct AmberTopFile::Impl {
         return string("");
     }
 
-
     string extract_format(const string& line) {
         int left = line.find("(");
         int right = line.find(")");
@@ -375,6 +372,30 @@ struct AmberTopFile::Impl {
         return true;
     }
 
+    AmberTopIntSection *get_int_section(const string& name) {
+        for (int i = 0; i < int_sections.size(); i++) {
+            if (int_sections[i]->name() == name)
+                return int_sections[i];
+        }
+        return NULL;
+    }
+
+    AmberTopDoubleSection *get_double_section(const string& name) {
+        for (int i = 0; i < double_sections.size(); i++) {
+            if (double_sections[i]->name() == name)
+                return double_sections[i];
+        }
+        return NULL;
+    }
+
+    AmberTopStringSection *get_string_section(const string& name) {
+        for (int i = 0; i < string_sections.size(); i++) {
+            if (string_sections[i]->name() == name)
+                return string_sections[i];
+        }
+        return NULL;
+    }
+
     vector<AmberTopIntSection*> int_sections;
     vector<AmberTopDoubleSection*> double_sections;
     vector<AmberTopStringSection*> string_sections;
@@ -389,6 +410,56 @@ AmberTopFile::AmberTopFile(const File& file) : impl_(new Impl) {
 }
 
 AmberTopFile::~AmberTopFile() {
+}
+
+AmberTopIntSection *AmberTopFile::create_int_section(const string& name,
+                                                     const string& format) {
+    return impl_->create_int_section(name, format);
+}
+
+AmberTopIntSection *AmberTopFile::create_int_section(const string& name,
+                                                     int count_per_line,
+                                                     int width) {
+    return impl_->create_int_section(name, count_per_line, width);
+}
+
+AmberTopDoubleSection *AmberTopFile::create_double_section(
+        const string& name, const string& format) {
+    return impl_->create_double_section(name, format);
+}
+
+AmberTopDoubleSection *AmberTopFile::create_double_section(
+        const string& name, int count_per_line, int width, int decimal_places) {
+    return impl_->create_double_section(name, count_per_line, width,
+                                        decimal_places);
+}
+
+AmberTopStringSection *AmberTopFile::create_string_section(
+        const string& name, const string& format) {
+    return impl_->create_string_section(name, format);
+}
+
+AmberTopStringSection *AmberTopFile::create_string_section(
+        const string& name, int count_per_line, int width) {
+    return impl_->create_string_section(name, count_per_line, width);
+}
+
+bool AmberTopFile::remove_section(const string& name) {
+    return impl_->remove_section(name);
+}
+
+
+AmberTopIntSection *AmberTopFile::get_int_section(const string& name) {
+    return impl_->get_int_section(name);
+}
+
+
+AmberTopDoubleSection *AmberTopFile::get_double_section(const string& name) {
+    return impl_->get_double_section(name);
+}
+
+AmberTopStringSection *AmberTopFile::get_string_section(const string& name) {
+    return impl_->get_string_section(name);
 }
 
 void AmberTopFile::sort(bool (*comp)(const AmberTopSection *lhs,

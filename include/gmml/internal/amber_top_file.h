@@ -29,10 +29,7 @@
 #ifndef GMML_INTERNAL_AMBER_TOP_FILE_H_
 #define GMML_INTERNAL_AMBER_TOP_FILE_H_
 
-#include <algorithm>
-#include <functional>
 #include <iosfwd>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -41,6 +38,81 @@
 #include "gmml/internal/stubs/file.h"
 
 namespace gmml {
+
+class AmberTopSection;
+class AmberTopIntSection;
+class AmberTopDoubleSection;
+class AmberTopStringSection;
+
+/**
+ This class represents an AMBER topology file.
+ */
+class AmberTopFile : public Readable, public Writeable {
+  public:
+    /**
+     Creates a topology file with no sections.
+     */
+    AmberTopFile();
+
+    /**
+     Creates a topology file from the given File.
+     */
+    explicit AmberTopFile(const File& file);
+
+    virtual ~AmberTopFile();
+
+    /**
+     Creates an integer section with the given name and FORTRAN format string,
+     appends it to the topology file, and returns it.
+     */
+    AmberTopIntSection *create_int_section(const std::string& name,
+                                           const std::string& format);
+
+    /**
+     Creates an integer section with the given name, number of elements per
+     line, and element width (in columns).
+     */
+    AmberTopIntSection *create_int_section(const std::string& name,
+                                           int count_per_line, int width);
+
+    AmberTopDoubleSection *create_double_section(const std::string& name,
+                                                 const std::string& format);
+    AmberTopDoubleSection *create_double_section(const std::string& name,
+                                                 int count_per_line, int width,
+                                                 int decimal_places);
+
+    AmberTopStringSection *create_string_section(const std::string& name,
+                                                 const std::string& format);
+    AmberTopStringSection *create_string_section(const std::string& name,
+                                                 int count_per_line, int width);
+
+    /**
+     Removes the section of the topology file with the given name.
+     */
+    bool remove_section(const std::string& name);
+
+    /**
+     Returns the integer section with the given name.
+     */
+    AmberTopIntSection *get_int_section(const std::string& name);
+    AmberTopDoubleSection *get_double_section(const std::string& name);
+    AmberTopStringSection *get_string_section(const std::string& name);
+
+    /**
+     Sorts the sections of the file, given a comparison function.
+     */
+    void sort(bool (*comp)(const AmberTopSection *lhs,
+                           const AmberTopSection *rhs));
+
+  private:
+    virtual void read(std::istream&);
+    virtual void write(std::ostream&) const;
+
+    struct Impl;
+    std::auto_ptr<Impl> impl_;
+
+    DISALLOW_COPY_AND_ASSIGN(AmberTopFile);
+};
 
 /**
  This class represents a type of section in the AMBER topology file.
@@ -200,116 +272,6 @@ class AmberTopStringSection : public AmberTopSection {
 
     DISALLOW_COPY_AND_ASSIGN(AmberTopStringSection);
 };
-
-// Put this at top of file~!!!
-/**
- This class represents an AMBER topology file.
- */
-class AmberTopFile : public Readable, public Writeable {
-  public:
-    /**
-     Creates a topology file with no sections.
-     */
-    AmberTopFile();
-
-    /**
-     Creates a topology file from the given File.
-     */
-    explicit AmberTopFile(const File& file);
-
-    virtual ~AmberTopFile();
-
-    /**
-     Creates an integer section with the given name and FORTRAN format string,
-     appends it to the topology file, and returns it.
-     */
-    AmberTopIntSection *create_int_section(const std::string& name,
-                                           const std::string& format);
-
-    /**
-     Creates an integer section with the given name, number of elements per
-     line, and element width (in columns).
-     */
-    AmberTopIntSection *create_int_section(const std::string& name,
-                                           int count_per_line, int width);
-
-    AmberTopDoubleSection *create_double_section(const std::string& name,
-                                                 const std::string& format);
-    AmberTopDoubleSection *create_double_section(const std::string& name,
-                                                 int count_per_line, int width,
-                                                 int decimal_places);
-
-    AmberTopStringSection *create_string_section(const std::string& name,
-                                                 const std::string& format);
-    AmberTopStringSection *create_string_section(const std::string& name,
-                                                 int count_per_line, int width);
-
-    /**
-     Removes the section of the topology file with the given name.
-     */
-    bool remove_section(const std::string& name);
-
-    /**
-     Returns the integer section with the given name.
-     */
-    AmberTopIntSection *get_int_section(const std::string& name);
-    AmberTopDoubleSection *get_double_section(const std::string& name);
-    AmberTopStringSection *get_string_section(const std::string& name);
-
-    /**
-     Sorts the sections of the file, given a comparison function.
-     */
-    void sort(bool (*comp)(const AmberTopSection *lhs,
-                           const AmberTopSection *rhs));
-
-  private:
-    struct Impl;
-    std::auto_ptr<Impl> impl_;
-
-    //void read(const std::string& file_name);
-
-    virtual void read(std::istream&);
-    virtual void write(std::ostream&) const;
-/*
-    enum SectionType get_section_type(const std::string&);
-    enum CardType get_card_type(const std::string&);
-    std::string extract_format(const std::string&);
-
-    std::string extract_title(const std::string&);
-    std::string extract_version(const std::string&);
-    void process_section(std::istream&, AmberTopSection *section);
-*/
-    DISALLOW_COPY_AND_ASSIGN(AmberTopFile);
-};
-
-/*
-inline AmberTopIntSection *AmberTopFile::get_int_section(
-        const std::string& name) {
-    for (int i = 0; i < int_sections_.size(); i++) {
-        if (int_sections_[i]->name() == name)
-            return int_sections_[i];
-    }
-    return NULL;
-}
-
-inline AmberTopDoubleSection *AmberTopFile::get_double_section(
-        const std::string& name) {
-    for (int i = 0; i < double_sections_.size(); i++) {
-        if (double_sections_[i]->name() == name)
-            return double_sections_[i];
-    }
-    return NULL;
-}
-
-inline AmberTopStringSection *AmberTopFile::get_string_section(
-        const std::string& name) {
-    for (int i = 0; i < string_sections_.size(); i++) {
-        if (string_sections_[i]->name() == name)
-            return string_sections_[i];
-    }
-    return NULL;
-}
-*/
 
 }  // namespace gmml
 
