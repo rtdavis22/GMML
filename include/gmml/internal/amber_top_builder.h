@@ -332,9 +332,11 @@ inline void AmberTopBuilder::type_error(const std::string& type1,
             type1 + "-" + type2 + "-" + type3 + "-" + type4);
 }
 
+/*
 // This class is populated with a list of topology file section names in the
 // order they should appear in the file.
-class SectionComparer {
+class SectionComparer : public std::binary_function<const AmberTopSection*,
+                                                    const AmberTopSection*, bool> {
   public:
     SectionComparer();
 
@@ -349,6 +351,7 @@ class SectionComparer {
     // multiple times.
     const boost::shared_ptr<std::vector<std::string> > section_list_;
 };
+*/
 
 }  // namespace gmml
 

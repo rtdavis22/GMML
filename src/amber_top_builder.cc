@@ -94,6 +94,12 @@ const char *kSectionList[] = {
     "SCREEN"
 };
 
+bool compare_sections(const AmberTopSection *s1, const AmberTopSection *s2) {
+    static int array_size = ARRAY_SIZE(kSectionList);
+    return std::find(kSectionList, kSectionList + array_size, s1->name()) <
+           std::find(kSectionList, kSectionList + array_size, s2->name());
+}
+
 }  // namespace
 
 typedef Structure::AtomList AtomList;
@@ -110,7 +116,7 @@ AmberTopBuilder::AmberTopBuilder(const ParameterSet& parameter_file_set)
 AmberTopFile *AmberTopBuilder::build(const Structure& structure,
                                      const string& title) const {
     AmberTopFile *file = build_common_sections(structure, title);
-    file->sort(SectionComparer());
+    file->sort(&compare_sections);
     return file;
 }
 
@@ -118,7 +124,7 @@ AmberTopFile *AmberTopBuilder::build(const BoxedStructure& boxed_structure,
                                      const string& title) const {
     AmberTopFile *file = build_common_sections(boxed_structure, title);
     build_box_section(boxed_structure, file);
-    file->sort(SectionComparer());
+    file->sort(&compare_sections);
     return file;
 }
 
@@ -128,7 +134,7 @@ AmberTopFile *AmberTopBuilder::build(const SolvatedStructure& structure,
     build_box_section(structure, file);
     build_solvation_sections(structure, file);
 
-    file->sort(SectionComparer());
+    file->sort(&compare_sections);
 
     return file;
 }
@@ -294,7 +300,6 @@ void AmberTopBuilder::build_excluded_atoms(const Structure& structure,
     AmberTopIntSection *list_section =
             file->create_int_section("EXCLUDED_ATOMS_LIST", "10I8");
 
-using namespace std;
     int num_atoms = structure.size();
     for (int i = 0; i < num_atoms; i++) {
         vector<size_t> *atoms = structure.bonds()->bfs(i, 3);
@@ -846,6 +851,7 @@ std::pair<double, double> AmberTopBuilder::get_radius_and_screen(
     return std::make_pair(radius, screen);
 }
 
+/*
 SectionComparer::SectionComparer()
         : section_list_(new vector<string>(
             kSectionList, kSectionList + ARRAY_SIZE(kSectionList))) {}
@@ -855,5 +861,5 @@ bool SectionComparer::operator()(const AmberTopSection *s1,
     return std::find(section_list_->begin(), section_list_->end(), s1->name()) <
            std::find(section_list_->begin(), section_list_->end(), s2->name());
 }
-
+*/
 }  // namespace gmml
