@@ -86,15 +86,15 @@ void Environment::load_prep_file(const PrepFile& prep_file) {
 }
 
 void Environment::add_residue_mapping(const string& from, const string& to) {
-    pdb_mapping_info_->residue_map.put(from, to);
+    pdb_mapping_info_->add_residue_mapping(from, to);
 }
 
 void Environment::add_head_mapping(const string& from, const string& to) {
-    pdb_mapping_info_->head_map.put(from, to);
+    pdb_mapping_info_->add_head_mapping(from, to);
 }
 
 void Environment::add_tail_mapping(const string& from, const string& to) {
-    pdb_mapping_info_->tail_map.put(from, to);
+    pdb_mapping_info_->add_tail_mapping(from, to);
 }
 
 bool Environment::set_full_pathname(File *file) const {

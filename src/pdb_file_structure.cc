@@ -481,6 +481,21 @@ const PdbChain *PdbFileStructure::chains(int index) const {
     return impl_->pdb_data_.get_chain(index);
 }
 
+std::pair<string, bool> PdbMappingInfo::lookup_residue_mapping(
+        const string& residue_name) const {
+    return lookup(residue_map_, residue_name);
+}
+
+std::pair<string, bool> PdbMappingInfo::lookup_head_mapping(
+        const std::string& residue_name) const {
+    return lookup(head_map_, residue_name);
+}
+
+std::pair<string, bool> PdbMappingInfo::lookup_tail_mapping(
+            const string& residue_name) const {
+    return lookup(tail_map_, residue_name);
+}
+
 
 PdbStructureBuilder::PdbStructureBuilder()
         : mapping_info_(*kDefaultEnvironment.pdb_mapping_info()),
@@ -529,19 +544,22 @@ string PdbStructureBuilder::map_pdb_residue(const PdbResidueId *pdb_residue_id,
 
     // The head and tail map have the second highest priority.
     if (is_head) {
-        pair<string, bool> name = mapping_info_.head_map.get(residue_name);
-        if (name.second)
-            return name.first;
+        pair<string, bool> mapped_name =
+                mapping_info_.lookup_head_mapping(residue_name);
+        if (mapped_name.second)
+            return mapped_name.first;
     }
     if (is_tail) {
-        pair<string, bool> name = mapping_info_.tail_map.get(residue_name);
-        if (name.second)
-            return name.first;
+        pair<string, bool> mapped_name =
+                mapping_info_.lookup_tail_mapping(residue_name);
+        if (mapped_name.second)
+            return mapped_name.first;
     }
 
-    pair<string, bool> name = mapping_info_.residue_map.get(residue_name);
-    if (name.second)
-        return name.first;
+    pair<string, bool> mapped_name =
+            mapping_info_.lookup_residue_mapping(residue_name);
+    if (mapped_name.second)
+        return mapped_name.first;
 
     return residue_name;
 }

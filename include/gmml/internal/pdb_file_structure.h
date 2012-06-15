@@ -26,9 +26,9 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include "gmml/internal/bimap.h"
 #include "gmml/internal/structure.h"
 #include "gmml/internal/stubs/common.h"
 #include "gmml/internal/stubs/utils.h"
@@ -46,7 +46,6 @@ class PdbMappingInfo;
 class PdbMappingResults;
 class PdbStructureBuilder;
 
-// TODO: This should be used throughout in place of Triplet<int>.
 struct PdbResidueId {
     PdbResidueId(char chain_id, int res_num, char i_code)
             : chain_id(chain_id), res_num(res_num), i_code(i_code) {}
@@ -147,13 +146,37 @@ class PdbFileStructure : public Structure {
     DISALLOW_COPY_AND_ASSIGN(PdbFileStructure);
 };
 
-// Change these to one-way maps, I think. If Bimap is needed, use a 
-// Boost::bimap.
-struct PdbMappingInfo {
-    Bimap<std::string, std::string> residue_map;
-    Bimap<std::string, std::string> head_map;
-    Bimap<std::string, std::string> tail_map;
-    Bimap<std::string, std::string> atom_map;
+class PdbMappingInfo {
+  public:
+    typedef std::map<std::string, std::string> MapType;
+
+    PdbMappingInfo() {}
+
+    std::pair<std::string, bool> lookup_residue_mapping(
+            const std::string& residue_name) const;
+
+    std::pair<std::string, bool> lookup_head_mapping(
+            const std::string& residue_name) const;
+
+    std::pair<std::string, bool> lookup_tail_mapping(
+            const std::string& residue_name) const;
+
+    void add_residue_mapping(const std::string& from, const std::string& to) {
+        residue_map_[from] = to;
+    }
+
+    void add_head_mapping(const std::string& from, const std::string& to) {
+        head_map_[from] = to;
+    }
+
+    void add_tail_mapping(const std::string& from, const std::string& to) {
+        tail_map_[from] = to;
+    }
+
+  private:
+    MapType residue_map_;
+    MapType head_map_;
+    MapType tail_map_;
 };
 
 // This class allows the user to configure how a particular PDB file is built.
@@ -181,19 +204,19 @@ class PdbStructureBuilder {
 
     // Adds a mapping from all residues with a specified name.
     void add_mapping(const std::string& from, const std::string& to) {
-        mapping_info_.residue_map.put(from, to);
+        mapping_info_.add_residue_mapping(from, to);
     }
 
     // Adds a mapping from all head residues with a specified name. See above
     // for what constitues a head residue.
     void add_head_mapping(const std::string& from, const std::string& to) {
-        mapping_info_.head_map.put(from, to);
+        mapping_info_.add_head_mapping(from, to);
     }
 
     // Adds a mapping from all tail residues with a specified name. See above
     // for what constitues a tail residues.
     void add_tail_mapping(const std::string& from, const std::string& to) {
-        mapping_info_.tail_map.put(from, to);
+        mapping_info_.add_tail_mapping(from, to);
     }
 
 
