@@ -47,6 +47,9 @@ class PdbMappingResults;
 class PdbStructureBuilder;
 
 struct PdbResidueId {
+    struct Less;
+    struct PtrLess;
+
     PdbResidueId(char chain_id, int res_num, char i_code)
             : chain_id(chain_id), res_num(res_num), i_code(i_code) {}
 
@@ -67,8 +70,7 @@ struct PdbResidueId {
     char i_code;
 };
 
-// Modify to use TripletLess
-struct PdbResidueIdLess {
+struct PdbResidueId::Less {
     bool operator()(const PdbResidueId& lhs, const PdbResidueId& rhs) const {
         if (lhs.chain_id == rhs.chain_id) {
             if (lhs.res_num == rhs.res_num) {
@@ -82,9 +84,9 @@ struct PdbResidueIdLess {
     }
 };
 
-struct PdbResidueIdPtrLess {
+struct PdbResidueId::PtrLess {
     bool operator()(const PdbResidueId *lhs, const PdbResidueId *rhs) const {
-        return PdbResidueIdLess()(*lhs, *rhs);
+        return Less()(*lhs, *rhs);
     }
 };
 
@@ -274,9 +276,8 @@ class PdbStructureBuilder {
 
   private:
     PdbMappingInfo mapping_info_;
-    // Change this to PdbResidueId.
-    std::map<Triplet<int>*, std::string,
-             TripletPtrLess<int> > pdb_residue_map_;
+    std::map<PdbResidueId*, std::string,
+             PdbResidueId::PtrLess> pdb_residue_map_;
     std::vector<PdbResidueId*> residues_to_remove_;
     bool is_residue_map_used_;
     bool are_unknown_hydrogens_removed_;

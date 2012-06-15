@@ -207,7 +207,7 @@ class PdbData : public PdbCardVisitor {
     }
 
     void append_to_structure(PdbFileStructure *structure) {
-        map<PdbResidueId*, IndexedResidue*, PdbResidueIdPtrLess>::iterator it;
+        map<PdbResidueId*, IndexedResidue*, PdbResidueId::PtrLess>::iterator it;
         for (it = pdb_residues_.begin(); it != pdb_residues_.end(); ++it) {
             structure->append(it->second, it->first);
         }
@@ -222,7 +222,7 @@ class PdbData : public PdbCardVisitor {
     const PdbChain *get_chain(int index) const { return chains_.at(index); }
 
   private:
-    typedef map<PdbResidueId*, IndexedResidue*, PdbResidueIdPtrLess>
+    typedef map<PdbResidueId*, IndexedResidue*, PdbResidueId::PtrLess>
             ResidueMapType;
 
     void add_pdb_bonds(PdbFileStructure *structure) {
@@ -396,7 +396,7 @@ PdbMappingResults *ApplyResidueMap::operator()() {
 
 struct PdbFileStructure::Impl {
     typedef bimap<int, int> AtomMapType;
-    typedef bimap<boost::bimaps::set_of<PdbResidueId*, PdbResidueIdPtrLess>,
+    typedef bimap<boost::bimaps::set_of<PdbResidueId*, PdbResidueId::PtrLess>,
                   int> ResidueMapType;
 
     Impl(const PdbFile& pdb_file, const PdbStructureBuilder& builder)
@@ -503,7 +503,7 @@ PdbStructureBuilder::PdbStructureBuilder()
           are_unknown_hydrogens_removed_(true) {}
 
 PdbStructureBuilder::~PdbStructureBuilder() {
-    map<Triplet<int>*, std::string>::iterator it;
+    map<PdbResidueId*, std::string>::iterator it;
     for (it = pdb_residue_map_.begin(); it != pdb_residue_map_.end(); ++it) {
         delete it->first;
     }
@@ -517,28 +517,23 @@ PdbFileStructure *PdbStructureBuilder::build(const File& file) const {
 
 void PdbStructureBuilder::add_mapping(const PdbResidueId& pdb_id,
                                       const string& name) {
-    Triplet<int> *pdb_index = new Triplet<int>(pdb_id.chain_id,
-                                               pdb_id.res_num,
-                                               pdb_id.i_code);
-    typedef std::map<Triplet<int>*, string>::iterator iterator;
+    typedef std::map<PdbResidueId*, string>::iterator iterator;
+    PdbResidueId *id = new PdbResidueId(pdb_id);
     pair<iterator, bool> ret =
-            pdb_residue_map_.insert(std::make_pair(pdb_index, name));
+            pdb_residue_map_.insert(std::make_pair(id, name));
     // The mapping already exists.
     if (!ret.second) {
         ret.first->second = name;
-        delete pdb_index;
+        delete id;
     }
 }
 
 string PdbStructureBuilder::map_pdb_residue(const PdbResidueId *pdb_residue_id,
                                             const string& residue_name,
                                             bool is_head, bool is_tail) const {
-    Triplet<int> *pdb_index = new Triplet<int>(pdb_residue_id->chain_id,
-                                               pdb_residue_id->res_num,
-                                               pdb_residue_id->i_code);
     // The pdb_residue_map has the highest priority.
-    map<Triplet<int>*, string>::const_iterator it =
-            pdb_residue_map_.find(pdb_index);
+    map<PdbResidueId*, string>::const_iterator it =
+            pdb_residue_map_.find(const_cast<PdbResidueId*>(pdb_residue_id));
     if (it != pdb_residue_map_.end())
         return it->second;
 
