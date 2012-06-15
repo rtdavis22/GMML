@@ -92,11 +92,8 @@ struct PdbResidueIdPtrLess {
 
 class PdbFileStructure : public Structure {
   public:
-    explicit PdbFileStructure(const PdbStructureBuilder& builder);
-
-    //explicit PdbFileStructure(const File& file);
-
-    //explicit PdbFileStructure(const PdbFile& pdb_file);
+    explicit PdbFileStructure(const PdbFile& pdb_file,
+                              const PdbStructureBuilder& builder);
 
     virtual ~PdbFileStructure();
 
@@ -168,13 +165,15 @@ class PdbStructureBuilder {
     // environment, which are typically specified via the global functions
     // add_mapping, add_head_mapping, and add_tail_mapping. Mappings defined
     // in this class override the global mappings.
-    // I don't think this should store a reference to the file.
-    explicit PdbStructureBuilder(const PdbFile& pdb_file);
+    PdbStructureBuilder();
 
     virtual ~PdbStructureBuilder();
 
-    PdbFileStructure *build() { return new PdbFileStructure(*this); }
+    PdbFileStructure *build(const File& file) const;
 
+    PdbFileStructure *build(const PdbFile& pdb_file) const {
+        return new PdbFileStructure(pdb_file, *this);
+    }
 
     //
     // Functions to add mappings.
@@ -245,8 +244,6 @@ class PdbStructureBuilder {
     //
     // Accessors
     //
-    const PdbFile& pdb_file() const { return pdb_file_; }
-
     bool is_residue_map_used() const { return is_residue_map_used_; }
 
     bool are_unknown_hydrogens_removed() const {
@@ -254,7 +251,6 @@ class PdbStructureBuilder {
     }
 
   private:
-    const PdbFile& pdb_file_;
     PdbMappingInfo mapping_info_;
     // Change this to PdbResidueId.
     std::map<Triplet<int>*, std::string,

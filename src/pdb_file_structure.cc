@@ -400,8 +400,8 @@ struct PdbFileStructure::Impl {
     typedef bimap<boost::bimaps::set_of<PdbResidueId*, PdbResidueIdPtrLess>,
                   int> ResidueMapType;
 
-    explicit Impl(const PdbStructureBuilder& builder)
-            : pdb_data_(builder.pdb_file()),
+    Impl(const PdbFile& pdb_file, const PdbStructureBuilder& builder)
+            : pdb_data_(pdb_file),
               mapping_results(NULL) {
         pdb_data_.remove_residues(builder);
         if (builder.is_residue_map_used()) {
@@ -428,8 +428,9 @@ struct PdbFileStructure::Impl {
 };
 
 
-PdbFileStructure::PdbFileStructure(const PdbStructureBuilder& builder)
-        : impl_(new Impl(builder)) {
+PdbFileStructure::PdbFileStructure(const PdbFile& pdb_file,
+                                   const PdbStructureBuilder& builder)
+        : impl_(new Impl(pdb_file, builder)) {
     impl_->pdb_data_.append_to_structure(this);
 }
 
@@ -482,9 +483,8 @@ const PdbChain *PdbFileStructure::chains(int index) const {
 }
 
 
-PdbStructureBuilder::PdbStructureBuilder(const PdbFile& pdb_file)
-        : pdb_file_(pdb_file),
-          mapping_info_(*kDefaultEnvironment.pdb_mapping_info()),
+PdbStructureBuilder::PdbStructureBuilder()
+        : mapping_info_(*kDefaultEnvironment.pdb_mapping_info()),
           is_residue_map_used_(true),
           are_unknown_hydrogens_removed_(true) {}
 
@@ -495,6 +495,10 @@ PdbStructureBuilder::~PdbStructureBuilder() {
     }
     std::for_each(residues_to_remove_.begin(), residues_to_remove_.end(),
                   DeletePtr());
+}
+
+PdbFileStructure *PdbStructureBuilder::build(const File& file) const {
+    return build(PdbFile(file));
 }
 
 void PdbStructureBuilder::add_mapping(const PdbResidueId& pdb_id,
