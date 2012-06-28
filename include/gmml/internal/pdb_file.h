@@ -49,9 +49,17 @@ class PdbEndMdlCard;
 class PdbLinkCard;
 class PdbTerCard;
 class PdbUnknownCard;
+class PdbSeqresCard;
+class PdbModresCard;
+class PdbSsbondCard;
+class PdbSiteCard;
+class PdbModelCard;
+
+class NamedPdbResidueId;
+
 
 /**
- \brief The class represents a PDB file, which contains
+ The class represents a PDB file, which contains
  \ref PdbCard "PdbCard"s.
  */
 class PdbFile : public Readable, public Writeable {
@@ -96,10 +104,8 @@ class PdbFile : public Readable, public Writeable {
 };
 
 /**
- \brief This is an abstract class for analyzing and modifying
- \ref PdbCard "PdbCards" in \ref PdbFile "PdbFile"s.
-
- Clients may override any of the visit methods
+ This is an abstract class for analyzing and modifying \ref PdbCard "PdbCards"
+ in \ref PdbFile "PdbFile"s. Clients may override any of the visit methods
  below to specify an operation to be performed on a given card type.
  Calling PdbFile::accept with a PdbCardVisitor will cause these visit methods to
  be invoked.
@@ -115,6 +121,11 @@ class PdbCardVisitor {
     virtual void visit(const PdbLinkCard* /* card */) {}
     virtual void visit(const PdbTerCard* /* card */) {}
     virtual void visit(const PdbUnknownCard* /* card */) {}
+    virtual void visit(const PdbSeqresCard* /* card */) {}
+    virtual void visit(const PdbModresCard* /* card */) {}
+    virtual void visit(const PdbSiteCard* /* card */) {}
+    virtual void visit(const PdbSsbondCard* /* card */) {}
+    virtual void visit(const PdbModelCard* /* card */) {}
 
   protected:
     PdbCardVisitor() {}
@@ -124,7 +135,7 @@ class PdbCardVisitor {
 };
 
 /**
- \brief This class represents a single line in a PDB file.
+ This class represents a single line in a PDB file.
  */
 class PdbLine {
   public:
@@ -151,7 +162,7 @@ class PdbLine {
 };
 
 /**
- \brief This abstract class represents a card (a type of entry) in a PDB file.
+ This abstract class represents a card (a type of entry) in a PDB file.
  */
 class PdbCard : public Writeable {
   public:
@@ -172,10 +183,8 @@ class PdbCard : public Writeable {
 };
 
 /**
- \brief This class is used to initialize the fields in a PdbAtomCard, which is
- immutable.
-
- Each of the accessors and modifiers corresponds to a field in ATOM
+ This class is used to initialize the fields in a PdbAtomCard, which is
+ immutable. Each of the accessors and modifiers corresponds to a field in ATOM
  and HETATM records, as specified in the PDB file specification.
  */
 class PdbAtomCardBuilder {
@@ -245,9 +254,8 @@ class PdbAtomCardBuilder {
 };
 
 /**
- \brief This class represents an ATOM or HETATM record in a PDB file.
-
- The accessors correspond to fields in the PDB file specification.
+ This class represents an ATOM or HETATM record in a PDB file. The accessors
+ correspond to fields in the PDB file specification.
  */
 class PdbAtomCard : public PdbCard {
   public:
@@ -293,8 +301,7 @@ class PdbAtomCard : public PdbCard {
 };
 
 /**
- \brief This class represents a TER card as defined in the PDB file
- specification.
+ This class represents a TER card as defined in the PDB file specification.
  */
 class PdbTerCard : public PdbCard {
   public:
@@ -311,9 +318,7 @@ class PdbTerCard : public PdbCard {
 };
 
 /**
- \brief This class represents a CONECT card as defined in the PDB file
- specification.
-
+ This class represents a CONECT card as defined in the PDB file specification.
  It consists of a source atom index and a list of bonded atom indices.
  */
 class PdbConnectCard : public PdbCard {
@@ -348,7 +353,8 @@ class PdbConnectCard : public PdbCard {
     int source() const { return source_; }
 
     /**
-     Returns the number of bonded atom indices associated with this card.
+     Returns the number of bondeResidue name for first residue that 
+                                           creates the site.d atom indices associated with this card.
      */
     int bonded_atom_count() const { return bonded_atoms_.size(); }
 
@@ -375,8 +381,7 @@ class PdbConnectCard : public PdbCard {
 };
 
 /**
- \brief This class represents an END card as defined in the PDB file
- specification.
+ This class represents an END card as defined in the PDB file specification.
  */
 class PdbEndCard : public PdbCard {
   public:
@@ -393,8 +398,7 @@ class PdbEndCard : public PdbCard {
 };
 
 /**
- \brief This class represents a LINK card as defined in the PDB file
- specification.
+ This class represents a LINK card as defined in the PDB file specification.
  */
 class PdbLinkCard : public PdbCard {
   public:
@@ -423,8 +427,7 @@ class PdbLinkCard : public PdbCard {
 };
 
 /**
- \brief This class represents a card in a PDB file which we don't currently
- recognize.
+ This class represents a card in a PDB file which we don't currently recognize.
  */
 class PdbUnknownCard : public PdbCard {
   public:
@@ -441,8 +444,7 @@ class PdbUnknownCard : public PdbCard {
 };
 
 /**
- \brief This class represents an ENDMDL card as defined in the PDB file
- specification.
+ This class represents an ENDMDL card as defined in the PDB file specification.
  */
 class PdbEndMdlCard : public PdbCard {
   public:
@@ -454,6 +456,193 @@ class PdbEndMdlCard : public PdbCard {
 
   private:
     virtual void read(const PdbLine& /* line */) { }
+};
+
+class PdbSeqresCardBuilder {
+  public:
+
+    explicit PdbSeqresCardBuilder(char chain_id) : chain_id_(chain_id) {}
+
+    /**
+    Returns an vector of PdbSeqresCard if all the fields are valid.  Otherwise, null is returned.
+    */
+    std::vector<PdbSeqresCard*> build() const;
+
+    /**
+    Adds a residue to the chain. 
+    */
+    void add_residue(std::string residue);
+    const std::string at(int index) const { return residues_[index]; }
+    int size() const { return (int)residues_.size(); }
+     
+    char chain_id() const { return chain_id_; }
+  private:
+    static const int kMaxNumberOfResidues = 13;
+    bool validate() const;
+    char chain_id_;
+    std::vector<std::string> residues_;
+};
+
+/**
+ This class represents a SEQRES card as defined in the PDB file specification.
+ Requires a PdbSeqresCardBuilder to create from beginning.
+*/
+class PdbSeqresCard : public PdbCard {
+  public:
+    explicit PdbSeqresCard(const PdbLine& line) { read(line); }
+
+    static std::vector<PdbSeqresCard*> create_cards(const PdbSeqresCardBuilder& builder);
+    
+    virtual void write(std::ostream& out) const;
+
+    virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
+
+    char chain_id() const { return chain_id_; }
+    int serial_number() const { return serial_number_; }
+    int residues_size() const { return (int)residues_.size(); }
+    int number_of_chain_residues() const { return number_of_chain_residues_; }
+    const std::string at(int index) const { return residues_[index]; }
+  private:
+    PdbSeqresCard(int serial_number, char chain_id, int num_residues) : serial_number_(serial_number),
+                                chain_id_(chain_id), number_of_chain_residues_(num_residues) {}
+    static const int kMaxNumberOfResidues = 13;
+    virtual void read(const PdbLine& line) { read(line.data()); }
+    void read(const std::string& line);
+    char chain_id_;
+    int serial_number_;
+    int number_of_chain_residues_;
+    std::vector<std::string> residues_;
+};
+
+/**
+ This class represents a MODRES card as defined in the PDB file specification.
+*/
+class PdbModresCard : public PdbCard {
+  public:
+    explicit PdbModresCard(const PdbLine& line) { read(line); }
+
+    PdbModresCard(std::string id_code, std::string res_name, char chain_id,
+                  int seq_num, char i_code, std::string std_res_name)
+                 : id_code_(id_code), res_name_(res_name), chain_id_(chain_id),
+                   seq_num_(seq_num), i_code_(i_code), std_res_name_(std_res_name) {}
+    
+    void set_comment(std::string comment) { comment_ = comment; } 
+
+    virtual void write(std::ostream& out) const;
+
+    virtual void accept(PdbCardVisitor* visitor) const { visitor->visit(this); }
+
+  private:
+    virtual void read(const PdbLine& line) { read(line.data()); }
+    void read(const std::string& line);
+
+    std::string id_code_;
+    std::string res_name_;
+    char chain_id_;
+    int seq_num_;
+    char i_code_;
+    std::string std_res_name_;
+    std::string comment_;
+};
+
+/**
+ This class represents a SSBOND card as defined in the PDB file specification.
+*/
+class PdbSsbondCard : public PdbCard {
+  public:
+    explicit PdbSsbondCard(const PdbLine& line) { read(line); }
+
+    PdbSsbondCard (int ser_num, std::string res_name_1, char chain_id_1, int res_seq_num_1,
+                   char i_code_1, std::string res_name_2, char chain_id_2, int res_seq_num_2,
+                   char i_code_2, int sym_op_1, int sym_op_2, double length)
+                  : ser_num_(ser_num), res_name_1_(res_name_1), chain_id_1_(chain_id_1_),
+                    res_seq_num_1_(res_seq_num_1), i_code_1_(i_code_1), res_name_2_(res_name_2),
+                    chain_id_2_(chain_id_2), res_seq_num_2_(res_seq_num_2), i_code_2_(i_code_2),
+                    sym_op_1_(sym_op_1), sym_op_2_(sym_op_2), length_(length) {} 
+    
+    virtual void write(std::ostream& out);
+
+    virtual void accept(PdbCardVisitor* visitor) const { visitor->visit(this); }
+  private:
+    virtual void read(const PdbLine& line) { read(line.data()); }
+    void read(const std::string& line);
+
+    int ser_num_;
+    std::string res_name_1_;
+    char chain_id_1_;
+    int res_seq_num_1_;
+    char i_code_1_;
+    std::string res_name_2_;
+    char chain_id_2_;
+    int res_seq_num_2_;
+    char i_code_2_;
+    int sym_op_1_;
+    int sym_op_2_;
+    double length_;
+};
+
+class PdbSiteCardBuilder {
+  public:
+    explicit PdbSiteCardBuilder(const std::string& site_name) : site_name_(site_name) {}
+
+    // Returns a vector of PdbSiteCard pointers if inputs are valid.  Otherwise, null is returned.
+    std::vector<PdbSiteCard*> build() const;
+
+    void add_residue(const NamedPdbResidueId& residue);
+    const NamedPdbResidueId* at(int index) const { return residues_.at(index); }
+    int size() const { return residues_.size(); }
+    std::string site_name() const { return site_name_; }
+  private:
+    std::string site_name_;
+    std::vector<NamedPdbResidueId*> residues_;
+};
+
+/**
+ This class represents a SITE card as defined in the PDB file specification.
+*/
+class PdbSiteCard : public PdbCard {
+  public:
+    explicit PdbSiteCard(const PdbLine& line) { read(line); }
+
+    static std::vector<PdbSiteCard*> create_cards(const PdbSiteCardBuilder& builder);
+    
+    virtual void write(std::ostream& out) const;
+
+    virtual void accept(PdbCardVisitor* visitor) const { visitor->visit(this); }
+
+    void add_residue(const NamedPdbResidueId& residue);
+  private:
+    PdbSiteCard(int seq_num, std::string site_name, int number_of_site_residues)
+               : seq_num_(seq_num), site_name_(site_name),
+                 number_of_site_residues_(number_of_site_residues) {}
+
+    virtual void read(const PdbLine& line) { read(line.data()); }
+    void read(const std::string& line);
+
+    static const int kMaxNumberOfResidues = 4;
+    int seq_num_;
+    std::string site_name_;
+    int number_of_site_residues_;
+    std::vector<NamedPdbResidueId*> residues_;
+};
+
+/**
+ This class represents a MODEL card as defined in the PDB file specification.
+*/
+class PdbModelCard : public PdbCard {
+  public:
+    explicit PdbModelCard(const PdbLine& line) { read(line); }
+
+    PdbModelCard(int ser_num) : ser_num_(ser_num) {}
+
+    virtual void write(std::ostream& out) const;
+
+    virtual void accept(PdbCardVisitor* visitor) const { visitor->visit(this); }
+  private:
+    virtual void read(const PdbLine& line) { read(line.data()); }
+    void read(const std::string& line);
+
+    int ser_num_;
 };
 
 }  // namespace gmml

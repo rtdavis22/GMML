@@ -69,6 +69,15 @@ struct PdbResidueId {
     char i_code;
 };
 
+struct NamedPdbResidueId {
+  public:
+    NamedPdbResidueId(std::string res_name, char chain_id, int res_num, char i_code) :
+                   res_name(res_name), pdb_residue_id(chain_id, res_num, i_code) {}
+
+    std::string res_name;
+    PdbResidueId pdb_residue_id;
+};
+
 // Modify to use TripletLess
 struct PdbResidueIdLess {
     bool operator()(const PdbResidueId& lhs, const PdbResidueId& rhs) const {

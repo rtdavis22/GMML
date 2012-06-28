@@ -35,6 +35,7 @@
 #include "gmml/internal/environment.h"
 #include "gmml/internal/geometry.h"
 #include "utilities.h"
+#include "gmml/internal/pdb_file_structure.h"
 
 namespace gmml {
 
@@ -79,6 +80,16 @@ PdbCard *PdbLine::get_card() const {
         return new PdbLinkCard(*this);
     } else if (first_six == "ENDMDL") {
         return new PdbEndMdlCard();
+    } else if (first_six == "SEQRES") {
+        return new PdbSeqresCard(*this);
+    } else if (first_six == "MODRES") {
+        return new PdbModelCard(*this);
+    } else if (first_six == "SSBOND") {
+        return new PdbSsbondCard(*this);
+    } else if (first_six == "SITE  ") {
+        return new PdbSiteCard(*this);
+    } else if (first_six == "MODEL ") {
+        return new PdbModelCard(*this);
     } else {
         return new PdbUnknownCard(*this);
     }
@@ -312,6 +323,188 @@ void PdbUnknownCard::write(std::ostream& out) const {
 
 void PdbEndMdlCard::write(std::ostream& out) const {
     out << "ENDMDL";
+}
+
+std::vector<PdbSeqresCard*> PdbSeqresCardBuilder::build() const {
+    return PdbSeqresCard::create_cards(*this);
+}
+
+void PdbSeqresCardBuilder::add_residue(std::string residue) {
+    if (residue.length() > 3)
+        throw std::invalid_argument("Residue string length must be at most 3 characters.");
+    else
+        residues_.push_back(residue);
+}
+
+bool PdbSeqresCardBuilder::validate() const {
+    /**
+    Check here to see if the PdbSeqresCardBuilder is
+    fully validated
+    */
+}
+
+std::vector<PdbSeqresCard*> PdbSeqresCard::create_cards(const PdbSeqresCardBuilder& builder) {
+    std::vector<PdbSeqresCard*> seqres_vector;
+    int serial_number = 1;
+    PdbSeqresCard* current_card = new PdbSeqresCard(serial_number, builder.chain_id(), builder.size());
+    for (int i = 0; i < builder.size(); i++) {
+        if (i % kMaxNumberOfResidues == 0) {
+            seqres_vector.push_back(current_card);
+            serial_number++;
+            PdbSeqresCard* current_card = new PdbSeqresCard(serial_number, builder.chain_id(), builder.size());
+        }
+        current_card->residues_.push_back(builder.at(i));
+        if (i == builder.size() - 1)
+            seqres_vector.push_back(current_card);
+    }
+    return seqres_vector;
+
+}
+
+
+void PdbSeqresCard::write(std::ostream& out) const {
+    string str(80, ' ');
+    set_in_string(str, "SEQRES", 0, 6, 'L');
+    set_in_string(str, serial_number_, 7, 3, 'R');
+    set_in_string(str, chain_id_, 11, 1, 'L');
+    set_in_string(str, number_of_chain_residues_, 13, 4, 'R');
+    int start_index = 18;
+    for (int i = 0; i < residues_size(); i++) {
+        set_in_string(str, residues_[i], start_index, 4, 'R');
+        start_index++;
+    }
+    trim(str);
+    out << str;
+}
+
+
+void PdbSeqresCard::read(const string& line) {
+    string input(line);
+    serial_number_ = convert_string<int>(input.substr(7, 3));
+    chain_id_ = input[11];
+    number_of_chain_residues_ = convert_string<int>(input.substr(13, 4));
+    int residue_index = 0;
+    for (int i = 19; i < line.size(); i = i + 4) {
+        residues_[residue_index] = input.substr(i, 4);
+        residue_index++;
+    }
+}
+
+void PdbModresCard::write(std::ostream& out) const {
+    string str(80, ' ');
+    set_in_string(str, "MODRES", 0, 6, 'L');
+    set_in_string(str, id_code_, 7, 4, 'R');
+    set_in_string(str, res_name_, 12, 3, 'R');
+    set_in_string(str, chain_id_, 16, 1, 'L');
+    set_in_string(str, seq_num_, 18, 4, 'R');
+    set_in_string(str, i_code_, 22, 1, 'L');
+    set_in_string(str, std_res_name_, 24, 3, 'R');
+    set_in_string(str, comment_, 29, 79, 'R');
+    trim(str);
+    out << str;
+}
+
+void PdbModresCard::read(const string& line) {
+    string input(line);
+    id_code_ = input.substr(7, 4);
+    trim(id_code_);
+    res_name_ = input.substr(12, 3);
+    trim(res_name_);
+    chain_id_ = input[16];
+    seq_num_ = convert_string<int>(input.substr(18, 4));
+    i_code_ = input[22];
+    std_res_name_ = input.substr(24, 3);
+    trim(std_res_name_);
+    if (input.size() > 29)
+        comment_ = input.substr(29, (input.size() - 29));
+    trim(comment_);
+}
+
+void PdbSsbondCard::read(const string& line) {
+    string input(line);
+    ser_num_ = convert_string<int>(input.substr(7, 3));
+    res_name_1_ = input.substr(11, 3);
+    trim(res_name_1_);
+    chain_id_1_ = input[15];
+    res_seq_num_1_ = convert_string<int>(input.substr(17, 4));
+    i_code_1_ = input[21];
+    res_name_2_ = input.substr(25, 3);
+    trim(res_name_2_);
+    chain_id_2_ = input[29];
+    res_seq_num_2_ = convert_string<int>(input.substr(31, 4));
+    i_code_2_ = input[35];
+    sym_op_1_ = convert_string<int>(input.substr(59, 6));
+    sym_op_2_ = convert_string<int>(input.substr(66, 6));
+    length_ = convert_string<double>(input.substr(73, 5));
+}
+
+void PdbSsbondCard::write(std::ostream& out) {
+    string str(80, ' ');
+    set_in_string(str, "SSBOND", 0, 6, 'L');
+    set_in_string(str, ser_num_, 7, 3, 'R');
+    set_in_string(str, res_name_1_, 11, 3, 'L');
+    set_in_string(str, chain_id_1_, 15, 1, 'L');
+    set_in_string(str, res_seq_num_1_, 17, 4, 'R');
+    set_in_string(str, i_code_1_, 21, 1, 'L');
+    set_in_string(str, res_name_2_, 25, 3, 'L');
+    set_in_string(str, chain_id_2_, 29, 1, 'L');
+    set_in_string(str, res_seq_num_2_, 31, 4, 'R');
+    set_in_string(str, i_code_2_, 35, 1, 'L');
+    set_in_string(str, sym_op_1_, 59, 6, 'R');
+    set_in_string(str, sym_op_2_, 66, 6, 'R');
+    set_in_string(str, length_, 73, 5, 'R');
+    trim(str);
+    out << str;
+}
+
+void PdbModelCard::write(std::ostream& out) const {
+    string str(80, ' ');
+    set_in_string(str, "MODEL ", 0, 6, 'L');
+    set_in_string(str, ser_num_, 10, 4, 'R');
+    trim(str);
+    out << str;
+}
+
+void PdbModelCard::read(const std::string& line) {
+    string input(line);
+    ser_num_ = convert_string<int>(input.substr(10, 4));
+}
+
+vector<PdbSiteCard*> PdbSiteCardBuilder::build() const {
+    return PdbSiteCard::create_cards(*this);
+}
+
+void PdbSiteCardBuilder::add_residue(const NamedPdbResidueId& residue) {
+    residues_.push_back(new NamedPdbResidueId(residue));
+}
+
+vector<PdbSiteCard*> PdbSiteCard::create_cards(const PdbSiteCardBuilder& builder) {
+    vector<PdbSiteCard*> site_vector;
+    int sequence_number = 1;
+    PdbSiteCard* current_card = new PdbSiteCard(sequence_number, builder.site_name(), builder.size());
+    for (int i = 0; i < builder.size(); i++) {
+        if (i % kMaxNumberOfResidues == 0) {
+            site_vector.push_back(current_card);
+            sequence_number++;
+            PdbSiteCard* current_card = new PdbSiteCard(sequence_number, builder.site_name(), builder.size());
+        }
+        current_card->add_residue(*builder.at(i));
+        if (i == builder.size() - 1)
+            site_vector.push_back(current_card);
+    }
+    return site_vector;
+}
+
+void PdbSiteCard::add_residue(const NamedPdbResidueId& residue) {
+    residues_.push_back(new NamedPdbResidueId(residue));
+}
+
+void PdbSiteCard::write(std::ostream& out) const {
+
+}
+
+void PdbSiteCard::read(const std::string& line) {
+
 }
 
 }  // namespace gmml

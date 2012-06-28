@@ -40,7 +40,6 @@ gmml_include_HEADERS = \
   include/gmml/internal/complete_residue.h \
   include/gmml/internal/coordinate_file.h \
   include/gmml/internal/coordinate_grid.h \
-  include/gmml/internal/element.h \
   include/gmml/internal/fasta_sequence.h \
   include/gmml/internal/environment.h \
   include/gmml/internal/geometry.h \
@@ -85,7 +84,6 @@ libgmml_a_SOURCES = \
   src/boxed_structure.cc \
   src/complete_residue.cc \
   src/coordinate_file.cc \
-  src/element.cc \
   src/fasta_sequence.cc \
   src/environment.cc \
   src/geometry.cc \
