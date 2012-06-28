@@ -59,6 +59,17 @@ class CreateMap {
     std::map<T, U> map_;
 };
 
+template<typename MapType, typename KeyType>
+inline std::pair<typename MapType::mapped_type, bool> lookup(
+        const MapType& map_,
+        const KeyType& key) {
+    typename MapType::const_iterator it = map_.find(key);
+    if (it != map_.end()) {
+        return std::make_pair(it->second, true);
+    }
+    return std::make_pair(typename MapType::mapped_type(), false);
+}
+
 // A function to efficiently add or update a map. If a key exists in the map
 // already, updating its value with operator[] is faster. Otherwise, insert()
 // is faster. This function does the right thing and returns an iterator

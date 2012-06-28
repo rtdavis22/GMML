@@ -90,7 +90,7 @@ class RsaInfo {
 
   private:
     std::map<PdbResidueId*, ResidueAccessibilityInfo*,
-             PdbResidueIdPtrLess> accessibility_info;
+             PdbResidueId::PtrLess> accessibility_info;
 };
 
 class NAccessResults {

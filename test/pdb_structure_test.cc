@@ -8,9 +8,7 @@ using namespace gmml;
 class PdbStructureTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
-        PdbFile pdb_file(File("dat/1RVZ_New.pdb"));
-        PdbStructureBuilder builder(pdb_file);
-        structure = builder.build();
+        structure = PdbStructureBuilder().build(File("dat/1RVZ_New.pdb"));
     }
 
     virtual void TearDown() {
@@ -54,8 +52,7 @@ TEST_F(PdbStructureTest, MapAtomValid) {
 }
 
 TEST(PdbStructureBuilder, IsToBeRemoved1) {
-    PdbFile pdb(File("dat/1RVZ_New.pdb"));
-    PdbStructureBuilder builder(pdb);
+    PdbStructureBuilder builder;
     PdbResidueId id('A', 123, ' ');
     builder.add_residue_to_remove(&id);
     ASSERT_EQ(1, builder.residues_to_remove_count());
@@ -63,7 +60,6 @@ TEST(PdbStructureBuilder, IsToBeRemoved1) {
 }
 
 TEST(PdbStructureBuilder, IsToBeRemoved2) {
-    PdbFile pdb(File("dat/1RVZ_New.pdb"));
-    PdbStructureBuilder builder(pdb);
+    PdbStructureBuilder builder;
     EXPECT_EQ(0, builder.residues_to_remove_count());
 }

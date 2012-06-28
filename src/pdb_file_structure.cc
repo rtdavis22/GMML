@@ -43,7 +43,6 @@
 using std::deque;
 using std::map;
 using std::pair;
-using std::set;
 using std::string;
 using std::vector;
 
@@ -208,7 +207,7 @@ class PdbData : public PdbCardVisitor {
     }
 
     void append_to_structure(PdbFileStructure *structure) {
-        map<PdbResidueId*, IndexedResidue*, PdbResidueIdPtrLess>::iterator it;
+        map<PdbResidueId*, IndexedResidue*, PdbResidueId::PtrLess>::iterator it;
         for (it = pdb_residues_.begin(); it != pdb_residues_.end(); ++it) {
             structure->append(it->second, it->first);
         }
@@ -223,7 +222,7 @@ class PdbData : public PdbCardVisitor {
     const PdbChain *get_chain(int index) const { return chains_.at(index); }
 
   private:
-    typedef map<PdbResidueId*, IndexedResidue*, PdbResidueIdPtrLess>
+    typedef map<PdbResidueId*, IndexedResidue*, PdbResidueId::PtrLess>
             ResidueMapType;
 
     void add_pdb_bonds(PdbFileStructure *structure) {
@@ -397,11 +396,11 @@ PdbMappingResults *ApplyResidueMap::operator()() {
 
 struct PdbFileStructure::Impl {
     typedef bimap<int, int> AtomMapType;
-    typedef bimap<boost::bimaps::set_of<PdbResidueId*, PdbResidueIdPtrLess>,
+    typedef bimap<boost::bimaps::set_of<PdbResidueId*, PdbResidueId::PtrLess>,
                   int> ResidueMapType;
 
-    explicit Impl(const PdbStructureBuilder& builder)
-            : pdb_data_(builder.pdb_file()),
+    Impl(const PdbFile& pdb_file, const PdbStructureBuilder& builder)
+            : pdb_data_(pdb_file),
               mapping_results(NULL) {
         pdb_data_.remove_residues(builder);
         if (builder.is_residue_map_used()) {
@@ -428,8 +427,9 @@ struct PdbFileStructure::Impl {
 };
 
 
-PdbFileStructure::PdbFileStructure(const PdbStructureBuilder& builder)
-        : impl_(new Impl(builder)) {
+PdbFileStructure::PdbFileStructure(const PdbFile& pdb_file,
+                                   const PdbStructureBuilder& builder)
+        : impl_(new Impl(pdb_file, builder)) {
     impl_->pdb_data_.append_to_structure(this);
 }
 
@@ -481,15 +481,29 @@ const PdbChain *PdbFileStructure::chains(int index) const {
     return impl_->pdb_data_.get_chain(index);
 }
 
+std::pair<string, bool> PdbMappingInfo::lookup_residue_mapping(
+        const string& residue_name) const {
+    return lookup(residue_map_, residue_name);
+}
 
-PdbStructureBuilder::PdbStructureBuilder(const PdbFile& pdb_file)
-        : pdb_file_(pdb_file),
-          mapping_info_(*kDefaultEnvironment.pdb_mapping_info()),
+std::pair<string, bool> PdbMappingInfo::lookup_head_mapping(
+        const std::string& residue_name) const {
+    return lookup(head_map_, residue_name);
+}
+
+std::pair<string, bool> PdbMappingInfo::lookup_tail_mapping(
+            const string& residue_name) const {
+    return lookup(tail_map_, residue_name);
+}
+
+
+PdbStructureBuilder::PdbStructureBuilder()
+        : mapping_info_(*kDefaultEnvironment.pdb_mapping_info()),
           is_residue_map_used_(true),
           are_unknown_hydrogens_removed_(true) {}
 
 PdbStructureBuilder::~PdbStructureBuilder() {
-    map<Triplet<int>*, std::string>::iterator it;
+    map<PdbResidueId*, std::string>::iterator it;
     for (it = pdb_residue_map_.begin(); it != pdb_residue_map_.end(); ++it) {
         delete it->first;
     }
@@ -497,48 +511,50 @@ PdbStructureBuilder::~PdbStructureBuilder() {
                   DeletePtr());
 }
 
+PdbFileStructure *PdbStructureBuilder::build(const File& file) const {
+    return build(PdbFile(file));
+}
+
 void PdbStructureBuilder::add_mapping(const PdbResidueId& pdb_id,
                                       const string& name) {
-    Triplet<int> *pdb_index = new Triplet<int>(pdb_id.chain_id,
-                                               pdb_id.res_num,
-                                               pdb_id.i_code);
-    typedef std::map<Triplet<int>*, string>::iterator iterator;
+    typedef std::map<PdbResidueId*, string>::iterator iterator;
+    PdbResidueId *id = new PdbResidueId(pdb_id);
     pair<iterator, bool> ret =
-            pdb_residue_map_.insert(std::make_pair(pdb_index, name));
+            pdb_residue_map_.insert(std::make_pair(id, name));
     // The mapping already exists.
     if (!ret.second) {
         ret.first->second = name;
-        delete pdb_index;
+        delete id;
     }
 }
 
 string PdbStructureBuilder::map_pdb_residue(const PdbResidueId *pdb_residue_id,
                                             const string& residue_name,
                                             bool is_head, bool is_tail) const {
-    Triplet<int> *pdb_index = new Triplet<int>(pdb_residue_id->chain_id,
-                                               pdb_residue_id->res_num,
-                                               pdb_residue_id->i_code);
     // The pdb_residue_map has the highest priority.
-    map<Triplet<int>*, string>::const_iterator it =
-            pdb_residue_map_.find(pdb_index);
+    map<PdbResidueId*, string>::const_iterator it =
+            pdb_residue_map_.find(const_cast<PdbResidueId*>(pdb_residue_id));
     if (it != pdb_residue_map_.end())
         return it->second;
 
     // The head and tail map have the second highest priority.
     if (is_head) {
-        pair<string, bool> name = mapping_info_.head_map.get(residue_name);
-        if (name.second)
-            return name.first;
+        pair<string, bool> mapped_name =
+                mapping_info_.lookup_head_mapping(residue_name);
+        if (mapped_name.second)
+            return mapped_name.first;
     }
     if (is_tail) {
-        pair<string, bool> name = mapping_info_.tail_map.get(residue_name);
-        if (name.second)
-            return name.first;
+        pair<string, bool> mapped_name =
+                mapping_info_.lookup_tail_mapping(residue_name);
+        if (mapped_name.second)
+            return mapped_name.first;
     }
 
-    pair<string, bool> name = mapping_info_.residue_map.get(residue_name);
-    if (name.second)
-        return name.first;
+    pair<string, bool> mapped_name =
+            mapping_info_.lookup_residue_mapping(residue_name);
+    if (mapped_name.second)
+        return mapped_name.first;
 
     return residue_name;
 }

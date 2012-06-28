@@ -25,11 +25,10 @@
 
 #include <map>
 #include <memory>
-#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include "gmml/internal/bimap.h"
 #include "gmml/internal/structure.h"
 #include "gmml/internal/stubs/common.h"
 #include "gmml/internal/stubs/utils.h"
@@ -47,8 +46,10 @@ class PdbMappingInfo;
 class PdbMappingResults;
 class PdbStructureBuilder;
 
-// TODO: This should be used throughout in place of Triplet<int>.
 struct PdbResidueId {
+    struct Less;
+    struct PtrLess;
+
     PdbResidueId(char chain_id, int res_num, char i_code)
             : chain_id(chain_id), res_num(res_num), i_code(i_code) {}
 
@@ -78,8 +79,7 @@ struct NamedPdbResidueId {
     PdbResidueId pdb_residue_id;
 };
 
-// Modify to use TripletLess
-struct PdbResidueIdLess {
+struct PdbResidueId::Less {
     bool operator()(const PdbResidueId& lhs, const PdbResidueId& rhs) const {
         if (lhs.chain_id == rhs.chain_id) {
             if (lhs.res_num == rhs.res_num) {
@@ -93,19 +93,16 @@ struct PdbResidueIdLess {
     }
 };
 
-struct PdbResidueIdPtrLess {
+struct PdbResidueId::PtrLess {
     bool operator()(const PdbResidueId *lhs, const PdbResidueId *rhs) const {
-        return PdbResidueIdLess()(*lhs, *rhs);
+        return Less()(*lhs, *rhs);
     }
 };
 
 class PdbFileStructure : public Structure {
   public:
-    explicit PdbFileStructure(const PdbStructureBuilder& builder);
-
-    //explicit PdbFileStructure(const File& file);
-
-    //explicit PdbFileStructure(const PdbFile& pdb_file);
+    explicit PdbFileStructure(const PdbFile& pdb_file,
+                              const PdbStructureBuilder& builder);
 
     virtual ~PdbFileStructure();
 
@@ -160,13 +157,37 @@ class PdbFileStructure : public Structure {
     DISALLOW_COPY_AND_ASSIGN(PdbFileStructure);
 };
 
-// Change these to one-way maps, I think. If Bimap is needed, use a 
-// Boost::bimap.
-struct PdbMappingInfo {
-    Bimap<std::string, std::string> residue_map;
-    Bimap<std::string, std::string> head_map;
-    Bimap<std::string, std::string> tail_map;
-    Bimap<std::string, std::string> atom_map;
+class PdbMappingInfo {
+  public:
+    typedef std::map<std::string, std::string> MapType;
+
+    PdbMappingInfo() {}
+
+    std::pair<std::string, bool> lookup_residue_mapping(
+            const std::string& residue_name) const;
+
+    std::pair<std::string, bool> lookup_head_mapping(
+            const std::string& residue_name) const;
+
+    std::pair<std::string, bool> lookup_tail_mapping(
+            const std::string& residue_name) const;
+
+    void add_residue_mapping(const std::string& from, const std::string& to) {
+        residue_map_[from] = to;
+    }
+
+    void add_head_mapping(const std::string& from, const std::string& to) {
+        head_map_[from] = to;
+    }
+
+    void add_tail_mapping(const std::string& from, const std::string& to) {
+        tail_map_[from] = to;
+    }
+
+  private:
+    MapType residue_map_;
+    MapType head_map_;
+    MapType tail_map_;
 };
 
 // This class allows the user to configure how a particular PDB file is built.
@@ -177,13 +198,15 @@ class PdbStructureBuilder {
     // environment, which are typically specified via the global functions
     // add_mapping, add_head_mapping, and add_tail_mapping. Mappings defined
     // in this class override the global mappings.
-    // I don't think this should store a reference to the file.
-    explicit PdbStructureBuilder(const PdbFile& pdb_file);
+    PdbStructureBuilder();
 
     virtual ~PdbStructureBuilder();
 
-    PdbFileStructure *build() { return new PdbFileStructure(*this); }
+    PdbFileStructure *build(const File& file) const;
 
+    PdbFileStructure *build(const PdbFile& pdb_file) const {
+        return new PdbFileStructure(pdb_file, *this);
+    }
 
     //
     // Functions to add mappings.
@@ -192,19 +215,19 @@ class PdbStructureBuilder {
 
     // Adds a mapping from all residues with a specified name.
     void add_mapping(const std::string& from, const std::string& to) {
-        mapping_info_.residue_map.put(from, to);
+        mapping_info_.add_residue_mapping(from, to);
     }
 
     // Adds a mapping from all head residues with a specified name. See above
     // for what constitues a head residue.
     void add_head_mapping(const std::string& from, const std::string& to) {
-        mapping_info_.head_map.put(from, to);
+        mapping_info_.add_head_mapping(from, to);
     }
 
     // Adds a mapping from all tail residues with a specified name. See above
     // for what constitues a tail residues.
     void add_tail_mapping(const std::string& from, const std::string& to) {
-        mapping_info_.tail_map.put(from, to);
+        mapping_info_.add_tail_mapping(from, to);
     }
 
 
@@ -254,8 +277,6 @@ class PdbStructureBuilder {
     //
     // Accessors
     //
-    const PdbFile& pdb_file() const { return pdb_file_; }
-
     bool is_residue_map_used() const { return is_residue_map_used_; }
 
     bool are_unknown_hydrogens_removed() const {
@@ -263,11 +284,9 @@ class PdbStructureBuilder {
     }
 
   private:
-    const PdbFile& pdb_file_;
     PdbMappingInfo mapping_info_;
-    // Change this to PdbResidueId.
-    std::map<Triplet<int>*, std::string,
-             TripletPtrLess<int> > pdb_residue_map_;
+    std::map<PdbResidueId*, std::string,
+             PdbResidueId::PtrLess> pdb_residue_map_;
     std::vector<PdbResidueId*> residues_to_remove_;
     bool is_residue_map_used_;
     bool are_unknown_hydrogens_removed_;

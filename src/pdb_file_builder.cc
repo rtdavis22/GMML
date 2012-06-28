@@ -27,6 +27,7 @@
 #include <stack>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "gmml/internal/atom.h"
 #include "gmml/internal/element.h"
@@ -45,12 +46,27 @@ using std::stack;
 using std::string;
 using std::vector;
 
-struct BuildPdbFile::Impl {
-    Impl(const Structure& structure, const PdbFileBuilderBuilder& builder)
+class BuildPdbFile {
+  public:
+    BuildPdbFile(const Structure& structure,
+                 const PdbFileBuilder& builder)
             : structure_(structure), builder_(builder),
               atom_map_(structure.size(), -1),
               residue_map_(structure.residue_count(), -1) {}
 
+    PdbFile *operator()() {
+        file_ = new PdbFile;
+
+        build_atom_section();
+        build_connect_section();
+        build_link_section();
+
+        file_->insert_card(new PdbEndCard);
+
+        return file_;
+    }
+
+  private:
     void build_atom_section() {
         add_atoms();
         add_hetatms();
@@ -212,7 +228,7 @@ struct BuildPdbFile::Impl {
     }
 
     const Structure& structure_;
-    const PdbFileBuilderBuilder& builder_;
+    const PdbFileBuilder& builder_;
     PdbFile *file_;
     // The atom indices in the order they're inserted into the file.
     vector<int> atom_sequence_;
@@ -222,23 +238,8 @@ struct BuildPdbFile::Impl {
     vector<int> residue_map_;
 };
 
-BuildPdbFile::BuildPdbFile(const Structure& structure,
-                           const PdbFileBuilderBuilder& builder)
-        : impl_(new Impl(structure, builder)) {
-}
-
-BuildPdbFile::~BuildPdbFile() {
-}
-
-PdbFile *BuildPdbFile::operator()() {
-    impl_->file_ = new PdbFile;
-
-    impl_->build_atom_section();
-    impl_->build_connect_section();
-    impl_->build_link_section();
-    impl_->file_->insert_card(new PdbEndCard);
-
-    return impl_->file_;
+PdbFile *PdbFileBuilder::build(const Structure& structure) const {
+    return BuildPdbFile(structure, *this)();
 }
 
 }  // namespace gmml
