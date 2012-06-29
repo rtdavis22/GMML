@@ -33,6 +33,7 @@
 #include "internal/environment.h"
 #include "internal/fasta_sequence.h"
 #include "internal/geometry.h"
+#include "internal/get_residue_mapping.h"
 #include "internal/glycam_code_set.h"
 #include "internal/glycam_parser.h"
 #include "internal/glycan_conformation_builder.h"
