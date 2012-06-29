@@ -311,6 +311,7 @@ class Structure {
             int residue_index,
             const std::string& atom_name) const;
 
+    std::vector<std::vector<int> > *extract_molecules() const;
 
     //
     // Accessors
