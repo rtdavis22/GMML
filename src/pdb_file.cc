@@ -438,7 +438,7 @@ void PdbSsbondCard::read(const string& line) {
     length_ = convert_string<double>(input.substr(73, 5));
 }
 
-void PdbSsbondCard::write(std::ostream& out) {
+void PdbSsbondCard::write(std::ostream& out) const {
     string str(80, ' ');
     set_in_string(str, "SSBOND", 0, 6, 'L');
     set_in_string(str, ser_num_, 7, 3, 'R');

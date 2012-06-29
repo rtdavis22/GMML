@@ -560,7 +560,7 @@ class PdbSsbondCard : public PdbCard {
                     chain_id_2_(chain_id_2), res_seq_num_2_(res_seq_num_2), i_code_2_(i_code_2),
                     sym_op_1_(sym_op_1), sym_op_2_(sym_op_2), length_(length) {} 
     
-    virtual void write(std::ostream& out);
+    virtual void write(std::ostream& out) const;
 
     virtual void accept(PdbCardVisitor* visitor) const { visitor->visit(this); }
   private:
