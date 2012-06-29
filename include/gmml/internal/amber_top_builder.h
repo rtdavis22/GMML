@@ -332,26 +332,7 @@ inline void AmberTopBuilder::type_error(const std::string& type1,
             type1 + "-" + type2 + "-" + type3 + "-" + type4);
 }
 
-/*
-// This class is populated with a list of topology file section names in the
-// order they should appear in the file.
-class SectionComparer : public std::binary_function<const AmberTopSection*,
-                                                    const AmberTopSection*, bool> {
-  public:
-    SectionComparer();
-
-    // Each comparison takes O(n) time, so it may be preferable to use a
-    // different data structure.
-    bool operator()(const AmberTopSection *section1,
-                    const AmberTopSection *section2) const;
-
-  private:
-    // A smart pointer is used here because this functor will be passed to a
-    // sort function and we want to avoid constructing the section list
-    // multiple times.
-    const boost::shared_ptr<std::vector<std::string> > section_list_;
-};
-*/
+Structure *build_topology_file(const AmberTopFile& file);
 
 }  // namespace gmml
 
