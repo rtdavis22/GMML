@@ -368,10 +368,10 @@ void PdbSeqresCard::write(std::ostream& out) const {
     set_in_string(str, serial_number_, 7, 3, 'R');
     set_in_string(str, chain_id_, 11, 1, 'L');
     set_in_string(str, number_of_chain_residues_, 13, 4, 'R');
-    int start_index = 18;
-    for (int i = 0; i < residues_size(); i++) {
+    int start_index = 19;
+    for (int i = 0; i < residues_.size(); i++) {
         set_in_string(str, residues_[i], start_index, 4, 'R');
-        start_index++;
+        start_index = start_index + 4;
     }
     trim(str);
     out << str;
@@ -380,6 +380,7 @@ void PdbSeqresCard::write(std::ostream& out) const {
 
 void PdbSeqresCard::read(const string& line) {
     string input(line);
+    trim(input);
     serial_number_ = convert_string<int>(input.substr(7, 3));
     chain_id_ = input[11];
     number_of_chain_residues_ = convert_string<int>(input.substr(13, 4));
@@ -438,7 +439,7 @@ void PdbSsbondCard::read(const string& line) {
     length_ = convert_string<double>(input.substr(73, 5));
 }
 
-void PdbSsbondCard::write(std::ostream& out) {
+void PdbSsbondCard::write(std::ostream& out) const {
     string str(80, ' ');
     set_in_string(str, "SSBOND", 0, 6, 'L');
     set_in_string(str, ser_num_, 7, 3, 'R');
@@ -500,11 +501,41 @@ void PdbSiteCard::add_residue(const NamedPdbResidueId& residue) {
 }
 
 void PdbSiteCard::write(std::ostream& out) const {
-
+    string str(80, ' ');
+    set_in_string(str, "SITE  ", 0, 6, 'L');
+    set_in_string(str, seq_num_, 7, 3, 'R');
+    set_in_string(str,  site_name_, 11, 3, 'L');
+    set_in_string(str,  number_of_site_residues_, 15, 2, 'R');
+    int current_index = 18;
+    for (int i = 0; i < this->residues_.size(); i++) {
+        NamedPdbResidueId *current_residue = residues_[i];
+        set_in_string(str, current_residue->res_name, current_index, 3, 'L');
+        current_index = current_index + 4;
+        set_in_string(str, current_residue->pdb_residue_id.chain_id, current_index, 1, 'L');
+        current_index++;
+        set_in_string(str, current_residue->pdb_residue_id.res_num, current_index, 4, 'R');
+        current_index = current_index + 4;
+        set_in_string(str, current_residue->pdb_residue_id.i_code, current_index, 1, 'R');
+        current_index = current_index + 2;
+    }
+    trim(str);
+    out << str;
 }
 
 void PdbSiteCard::read(const std::string& line) {
-
+    string input(line);
+    trim(input);
+    seq_num_ = convert_string<int>(input.substr(7, 3));
+    site_name_ = input.substr(11, 3);
+    number_of_site_residues_ = convert_string<int>(input.substr(15, 2));
+    for (int i = 18; i < input.size(); i = i + 11) {
+        string res_name = input.substr(i, 3);
+        char chain_id = input[i + 4];
+        int seq_num = convert_string<int>(input.substr(i + 5, 4));
+        char i_code = input[i + 9];
+        NamedPdbResidueId *residue = new NamedPdbResidueId(res_name, chain_id, seq_num, i_code);
+        residues_.push_back(residue);
+    }
 }
 
 }  // namespace gmml

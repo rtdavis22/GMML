@@ -496,12 +496,6 @@ class PdbSeqresCard : public PdbCard {
     virtual void write(std::ostream& out) const;
 
     virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
-
-    char chain_id() const { return chain_id_; }
-    int serial_number() const { return serial_number_; }
-    int residues_size() const { return (int)residues_.size(); }
-    int number_of_chain_residues() const { return number_of_chain_residues_; }
-    const std::string at(int index) const { return residues_[index]; }
   private:
     PdbSeqresCard(int serial_number, char chain_id, int num_residues) : serial_number_(serial_number),
                                 chain_id_(chain_id), number_of_chain_residues_(num_residues) {}
@@ -560,7 +554,7 @@ class PdbSsbondCard : public PdbCard {
                     chain_id_2_(chain_id_2), res_seq_num_2_(res_seq_num_2), i_code_2_(i_code_2),
                     sym_op_1_(sym_op_1), sym_op_2_(sym_op_2), length_(length) {} 
     
-    virtual void write(std::ostream& out);
+    virtual void write(std::ostream& out) const;
 
     virtual void accept(PdbCardVisitor* visitor) const { visitor->visit(this); }
   private:
@@ -590,7 +584,7 @@ class PdbSiteCardBuilder {
 
     void add_residue(const NamedPdbResidueId& residue);
     const NamedPdbResidueId* at(int index) const { return residues_.at(index); }
-    int size() const { return residues_.size(); }
+    int size() const { return (int)residues_.size(); }
     std::string site_name() const { return site_name_; }
   private:
     std::string site_name_;
