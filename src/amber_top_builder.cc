@@ -905,6 +905,8 @@ class BuildTopologyFile {
                    residue_pointers->get(residue_pointers->size() - 1) + 1;
 
         sizes->push_back(last);
+
+        return sizes;
     }
 
     void add_bonds() {
