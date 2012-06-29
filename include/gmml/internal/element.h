@@ -97,6 +97,15 @@ inline Element guess_element_by_letter(char letter) {
     }
 }
 
+inline Element guess_element_by_name(const std::string& name) {
+    for (int i = 0; i < name.size(); i++) {
+        Element guess = guess_element_by_letter(name[i]);
+        if (guess != Element())
+            return guess;
+    }
+    return Element();
+}
+
 }  // namespace gmml
 
 #endif // GMML_INTERNAL_ELEMENT_H_
