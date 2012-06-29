@@ -94,9 +94,27 @@ class AmberTopFile : public Readable, public Writeable {
     /**
      Returns the integer section with the given name.
      */
-    AmberTopIntSection *get_int_section(const std::string& name);
-    AmberTopDoubleSection *get_double_section(const std::string& name);
-    AmberTopStringSection *get_string_section(const std::string& name);
+    AmberTopIntSection *get_int_section(const std::string& name) {
+        return const_cast<AmberTopIntSection*>(
+                static_cast<const AmberTopFile*>(this)->get_int_section(name));
+    }
+    const AmberTopIntSection *get_int_section(const std::string& name) const;
+
+    AmberTopDoubleSection *get_double_section(const std::string& name) {
+        return const_cast<AmberTopDoubleSection*>(
+                static_cast<const AmberTopFile*>(
+                        this)->get_double_section(name));
+    }
+    const AmberTopDoubleSection *get_double_section(
+            const std::string& name) const;
+
+    AmberTopStringSection *get_string_section(const std::string& name) {
+        return const_cast<AmberTopStringSection*>(
+                static_cast<const AmberTopFile*>(
+                        this)->get_string_section(name));
+    }
+    const AmberTopStringSection *get_string_section(
+            const std::string& name) const;
 
     /**
      Sorts the sections of the file, given a comparison function.
