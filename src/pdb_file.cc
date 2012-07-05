@@ -424,11 +424,10 @@ void PdbModresCard::read(const string& line) {
 void PdbSsbondCard::read(const string& line) {
     string input(line);
     ser_num_ = convert_string<int>(input.substr(7, 3));
-    res_name_1_ = input.substr(11, 3);
-    trim(res_name_1_);
-    chain_id_1_ = input[15];
-    res_seq_num_1_ = convert_string<int>(input.substr(17, 4));
-    i_code_1_ = input[21];
+    char chain_id_1 = input[15];
+    int res_seq_num_1 = convert_string<int>(input.substr(17, 4));
+    char i_code_1 = input[21];
+    
     res_name_2_ = input.substr(25, 3);
     trim(res_name_2_);
     chain_id_2_ = input[29];

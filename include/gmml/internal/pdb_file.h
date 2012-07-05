@@ -354,7 +354,7 @@ class PdbConnectCard : public PdbCard {
 
     /**
      Returns the number of bondeResidue name for first residue that 
-                                           creates the site.d atom indices associated with this card.
+     creates the site.d atom indices associated with this card.
      */
     int bonded_atom_count() const { return bonded_atoms_.size(); }
 
@@ -491,14 +491,15 @@ class PdbSeqresCard : public PdbCard {
   public:
     explicit PdbSeqresCard(const PdbLine& line) { read(line); }
 
-    static std::vector<PdbSeqresCard*> create_cards(const PdbSeqresCardBuilder& builder);
+    static std::vector<PdbSeqresCard*> create_cards(const PdbSeqresCardBuilder&             builder);
     
     virtual void write(std::ostream& out) const;
 
     virtual void accept(PdbCardVisitor *visitor) const { visitor->visit(this); }
   private:
-    PdbSeqresCard(int serial_number, char chain_id, int num_residues) : serial_number_(serial_number),
-                                chain_id_(chain_id), number_of_chain_residues_(num_residues) {}
+    PdbSeqresCard(int serial_number, char chain_id, int num_residues)
+            : serial_number_(serial_number), chain_id_(chain_id),
+              number_of_chain_residues_(num_residues) {}
     static const int kMaxNumberOfResidues = 13;
     virtual void read(const PdbLine& line) { read(line.data()); }
     void read(const std::string& line);
@@ -517,8 +518,9 @@ class PdbModresCard : public PdbCard {
 
     PdbModresCard(std::string id_code, std::string res_name, char chain_id,
                   int seq_num, char i_code, std::string std_res_name)
-                 : id_code_(id_code), res_name_(res_name), chain_id_(chain_id),
-                   seq_num_(seq_num), i_code_(i_code), std_res_name_(std_res_name) {}
+            : id_code_(id_code), res_name_(res_name), chain_id_(chain_id),
+              seq_num_(seq_num), i_code_(i_code),
+              std_res_name_(std_res_name) {}
     
     void set_comment(std::string comment) { comment_ = comment; } 
 
@@ -546,13 +548,12 @@ class PdbSsbondCard : public PdbCard {
   public:
     explicit PdbSsbondCard(const PdbLine& line) { read(line); }
 
-    PdbSsbondCard (int ser_num, std::string res_name_1, char chain_id_1, int res_seq_num_1,
-                   char i_code_1, std::string res_name_2, char chain_id_2, int res_seq_num_2,
-                   char i_code_2, int sym_op_1, int sym_op_2, double length)
-                  : ser_num_(ser_num), res_name_1_(res_name_1), chain_id_1_(chain_id_1_),
-                    res_seq_num_1_(res_seq_num_1), i_code_1_(i_code_1), res_name_2_(res_name_2),
-                    chain_id_2_(chain_id_2), res_seq_num_2_(res_seq_num_2), i_code_2_(i_code_2),
-                    sym_op_1_(sym_op_1), sym_op_2_(sym_op_2), length_(length) {} 
+    PdbSsbondCard (int ser_num, const PdbResidueId& residue_1, 
+                   const PdbResidueId& residue_2, int sym_op_1, 
+                   int sym_op_2, double length)
+            : ser_num_(ser_num), residue_1_("CYS", residue_1), 
+              residue_2_("CYS", residue_2), sym_op_1_(sym_op_1), 
+              sym_op_2_(sym_op_2), length_(length)  {} 
     
     virtual void write(std::ostream& out) const;
 
@@ -562,14 +563,8 @@ class PdbSsbondCard : public PdbCard {
     void read(const std::string& line);
 
     int ser_num_;
-    std::string res_name_1_;
-    char chain_id_1_;
-    int res_seq_num_1_;
-    char i_code_1_;
-    std::string res_name_2_;
-    char chain_id_2_;
-    int res_seq_num_2_;
-    char i_code_2_;
+    NamedPdbResidueId residue_1_;
+    NamedPdbResidueId residue_2_;
     int sym_op_1_;
     int sym_op_2_;
     double length_;
@@ -598,7 +593,8 @@ class PdbSiteCard : public PdbCard {
   public:
     explicit PdbSiteCard(const PdbLine& line) { read(line); }
 
-    static std::vector<PdbSiteCard*> create_cards(const PdbSiteCardBuilder& builder);
+    static std::vector<PdbSiteCard*> create_cards(const PdbSiteCardBuilder& 
+            builder);
     
     virtual void write(std::ostream& out) const;
 
