@@ -353,12 +353,7 @@ class PdbConnectCard : public PdbCard {
     int source() const { return source_; }
 
     /**
-<<<<<<< HEAD
-     Returns the number of bondeResidue name for first residue that 
-     creates the site.d atom indices associated with this card.
-=======
      Returns the number of bonded atom indices associated with this card.
->>>>>>> fc9c0fb98d3cdd71700cf2c8542d739cf7eab443
      */
     int bonded_atom_count() const { return bonded_atoms_.size(); }
 
@@ -523,13 +518,8 @@ class PdbModresCard : public PdbCard {
     PdbModresCard(std::string id_code, std::string res_name, char chain_id,
                   int seq_num, char i_code, std::string std_res_name)
             : id_code_(id_code), res_name_(res_name), chain_id_(chain_id),
-<<<<<<< HEAD
-              seq_num_(seq_num), i_code_(i_code),
-              std_res_name_(std_res_name) {}
-=======
               seq_num_(seq_num), i_code_(i_code), std_res_name_(std_res_name) {
      }
->>>>>>> fc9c0fb98d3cdd71700cf2c8542d739cf7eab443
     
     void set_comment(std::string comment) { comment_ = comment; } 
 
