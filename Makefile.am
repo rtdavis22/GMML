@@ -43,6 +43,7 @@ gmml_include_HEADERS = \
   include/gmml/internal/element.h \
   include/gmml/internal/environment.h \
   include/gmml/internal/geometry.h \
+  include/gmml/internal/get_residue_mapping.h \
   include/gmml/internal/glycam_code_set.h \
   include/gmml/internal/glycam_parser.h \
   include/gmml/internal/glycan_conformation_builder.h \
@@ -88,6 +89,7 @@ libgmml_a_SOURCES = \
   src/fasta_sequence.cc \
   src/environment.cc \
   src/geometry.cc \
+  src/get_residue_mapping.cc \
   src/glycam_code_set.cc \
   src/glycam_parser.cc \
   src/glycan_conformation_builder.cc \

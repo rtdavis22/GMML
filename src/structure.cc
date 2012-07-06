@@ -777,6 +777,27 @@ void Structure::clone_from(const Structure& structure) {
     tail_ = structure.tail();
 }
 
+vector<vector<int> > *Structure::extract_molecules() const {
+    Graph *link_graph = get_link_graph();
+    deque<bool> marked(residue_count(), false);
+    vector<vector<int> > *molecules = new vector<vector<int> >;
+    for (int i = 0; i < marked.size(); i++) {
+        if (!marked[i]) {
+            vector<size_t> *component = link_graph->bfs(i);
+            vector<int> int_component;
+            for (int j = 0; j < component->size(); j++) {
+                int residue = (*component)[j];
+                int_component.push_back(residue);
+                marked[residue] = true;
+            }
+            molecules->push_back(int_component);
+            delete component;
+        }
+    }
+    delete link_graph;
+    return molecules;
+}
+
 struct StructureAttach::Impl {
     static Vector<3> get_connection_direction(const Structure& structure,
                                               int source_index,

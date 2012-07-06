@@ -80,16 +80,16 @@ PdbCard *PdbLine::get_card() const {
         return new PdbLinkCard(*this);
     } else if (first_six == "ENDMDL") {
         return new PdbEndMdlCard();
-    } else if (first_six == "SEQRES") {
-        return new PdbSeqresCard(*this);
-    } else if (first_six == "MODRES") {
-        return new PdbModelCard(*this);
-    } else if (first_six == "SSBOND") {
-        return new PdbSsbondCard(*this);
-    } else if (first_six == "SITE  ") {
-        return new PdbSiteCard(*this);
-    } else if (first_six == "MODEL ") {
-        return new PdbModelCard(*this);
+    //} else if (first_six == "SEQRES") {
+    //    return new PdbSeqresCard(*this);
+    //} else if (first_six == "MODRES") {
+    //    return new PdbModelCard(*this);
+    //} else if (first_six == "SSBOND") {
+    //    return new PdbSsbondCard(*this);
+    //} else if (first_six == "SITE  ") {
+    //    return new PdbSiteCard(*this);
+    //} else if (first_six == "MODEL ") {
+    //    return new PdbModelCard(*this);
     } else {
         return new PdbUnknownCard(*this);
     }

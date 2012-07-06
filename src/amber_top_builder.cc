@@ -304,7 +304,7 @@ void AmberTopBuilder::build_excluded_atoms(const Structure& structure,
     int num_atoms = structure.size();
     for (int i = 0; i < num_atoms; i++) {
         vector<size_t> *atoms = structure.bonds()->bfs(i, 3);
-        //vector<size_t> *atoms = bfs_results->found;
+
         atoms->erase(std::remove_if(atoms->begin(), atoms->end(),
                                     std::bind2nd(std::less_equal<int>(), i)),
                      atoms->end());
@@ -844,15 +844,89 @@ std::pair<double, double> AmberTopBuilder::get_radius_and_screen(
     return std::make_pair(radius, screen);
 }
 
-/*
-SectionComparer::SectionComparer()
-        : section_list_(new vector<string>(
-            kSectionList, kSectionList + ARRAY_SIZE(kSectionList))) {}
+class BuildTopologyFile {
+  public:
+    explicit BuildTopologyFile(const AmberTopFile& file) : file_(file) {
+    }
 
-bool SectionComparer::operator()(const AmberTopSection *s1,
-                                 const AmberTopSection *s2) const {
-    return std::find(section_list_->begin(), section_list_->end(), s1->name()) <
-           std::find(section_list_->begin(), section_list_->end(), s2->name());
+    Structure *operator()() {
+        structure_ = new Structure;
+
+        add_residues();
+        add_bonds();
+
+        return structure_;
+    }
+
+  private:
+    void add_residues() {
+        const AmberTopStringSection *residue_labels =
+                file_.get_string_section("RESIDUE_LABEL");
+        const AmberTopStringSection *atom_names =
+                file_.get_string_section("ATOM_NAME");
+        const AmberTopStringSection *type_names =
+                file_.get_string_section("AMBER_ATOM_TYPE");
+        const AmberTopIntSection *type_indices =
+                file_.get_int_section("ATOM_TYPE_INDEX");
+        const AmberTopDoubleSection *charges =
+                file_.get_double_section("CHARGE");
+
+        vector<int> *residue_sizes = get_residue_sizes();
+        int cur_atom = 0;
+        for (int i = 0; i < residue_sizes->size(); i++) {
+            Residue residue(residue_labels->get(i));
+            for (int j = 0; j < (*residue_sizes)[i]; j++) {
+                Atom atom(guess_element_by_name(atom_names->get(cur_atom)),
+                          Coordinate(0.0, 0.0, 0.0),
+                          atom_names->get(cur_atom),
+                          type_names->get(cur_atom),
+                          charges->get(cur_atom));
+
+                cur_atom++;
+                residue.append(&atom);
+            }
+            structure_->append(&residue, true);
+        }
+        delete residue_sizes;
+    }
+
+    vector<int> *get_residue_sizes() const {
+        const AmberTopIntSection *residue_pointers =
+                file_.get_int_section("RESIDUE_POINTER");
+
+        vector<int> *sizes = new vector<int>;
+
+        for (int i = 1; i < residue_pointers->size(); i++) {
+            sizes->push_back(residue_pointers->get(i) -
+                             residue_pointers->get(i - 1));
+        }
+
+        int last = file_.get_string_section("ATOM_NAME")->size() -
+                   residue_pointers->get(residue_pointers->size() - 1) + 1;
+
+        sizes->push_back(last);
+
+        return sizes;
+    }
+
+    void add_bonds() {
+        add_bond_section(file_.get_int_section("BONDS_INC_HYDROGEN"));
+        add_bond_section(file_.get_int_section("BONDS_WITHOUT_HYDROGEN"));
+    }
+
+    void add_bond_section(const AmberTopIntSection *bond_section) {
+        for (int i = 0; i < bond_section->size(); i += 3) {
+            structure_->add_bond(bond_section->get(i)/3,
+                                 bond_section->get(i + 1)/3);
+        }
+    }
+
+    Structure *structure_;
+    const AmberTopFile& file_;
+};
+
+Structure *build_topology_file(const AmberTopFile& file) {
+    return BuildTopologyFile(file)();
 }
-*/
+
 }  // namespace gmml

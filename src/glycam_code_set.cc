@@ -322,6 +322,8 @@ string GlycamCodeSet::get_first_letter(const bitset<10>& open_valences) const {
             return "Y";
         if (bs[2] && bs[3])
             return "Z";
+        if (bs[3] && bs[5])
+            return "w";
     } else if (bs.count() == 1) {
         for (int i = 1; i < bs.size(); i++)
             if (bs[i])

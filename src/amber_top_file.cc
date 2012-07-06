@@ -372,7 +372,7 @@ struct AmberTopFile::Impl {
         return true;
     }
 
-    AmberTopIntSection *get_int_section(const string& name) {
+    const AmberTopIntSection *get_int_section(const string& name) const {
         for (int i = 0; i < int_sections.size(); i++) {
             if (int_sections[i]->name() == name)
                 return int_sections[i];
@@ -380,7 +380,7 @@ struct AmberTopFile::Impl {
         return NULL;
     }
 
-    AmberTopDoubleSection *get_double_section(const string& name) {
+    const AmberTopDoubleSection *get_double_section(const string& name) const {
         for (int i = 0; i < double_sections.size(); i++) {
             if (double_sections[i]->name() == name)
                 return double_sections[i];
@@ -388,7 +388,7 @@ struct AmberTopFile::Impl {
         return NULL;
     }
 
-    AmberTopStringSection *get_string_section(const string& name) {
+    const AmberTopStringSection *get_string_section(const string& name) const {
         for (int i = 0; i < string_sections.size(); i++) {
             if (string_sections[i]->name() == name)
                 return string_sections[i];
@@ -449,16 +449,19 @@ bool AmberTopFile::remove_section(const string& name) {
 }
 
 
-AmberTopIntSection *AmberTopFile::get_int_section(const string& name) {
+const AmberTopIntSection *AmberTopFile::get_int_section(
+        const string& name) const {
     return impl_->get_int_section(name);
 }
 
 
-AmberTopDoubleSection *AmberTopFile::get_double_section(const string& name) {
+const AmberTopDoubleSection *AmberTopFile::get_double_section(
+        const string& name) const {
     return impl_->get_double_section(name);
 }
 
-AmberTopStringSection *AmberTopFile::get_string_section(const string& name) {
+const AmberTopStringSection *AmberTopFile::get_string_section(
+        const string& name) const {
     return impl_->get_string_section(name);
 }
 

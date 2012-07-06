@@ -127,11 +127,9 @@ int main() {
         add_residue_mapping(kResidueMap[i], kResidueMap[i + 1]);
     }
 
-    PdbFile pdb(File("1RVZ_New.pdb"));
-
     // PdbStructureBuilder allows us to specify custom mappings for this
     // particular pdb file.
-    PdbStructureBuilder builder(pdb);
+    PdbStructureBuilder builder;
 
     // This mapping overrides the global mapping from HIS to HIE.
     builder.add_mapping("HIS", "HIP");
@@ -145,7 +143,7 @@ int main() {
     builder.add_mapping(PdbResidueId('A', 8), "CYX");
     builder.add_mapping(PdbResidueId('B', 637), "CYX");
 
-    PdbFileStructure *structure = builder.build();
+    PdbFileStructure *structure = builder.build(File("1RVZ_New.pdb"));
 
     // We can search for a particular residue in the structure using its
     // pdb identifier:

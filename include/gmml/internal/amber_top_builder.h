@@ -225,7 +225,8 @@ namespace amber_top_builder {
 // Lennard-Jones coefficients.
 struct TypeInfoType {
     TypeInfoType(double radius, double well_depth) : radius(radius),
-                                                     well_depth(well_depth) {}
+                                                     well_depth(well_depth) {
+    }
 
     double radius;
     double well_depth;
@@ -239,7 +240,8 @@ inline bool operator==(const TypeInfoType& lhs, const TypeInfoType& rhs) {
 // These correspond to values in BOND_FORCE_CONSTANT and BOND_EQUIL_VALUE.
 struct BondType {
     BondType(double force_constant, double equil_value)
-            : force_constant(force_constant), equil_value(equil_value) {}
+            : force_constant(force_constant), equil_value(equil_value) {
+    }
 
     double force_constant;
     double equil_value;
@@ -253,7 +255,8 @@ inline bool operator==(const BondType& lhs, const BondType& rhs) {
 // These correspond to values in ANGLE_FORCE_CONSTANT and ANGLE_EQUIL_VALUE.
 struct AngleType {
     AngleType(double force_constant, double equil_value)
-            : force_constant(force_constant), equil_value(equil_value) {}
+            : force_constant(force_constant), equil_value(equil_value) {
+    }
 
     double force_constant;
     double equil_value;
@@ -270,7 +273,8 @@ struct DihedralType {
     DihedralType(double force_constant, double periodicity, double phase,
                  double scee, double scnb)
             : force_constant(force_constant), periodicity(periodicity),
-              phase(phase), scee(scee), scnb(scnb) {}
+              phase(phase), scee(scee), scnb(scnb) {
+    }
 
     double force_constant;
     double periodicity;
@@ -332,26 +336,7 @@ inline void AmberTopBuilder::type_error(const std::string& type1,
             type1 + "-" + type2 + "-" + type3 + "-" + type4);
 }
 
-/*
-// This class is populated with a list of topology file section names in the
-// order they should appear in the file.
-class SectionComparer : public std::binary_function<const AmberTopSection*,
-                                                    const AmberTopSection*, bool> {
-  public:
-    SectionComparer();
-
-    // Each comparison takes O(n) time, so it may be preferable to use a
-    // different data structure.
-    bool operator()(const AmberTopSection *section1,
-                    const AmberTopSection *section2) const;
-
-  private:
-    // A smart pointer is used here because this functor will be passed to a
-    // sort function and we want to avoid constructing the section list
-    // multiple times.
-    const boost::shared_ptr<std::vector<std::string> > section_list_;
-};
-*/
+Structure *build_topology_file(const AmberTopFile& file);
 
 }  // namespace gmml
 
