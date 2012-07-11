@@ -50,6 +50,8 @@ struct PdbResidueId {
     struct Less;
     struct PtrLess;
 
+    PdbResidueId() : chain_id(' '), res_num(0), i_code(' ') {}
+
     PdbResidueId(char chain_id, int res_num, char i_code)
             : chain_id(chain_id), res_num(res_num), i_code(i_code) {}
 
@@ -72,8 +74,10 @@ struct PdbResidueId {
 
 struct NamedPdbResidueId {
   public:
-    NamedPdbResidueId(std::string res_name, char chain_id, int res_num, char i_code) :
-                   res_name(res_name), pdb_residue_id(chain_id, res_num, i_code) {}
+
+    NamedPdbResidueId() {}
+    NamedPdbResidueId(std::string res_name, const PdbResidueId& residue) 
+            : res_name(res_name), pdb_residue_id(residue) {}
 
     std::string res_name;
     PdbResidueId pdb_residue_id;

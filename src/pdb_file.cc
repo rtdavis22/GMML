@@ -424,15 +424,18 @@ void PdbModresCard::read(const string& line) {
 void PdbSsbondCard::read(const string& line) {
     string input(line);
     ser_num_ = convert_string<int>(input.substr(7, 3));
-    char chain_id_1 = input[15];
-    int res_seq_num_1 = convert_string<int>(input.substr(17, 4));
-    char i_code_1 = input[21];
-    
-    res_name_2_ = input.substr(25, 3);
-    trim(res_name_2_);
-    chain_id_2_ = input[29];
-    res_seq_num_2_ = convert_string<int>(input.substr(31, 4));
-    i_code_2_ = input[35];
+    residue_1_.res_name = input.substr(11, 3);
+    trim(residue_1_.res_name);
+    residue_1_.pdb_residue_id.chain_id = input[15];
+    residue_1_.pdb_residue_id.res_num = 
+            convert_string<int>(input.substr(17, 4));
+    residue_1_.pdb_residue_id.i_code = input[21];
+    residue_2_.res_name = input.substr(25, 3);
+    trim(residue_2_.res_name);
+    residue_2_.pdb_residue_id.chain_id = input[29];
+    residue_2_.pdb_residue_id.res_num = 
+            convert_string<int>(input.substr(31, 4));
+    residue_2_.pdb_residue_id.i_code = input[35];
     sym_op_1_ = convert_string<int>(input.substr(59, 6));
     sym_op_2_ = convert_string<int>(input.substr(66, 6));
     length_ = convert_string<double>(input.substr(73, 5));
@@ -442,14 +445,14 @@ void PdbSsbondCard::write(std::ostream& out) const {
     string str(80, ' ');
     set_in_string(str, "SSBOND", 0, 6, 'L');
     set_in_string(str, ser_num_, 7, 3, 'R');
-    set_in_string(str, res_name_1_, 11, 3, 'L');
-    set_in_string(str, chain_id_1_, 15, 1, 'L');
-    set_in_string(str, res_seq_num_1_, 17, 4, 'R');
-    set_in_string(str, i_code_1_, 21, 1, 'L');
-    set_in_string(str, res_name_2_, 25, 3, 'L');
-    set_in_string(str, chain_id_2_, 29, 1, 'L');
-    set_in_string(str, res_seq_num_2_, 31, 4, 'R');
-    set_in_string(str, i_code_2_, 35, 1, 'L');
+    set_in_string(str, residue_1_.res_name, 11, 3, 'L');
+    set_in_string(str, residue_1_.pdb_residue_id.chain_id, 15, 1, 'L');
+    set_in_string(str, residue_1_.pdb_residue_id.res_num, 17, 4, 'R');
+    set_in_string(str, residue_1_.pdb_residue_id.i_code, 21, 1, 'L');
+    set_in_string(str, residue_2_.res_name, 25, 3, 'L');
+    set_in_string(str, residue_2_.pdb_residue_id.chain_id, 29, 1, 'L');
+    set_in_string(str, residue_2_.pdb_residue_id.res_num, 31, 4, 'R');
+    set_in_string(str, residue_2_.pdb_residue_id.i_code, 35, 1, 'L');
     set_in_string(str, sym_op_1_, 59, 6, 'R');
     set_in_string(str, sym_op_2_, 66, 6, 'R');
     set_in_string(str, length_, 73, 5, 'R');
@@ -510,11 +513,14 @@ void PdbSiteCard::write(std::ostream& out) const {
         NamedPdbResidueId *current_residue = residues_[i];
         set_in_string(str, current_residue->res_name, current_index, 3, 'L');
         current_index = current_index + 4;
-        set_in_string(str, current_residue->pdb_residue_id.chain_id, current_index, 1, 'L');
+        set_in_string(str, current_residue->pdb_residue_id.chain_id, 
+                current_index, 1, 'L');
         current_index++;
-        set_in_string(str, current_residue->pdb_residue_id.res_num, current_index, 4, 'R');
+        set_in_string(str, current_residue->pdb_residue_id.res_num, 
+                current_index, 4, 'R');
         current_index = current_index + 4;
-        set_in_string(str, current_residue->pdb_residue_id.i_code, current_index, 1, 'R');
+        set_in_string(str, current_residue->pdb_residue_id.i_code, 
+                current_index, 1, 'R');
         current_index = current_index + 2;
     }
     trim(str);
@@ -532,7 +538,8 @@ void PdbSiteCard::read(const std::string& line) {
         char chain_id = input[i + 4];
         int seq_num = convert_string<int>(input.substr(i + 5, 4));
         char i_code = input[i + 9];
-        NamedPdbResidueId *residue = new NamedPdbResidueId(res_name, chain_id, seq_num, i_code);
+        PdbResidueId *res = new PdbResidueId(chain_id, seq_num, i_code);
+        NamedPdbResidueId *residue = new NamedPdbResidueId(res_name, *res);
         residues_.push_back(residue);
     }
 }

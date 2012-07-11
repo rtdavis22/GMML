@@ -7,10 +7,6 @@
 
 using namespace gmml;
 
-class PdbFileTest : public ::testing::Test {
-
-};
-
 TEST(PdbSeqresCardBuilder, AccessMethods) {
     PdbSeqresCardBuilder *builder = new PdbSeqresCardBuilder('N');
     EXPECT_EQ('N', builder->chain_id());
@@ -112,7 +108,8 @@ TEST(PdbSeqresCard, CreateCards) {
 }
 
 TEST(PdbSeqresCard, Read) {
-    PdbLine *pdb_line = new PdbLine("SEQRES   2 A   21  TYR GLN LEU GLU ASN TYR CYS ASN");
+    PdbLine *pdb_line = new PdbLine("SEQRES   2 A   21  TYR GLN LEU GLU ASN TYR 
+            CYS ASN");
     PdbSeqresCard *current_card = new PdbSeqresCard(*pdb_line);
     EXPECT_EQ('A', current_card->chain_id());
     EXPECT_EQ(2, current_card->serial_number());
@@ -167,7 +164,7 @@ TEST(PdbSsbondCard, Read) {
     std::string str = "SSBOND   3 CYS A   64    CYS A   80                          1555   1555  2.06";
     PdbLine *pdb_line = new PdbLine(str);
     PdbSsbondCard *ssbond_card = new PdbSsbondCard(*pdb_line);
-    std::ostream stream;
+    std::ostringstream stream;
     ssbond_card->write(stream);
     EXPECT_EQ(str, stream.str());
 }
@@ -186,4 +183,78 @@ TEST(PdbSiteCardBuilder, AccessMethods) {
     builder->add_residue(*res4);
     EXPECT_EQ(5, builder->size());
     EXPECT_EQ("AC2", builder->site_name);
+    EXPECT_EQ(*res0, builder.at(0));
+    EXPECT_EQ(*res1, builder.at(1));
+    EXPECT_EQ(*res2, builder.at(2));
+    EXPECT_EQ(*res3, builder.at(3));
+    EXPECT_EQ(*res4, builder.at(4));
+}
+
+TEST(PdbSiteCardBuilder, CreateCards) {
+    PdbSiteCardBuilder *builder = new PdbSiteCardBuilder("AC4");
+    NamedPdbResidueId *res0 = new NamedPdbResidueId("HIS", 'A', 64, ' ');
+    NamedPdbResidueId *res1 = new NamedPdbResidueId("HIS", 'A', 94, ' ');
+    NamedPdbResidueId *res2 = new NamedPdbResidueId("HIS", 'A', 96, ' ');
+    NamedPdbResidueId *res3 = new NamedPdbResidueId("HIS", 'A', 119, ' ');
+    NamedPdbResidueId *res4 = new NamedPdbResidueId("LEU", 'A', 198, ' ');
+    NamedPdbResidueId *res5 = new NamedPdbResidueId("THR", 'A', 199, ' ');
+    NamedPdbResidueId *res6 = new NamedPdbResidueId("THR", 'A', 200, ' ');
+    NamedPdbResidueId *res7 = new NamedPdbResidueId("TRP", 'A', 209, ' ');
+    NamedPdbResidueId *res8 = new NamedPdbResidueId("HOH", 'A', 572, ' ');
+    NamedPdbResidueId *res9 = new NamedPdbResidueId("HOH", 'A', 582, ' ');
+    NamedPdbResidueId *res10 = new NamedPdbResidueId("HOH", 'A', 635, ' ');
+    builder->add_residue(*res0);
+    builder->add_residue(*res1);
+    builder->add_residue(*res2);
+    builder->add_residue(*res3);
+    builder->add_residue(*res4);
+    builder->add_residue(*res5);
+    builder->add_residue(*res6);
+    builder->add_residue(*res7);
+    builder->add_residue(*res8);
+    builder->add_residue(*res9);
+    builder->add_residue(*res10);
+    std::vector<PdbSiteCard*> site_cards = builder->build();
+    EXPECT_EQ(*res0, site_cards[0]);
+    EXPECT_EQ(*res1, site_cards[1]);
+    EXPECT_EQ(*res2, site_cards[2]);
+    EXPECT_EQ(*res3, site_cards[3]);
+    EXPECT_EQ(*res4, site_cards[4]);
+    EXPECT_EQ(*res5, site_cards[5]);
+    EXPECT_EQ(*res6, site_cards[6]);
+    EXPECT_EQ(*res7, site_cards[7]);
+    EXPECT_EQ(*res8, site_cards[8]);
+    EXPECT_EQ(*res9, site_cards[9]);
+    EXPECT_EQ(*res10, site_cards[10]);
+}
+
+TEST(PdbSiteCard, ReadandWrite) {
+    string str = "SITE     3 AC4 11 HOH A 572  HOH A 582  HOH A 635           ";
+    trim(str);
+    PdbLine *pdb_line = new PdbLine(str);
+    PdbSiteCard *site_card = new PdbSiteCard(*pdb_line);
+    std::ostringstream stream;
+    site_card->write(stream);
+    ASSERT_EQ(str, stream.str());
+}
+
+TEST(PdbModelCard, ConstructorWrite) {
+    string str = "MODEL        1    ";
+    trim(str);
+    PdbModelCard *model_card = new PdbModelCard(1);
+    std::ostringstream stream;
+    model_card->write(stream);
+    ASSERT_EQ(str, stream.str());
+}
+
+TEST(PdbModelCard, Read) {
+    string str = "MODEL        5  ";
+    trim(str);
+    PdbLine *pdb_line = new PdbLine(str);
+    PdbModelCard *model_card = new PdbModelCard(*pdb_line);
+    std::ostringstream stream;
+    model_card->write(stream);
+    ASSERT_EQ(str, stream.str());
+}
+
 }

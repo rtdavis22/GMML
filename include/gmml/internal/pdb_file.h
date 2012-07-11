@@ -37,6 +37,7 @@
 #include "gmml/internal/geometry.h"
 #include "gmml/internal/stubs/common.h"
 #include "gmml/internal/stubs/file.h"
+#include "gmml/internal/pdb_file_structure.h"
 
 namespace gmml {
 
@@ -56,7 +57,7 @@ class PdbSiteCard;
 class PdbModelCard;
 
 class NamedPdbResidueId;
-
+class PdbResidueId;
 
 /**
  The class represents a PDB file, which contains
