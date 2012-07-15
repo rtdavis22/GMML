@@ -22,6 +22,7 @@
 
 namespace gmml {
 
+// Reference: http://inside.mines.edu/~gmurray/ArbitraryAxisRotation/ArbitraryAxisRotation.html
 RotationMatrix::RotationMatrix(const Coordinate& point, Vector<3> direction,
                                double radians) {
     direction.normalize();
