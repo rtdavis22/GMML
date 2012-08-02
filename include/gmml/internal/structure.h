@@ -145,6 +145,8 @@ class Structure {
     void set_residue_angle(int atom1, int atom2, int atom3, int residue_index,
                            double radians);
 
+    void set_angle(int atom1, int atom2, int atom3, double radians);
+
     void set_angle_in_range(int start_atom, int end_atom, int atom1, int atom2,
                             int atom3, double radians);
 

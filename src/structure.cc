@@ -282,6 +282,31 @@ void Structure::set_residue_angle(int atom1, int atom2, int atom3,
     set_angle_in_range(start_atom, end_atom, atom1, atom2, atom3, radians);
 }
 
+void Structure::set_angle(int atom1, int atom2, int atom3, double degrees) {
+    vector<size_t> *atoms = bonds_->edge_bfs(atom2, atom3);
+
+    double current_angle = measure(atoms_[atom1]->coordinate(),
+                                      atoms_[atom2]->coordinate(),
+                                      atoms_[atom3]->coordinate());
+
+    RotationMatrix matrix(
+        atoms_[atom2]->coordinate(),
+        Vector<3>(atoms_[atom1]->coordinate(),
+                  atoms_[atom2]->coordinate()).cross(
+                      Vector<3>(atoms_[atom3]->coordinate(),
+                                atoms_[atom2]->coordinate())),
+        to_radians(degrees) - current_angle
+    );
+
+
+    for (int i = 0; i < atoms->size(); i++)
+        matrix.apply(atoms_[(*atoms)[i]]->mutable_coordinate());
+
+    delete atoms;
+
+
+}
+
 void Structure::set_angle_in_range(int start_atom, int end_atom,
                                    int atom1, int atom2, int atom3,
                                    double radians) {
