@@ -20,26 +20,26 @@
 
 // Author: Robert Davis
 
-#ifndef GMML_GET_RESIDUE_MAPPING_H_
-#define GMML_GET_RESIDUE_MAPPING_H_
-
-#include <vector>
+#ifndef GMML_INTERNAL_AMBER_TOP_FILE_COMPARER_H_
+#define GMML_INTERNAL_AMBER_TOP_FILE_COMPARER_H_
 
 namespace gmml {
 
-class Structure;
+class AmberTopFile;
 
-// This function attempts to find a mapping between all residues of both
-// structures. If it succeeds, it returns a vector whose i'th element is the
-// residue index in structure2 that corresponds to the i'th residue in
-// structure1. Otherwise, it returns NULL.
-std::vector<int> *get_residue_mapping(const Structure *structure1,
-                                      const Structure *structure2);
+class AmberTopFileComparer {
+  public:
+    AmberTopFileComparer(const AmberTopFile& file1, const AmberTopFile& file2)
+            : file1_(file1), file2_(file2) {
+    }
 
-std::vector<int> *get_atom_mapping(const Structure *structure1,
-                                   const Structure *structure2,
-                                   const std::vector<int>& residue_mapping);
+    void operator()() const;
+
+  private:
+    const AmberTopFile& file1_;
+    const AmberTopFile& file2_;
+};
 
 }  // namespace gmml
 
-#endif  // GMML_GET_RESIDUE_MAPPING_H_
+#endif  // GMML_INTERNAL_AMBER_TOP_FILE_COMPARER_H_

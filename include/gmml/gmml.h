@@ -23,6 +23,7 @@
 
 #include "internal/amber_top_builder.h"
 #include "internal/amber_top_file.h"
+#include "internal/amber_top_file_comparer.h"
 #include "internal/atom.h"
 #include "internal/boxed_structure.h"
 #include "internal/carbohydrates.h"

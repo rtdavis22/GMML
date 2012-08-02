@@ -195,4 +195,24 @@ vector<int> *get_residue_mapping(const Structure *structure1,
     return GetResidueMapping(structure1, structure2)();
 }
 
+vector<int> *get_atom_mapping(const Structure *structure1,
+                              const Structure *structure2,
+                              const vector<int>& residue_mapping) {
+    vector<int> *atom_mapping = new vector<int>(structure1->size(), -1);
+    for (int i = 0; i < residue_mapping.size(); i++) {
+        int residue1_base = structure1->get_atom_index(i, 0);
+        int mapped_residue =residue_mapping[i];
+        int residue2_base = structure2->get_atom_index(mapped_residue, 0);
+        for (int j = 0; j < structure1->residues(i)->size(); j++) {
+            for (int k = 0;
+                     k < structure2->residues(mapped_residue)->size(); k++) {
+                if (structure1->residues(i)->atoms(j)->name() ==
+                    structure2->residues(mapped_residue)->atoms(k)->name())
+                       (*atom_mapping)[residue1_base + j] = residue2_base + k;
+            }
+        }
+    }
+    return atom_mapping;
+}
+
 }  // namespace gmml

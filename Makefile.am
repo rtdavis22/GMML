@@ -32,6 +32,7 @@ gmml_includedir = $(includedir)/gmml/internal
 gmml_include_HEADERS = \
   include/gmml/internal/amber_top_builder.h \
   include/gmml/internal/amber_top_file.h \
+  include/gmml/internal/amber_top_file_comparer.h \
   include/gmml/internal/array_tree.h \
   include/gmml/internal/atom.h \
   include/gmml/internal/boxed_structure.h \
@@ -82,6 +83,7 @@ lib_LIBRARIES = libgmml.a
 libgmml_a_SOURCES = \
   src/amber_top_builder.cc \
   src/amber_top_file.cc \
+  src/amber_top_file_comparer.cc \
   src/boxed_structure.cc \
   src/complete_residue.cc \
   src/coordinate_file.cc \
