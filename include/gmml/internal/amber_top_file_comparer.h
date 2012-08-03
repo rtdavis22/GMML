@@ -40,6 +40,11 @@ class AmberTopFileComparer {
     const AmberTopFile& file2_;
 };
 
+inline void compare_topology_files(const AmberTopFile& file1,
+                                   const AmberTopFile& file2) {
+    AmberTopFileComparer(file1, file2)();
+}
+
 }  // namespace gmml
 
 #endif  // GMML_INTERNAL_AMBER_TOP_FILE_COMPARER_H_
