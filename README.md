@@ -1,4 +1,4 @@
-The GLYCAM Molecular Modelling Library (GMML) assists in a variety of molecular modelling tasks, with a particular focus on carbohydrates. It works particularly well with the AMBER suite of molecular simulation programs.
+##### The GLYCAM Molecular Modelling Library (GMML) assists in a variety of molecular modelling tasks, with a particular focus on carbohydrates. It works particularly well with the AMBER suite of molecular simulation programs.
 
 Users of GMML can:
 
@@ -17,24 +17,31 @@ Users of GMML can:
 - Minimize structures through an interface with SANDER, AMBER's primary simulation program
 - GMML is the engine behind the new and improved GLYCAM web interface, currently being developed.
 
-A scripting interface similar to AMBER's LEaP called gems is also in the works.
-
-# Getting Started
+### Getting Started
 To build:
+```
     ./configure
     make
+```
 
 To run tests:
+```
     make check
+```
 
 To install:
+```
     make install
+```
 
 Building requires:
+```
     boost headers (for shared_ptr)
+```
 
 If you don't have a configure file, run 'sh autogen.sh' first. This requires:
+```
     autoconf
     automake
     libtool
-
+```
