@@ -1,4 +1,4 @@
-##### The GLYCAM Molecular Modelling Library (GMML) assists in a variety of molecular modelling tasks, with a particular focus on carbohydrates. It works particularly well with the AMBER suite of molecular simulation programs.
+##### The GLYCAM Molecular Modelling Library (GMML) assists in a variety of molecular modelling tasks, with a particular focus on carbohydrates. It works particularly well with the [AMBER](http://ambermd.org/) suite of molecular simulation programs.
 
 Users of GMML can:
 
